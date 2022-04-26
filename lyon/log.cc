@@ -1,4 +1,6 @@
 #include "log.h"
+#include <memory>
+#include <sstream>
 
 namespace lyon {
 Logger::Logger(const std::string &name) : m_name(name) {}
@@ -16,8 +18,9 @@ void Logger::delAppender(LogAppender::ptr appender) {
 
 void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
+        auto self = shared_from_this();
         for (auto appender : m_appenders) {
-            appender->log(level, event);
+            appender->log(self, level, event);
         }
     }
 }
@@ -36,15 +39,17 @@ bool FileLogAppender::reopen() {
     return !!m_fstream;
 }
 
-void FileLogAppender::log(LogLevel::Level level, LogEvent::ptr event) {
+void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
+                          LogEvent::ptr event) {
     if (level >= m_level) {
-        m_fstream << m_formatter->format(event);
+        m_formatter->format(m_fstream, logger, level, event);
     }
 }
 
-void StdoutLogAppender::log(LogLevel::Level level, LogEvent::ptr event) {
+void StdoutLogAppender::log(std::shared_ptr<Logger> logger,
+                            LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
-        std::cout << m_formatter->format(event);
+        m_formatter->format(std::cout, logger, level, event);
     }
 }
 
@@ -60,20 +65,45 @@ const char *LogLevel::toString(LogLevel::Level level) {
         XX(ERROR)
         XX(FATAL)
 #undef XX
+    default:
+        return "UNKNOWN";
     }
     return "UNKNOWN";
 }
 
 LogFormatter::LogFormatter(const std::string &pattern) : m_pattern(pattern) {}
+void LogFormatter::init() {
+    // TODO:添加解析
+}
+
+std::string LogFormatter::format(std::shared_ptr<Logger> logger,
+                                 LogLevel::Level level, LogEvent::ptr event) {
+    std::stringstream ss;
+    for (auto &item : m_items) {
+        item->format(ss, logger, level, event);
+    }
+    return ss.str();
+}
+
+std::ostream &LogFormatter::format(std::ostream &os,
+                                   std::shared_ptr<Logger> logger,
+                                   LogLevel::Level level, LogEvent::ptr event) {
+    for (auto &item : m_items) {
+        item->format(os, logger, level, event);
+    }
+    return os;
+}
 
 class MessageFormatItem : public LogFormatter::FormatItem {
-    void format(std::ostream &os, LogEvent::ptr event) override {
+    void format(std::ostream &os, std::shared_ptr<Logger> logger,
+                LogLevel::Level level, LogEvent::ptr event) override {
         os << event->getContent();
     }
 };
 
 class LevelFormatItem : public LogFormatter::FormatItem {
-    void format(std::ostream &os, LogEvent::ptr event) override {
+    void format(std::ostream &os, std::shared_ptr<Logger> logger,
+                LogLevel::Level level, LogEvent::ptr event) override {
         os << LogLevel::toString(event->getLevel());
     }
 };
