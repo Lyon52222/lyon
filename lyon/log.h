@@ -1,12 +1,15 @@
 #ifndef __LYON_LOG_H__
 #define __LYON_LOG_H__
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <list>
 #include <memory>
+#include <sstream>
 #include <stdint.h>
 #include <string>
-#include <strstream>
+#include <unordered_map>
+#include <vector>
 namespace lyon {
 
 class Logger;
@@ -21,30 +24,52 @@ class LogLevel {
 class LogEvent {
   public:
     typedef std::shared_ptr<LogEvent> ptr;
-    LogEvent();
+    LogEvent(const char *file, int32_t line, uint32_t threadId,
+             std::string &threadName, uint32_t fiberId, uint64_t time);
 
     const char *getFile() const { return m_file; };
     int32_t getLine() const { return m_line; };
     uint32_t getThreaId() const { return m_threadId; };
+    std::string getThreaName() const { return m_threadName; };
     uint32_t getFiberId() const { return m_fiberId; };
     uint64_t getTime() const { return m_time; };
+    uint32_t getElapse() const { return m_elapse; };
     std::string getContent() const { return m_content; };
+    std::shared_ptr<Logger> getLogger() const { return m_logger; };
     const LogLevel::Level getLevel() const { return m_level; };
 
   private:
     const char *m_file = nullptr; //文件名
     int32_t m_line = 0;           //行号
     uint32_t m_threadId = 0;      //线程ID
+    std::string m_threadName;     //线程名称
     uint32_t m_fiberId = 0;       //协程ID
-    uint64_t m_time;              //时间戳
+    uint64_t m_time = 0;          //时间戳
+    uint32_t m_elapse = 0;
     std::string m_content;
+
+    std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
 };
 
 //日志格式化
+/**
+ * %m 消息
+ * %p 日志等级
+ * %r 累计毫秒数
+ * %t 当前线程ID
+ * %d 时间和日期
+ * %f 文件名
+ * %l 源码行数
+ * %n 换行符
+ * %T 制表符
+ * %F 协程ID
+ * %N 线程名
+ */
 class LogFormatter {
   public:
     typedef std::shared_ptr<LogFormatter> ptr;
+
     LogFormatter(const std::string &pattern);
     void init();
     std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
@@ -63,6 +88,10 @@ class LogFormatter {
   private:
     std::string m_pattern;
     std::list<FormatItem::ptr> m_items;
+    static std::unordered_map<
+        std::string,
+        std::function<LogFormatter::FormatItem::ptr(const std::string &str)>>
+        format_items;
 };
 
 //日志输出地
