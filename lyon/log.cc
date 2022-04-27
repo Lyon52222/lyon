@@ -197,14 +197,18 @@ const char *LogLevel::toString(LogLevel::Level level) {
     return "UNKNOWN";
 }
 
-LogFormatter::LogFormatter(const std::string &pattern) : m_pattern(pattern) {}
+LogFormatter::LogFormatter(const std::string &pattern) : m_pattern(pattern) {
+    parsePattern();
+}
 
-void LogFormatter::setPattern(std::string pattern) { m_pattern = pattern; }
+void LogFormatter::setPattern(std::string pattern) {
+    m_pattern = pattern;
+    parsePattern();
+}
 
-void LogFormatter::init() {
+void LogFormatter::parsePattern() {
     std::vector<std::tuple<std::string, std::string, int>> vec;
     std::string sstr;
-    std::cout << m_pattern << std::endl;
     for (size_t i = 0; i < m_pattern.size(); i++) {
         if (m_pattern[i] != '%') {
             sstr.append(1, m_pattern[i]);
@@ -223,7 +227,6 @@ void LogFormatter::init() {
         size_t fmt_start = 0;
         size_t j = i + 1;
         std::string fmt;
-        std::cout << i << ' ' << j << std::endl;
         while (j < m_pattern.size()) {
             if (!fmt_status && !std::isalpha(m_pattern[j]) &&
                 m_pattern[j] != '{' && m_pattern[j] != '}') {
@@ -274,17 +277,19 @@ void LogFormatter::init() {
     }
 
     for (int i = 0; i < vec.size(); i++) {
-        auto itr = format_items.find(std::get<0>(vec[i]));
-        if (itr != format_items.end()) {
-            int item_type = std::get<2>(vec[i]);
-            if (item_type == 0) {
-                m_items.push_back(
-                    FormatItem::ptr(new StringFormatItem(std::get<0>(vec[i]))));
-            } else if (item_type == 1) {
-                m_items.push_back(itr->second(""));
-            } else if (item_type == 2) {
-                m_items.push_back(itr->second(std::get<1>(vec[i])));
-            } else {
+        int item_type = std::get<2>(vec[i]);
+        if (item_type == 0) {
+            m_items.push_back(
+                FormatItem::ptr(new StringFormatItem(std::get<0>(vec[i]))));
+        } else {
+            auto itr = format_items.find(std::get<0>(vec[i]));
+            if (itr != format_items.end()) {
+                if (item_type == 1) {
+                    m_items.push_back(itr->second(""));
+                } else if (item_type == 2) {
+                    m_items.push_back(itr->second(std::get<1>(vec[i])));
+                } else {
+                }
             }
         }
     }

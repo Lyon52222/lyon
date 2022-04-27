@@ -78,7 +78,7 @@ class LogFormatter {
      * @brief 对m_pattern进行解析，得到基本的元素组件
      *
      */
-    void init();
+    void parsePattern();
     /**
      * @brief 以pattern格式直接返回一个log描述
      *
