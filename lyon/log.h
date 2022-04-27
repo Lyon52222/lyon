@@ -26,7 +26,8 @@ class LogEvent {
   public:
     typedef std::shared_ptr<LogEvent> ptr;
     LogEvent(const char *file, int32_t line, uint32_t threadId,
-             std::string &threadName, uint32_t fiberId, uint64_t time);
+             std::string &threadName, uint32_t fiberId, uint64_t time,
+             uint32_t elapse, std::string &content, LogLevel::Level level);
 
     const char *getFile() const { return m_file; };
     int32_t getLine() const { return m_line; };
@@ -72,11 +73,28 @@ class LogFormatter {
     typedef std::shared_ptr<LogFormatter> ptr;
 
     LogFormatter(const std::string &pattern);
-    //初始化函数，对m_pattern进行解析，得到基本的元素组件。
-    void init();
     void setPattern(std::string pattern);
+    /**
+     * @brief 对m_pattern进行解析，得到基本的元素组件
+     *
+     */
+    void init();
+    /**
+     * @brief 以pattern格式直接返回一个log描述
+     *
+     * @param logger 日志器
+     * @param level 日志等级
+     * @param event 日志事件
+     */
     std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
                        LogEvent::ptr event);
+    /**
+     * @brief 以pattern格式格式化事件，并直接输出到流
+     *
+     * @param logger 日志器
+     * @param level 日志等级
+     * @param event 日志事件
+     */
     std::ostream &format(std::ostream &os, std::shared_ptr<Logger> logger,
                          LogLevel::Level level, LogEvent::ptr event);
 

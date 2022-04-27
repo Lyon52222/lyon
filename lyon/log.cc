@@ -122,6 +122,13 @@ class FiberIdFormatItem : public LogFormatter::FormatItem {
     }
 };
 
+LogEvent::LogEvent(const char *file, int32_t line, uint32_t threadId,
+                   std::string &threadName, uint32_t fiberId, uint64_t time,
+                   uint32_t elapse, std::string &content, LogLevel::Level level)
+    : m_file(file), m_line(line), m_threadId(threadId),
+      m_threadName(threadName), m_fiberId(fiberId), m_time(time),
+      m_elapse(elapse), m_content(content), m_level(level) {}
+
 Logger::Logger(const std::string &name) : m_name(name) {}
 
 void Logger::addAppender(LogAppender::ptr appender) {
