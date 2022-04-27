@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdint.h>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 namespace lyon {
@@ -71,7 +72,9 @@ class LogFormatter {
     typedef std::shared_ptr<LogFormatter> ptr;
 
     LogFormatter(const std::string &pattern);
+    //初始化函数，对m_pattern进行解析，得到基本的元素组件。
     void init();
+    void setPattern(std::string pattern);
     std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
                        LogEvent::ptr event);
     std::ostream &format(std::ostream &os, std::shared_ptr<Logger> logger,
@@ -80,7 +83,7 @@ class LogFormatter {
     class FormatItem {
       public:
         typedef std::shared_ptr<FormatItem> ptr;
-        virtual ~FormatItem();
+        virtual ~FormatItem(){};
         virtual void format(std::ostream &os, std::shared_ptr<Logger> logger,
                             LogLevel::Level level, LogEvent::ptr event) = 0;
     };

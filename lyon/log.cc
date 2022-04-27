@@ -1,9 +1,18 @@
 #include "log.h"
-#include <cctype>
-#include <functional>
-#include <memory>
 
 namespace lyon {
+
+class StringFormatItem : public LogFormatter::FormatItem {
+  public:
+    StringFormatItem(const std::string &str = "") : m_str(str) {}
+    void format(std::ostream &os, std::shared_ptr<Logger> logger,
+                LogLevel::Level level, LogEvent::ptr event) override {
+        os << m_str;
+    }
+
+  private:
+    std::string m_str;
+};
 
 class MessageFormatItem : public LogFormatter::FormatItem {
   public:
@@ -182,9 +191,13 @@ const char *LogLevel::toString(LogLevel::Level level) {
 }
 
 LogFormatter::LogFormatter(const std::string &pattern) : m_pattern(pattern) {}
+
+void LogFormatter::setPattern(std::string pattern) { m_pattern = pattern; }
+
 void LogFormatter::init() {
     std::vector<std::tuple<std::string, std::string, int>> vec;
     std::string sstr;
+    std::cout << m_pattern << std::endl;
     for (size_t i = 0; i < m_pattern.size(); i++) {
         if (m_pattern[i] != '%') {
             sstr.append(1, m_pattern[i]);
@@ -195,16 +208,19 @@ void LogFormatter::init() {
             i++;
             continue;
         }
-
-        vec.emplace_back(sstr, std::string(), 0);
+        if (!sstr.empty()) {
+            vec.emplace_back(sstr, std::string(), 0);
+            sstr.clear();
+        }
         short fmt_status = 0;
         size_t fmt_start = 0;
         size_t j = i + 1;
         std::string fmt;
+        std::cout << i << ' ' << j << std::endl;
         while (j < m_pattern.size()) {
             if (!fmt_status && !std::isalpha(m_pattern[j]) &&
                 m_pattern[j] != '{' && m_pattern[j] != '}') {
-                sstr = m_pattern.substr(i, j - i);
+                sstr = m_pattern.substr(i + 1, j - i - 1);
                 break;
             }
 
@@ -212,10 +228,17 @@ void LogFormatter::init() {
                 sstr = m_pattern.substr(i, j - i);
                 fmt_status = 1;
                 fmt_start = j + 1;
-                continue;
             } else if (fmt_status == 1 && m_pattern[j] == '}') {
                 fmt = m_pattern.substr(fmt_start, j - fmt_start);
                 fmt_status = 2;
+                j++;
+                break;
+            }
+            j++;
+            if (j == m_pattern.size()) {
+                if (sstr.empty()) {
+                    sstr = m_pattern.substr(i + 1);
+                }
             }
         }
         if (fmt_status == 0) {
@@ -235,7 +258,29 @@ void LogFormatter::init() {
     if (!sstr.empty()) {
         vec.emplace_back(sstr, std::string(), 0);
     }
-    // TODO::add to format_items
+
+    // TEST:print test
+    for (int i = 0; i < vec.size(); i++) {
+        std::cout << "key:" << std::get<0>(vec[i])
+                  << "value:" << std::get<1>(vec[i])
+                  << "type:" << std::get<2>(vec[i]) << std::endl;
+    }
+
+    for (int i = 0; i < vec.size(); i++) {
+        auto itr = format_items.find(std::get<0>(vec[i]));
+        if (itr != format_items.end()) {
+            int item_type = std::get<2>(vec[i]);
+            if (item_type == 0) {
+                m_items.push_back(
+                    FormatItem::ptr(new StringFormatItem(std::get<0>(vec[i]))));
+            } else if (item_type == 1) {
+                m_items.push_back(itr->second(""));
+            } else if (item_type == 2) {
+                m_items.push_back(itr->second(std::get<1>(vec[i])));
+            } else {
+            }
+        }
+    }
 }
 
 std::string LogFormatter::format(std::shared_ptr<Logger> logger,
@@ -265,7 +310,12 @@ std::unordered_map<std::string, std::function<LogFormatter::FormatItem::ptr(
             [](const std::string &fmt) { return FormatItem::ptr(new C(fmt)); } \
     }
 
-        XX(m, MessageFormatItem), XX(p, LevelFormatItem),
+        XX(m, MessageFormatItem),    XX(p, LevelFormatItem),
+        XX(r, ElapseFormatItem),     XX(t, ThreadIdFormatItem),
+        XX(d, DataTimeFormatItem),   XX(f, FileNameFormatItem),
+        XX(l, FileLineFormatItem),   XX(n, NewLineFomatItem),
+        XX(T, TabFomatItem),         XX(F, FiberIdFormatItem),
+        XX(N, ThreadNameFormatItem),
 #undef XX
         // {"p", [](const std::string &fmt) {
         //      return FormatItem::ptr(new LevelFormatItem(fmt));
