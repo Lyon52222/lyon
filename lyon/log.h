@@ -1,5 +1,6 @@
 #ifndef __LYON_LOG_H__
 #define __LYON_LOG_H__
+#include "singleton.h"
 #include "util.h"
 #include <ctime>
 #include <fstream>
@@ -16,10 +17,9 @@
 // TODO:add getThreadName
 #define LYON_LOG_LEVEL(logger, level)                                          \
     if (logger->getLevel() <= level)                                           \
-    lyon::LogEventWrap(                                                        \
-        lyon::LogEvent::ptr(new lyon::LogEvent(                                \
-            logger, __FILE__, __LINE__, lyon::GetThreadId(),                   \
-            lyon::GetThreadName(), lyon::GetFiberId(), time(0), 0, level)))    \
+    lyon::LogEventWrap(lyon::LogEvent::ptr(new lyon::LogEvent(                 \
+                           logger, __FILE__, __LINE__, lyon::GetThreadId(),    \
+                           lyon::GetFiberId(), time(0), 0, level)))            \
         .getSS()
 
 #define LYON_LOG_DEBUG(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::DEBUG)
@@ -37,6 +37,7 @@ class LogLevel {
     enum Level { UNKNOWN = 0, DEBUG, INFO, WARN, ERROR, FATAL };
 
     static const char *toString(LogLevel::Level level);
+    LogLevel::Level fromString(const std::string &level);
 };
 
 /**
@@ -46,8 +47,8 @@ class LogEvent {
   public:
     typedef std::shared_ptr<LogEvent> ptr;
     LogEvent(std::shared_ptr<Logger> logger, const char *file, int32_t line,
-             uint32_t threadId, const std::string &threadName, uint32_t fiberId,
-             uint64_t time, uint32_t elapse, LogLevel::Level level);
+             uint32_t threadId, uint32_t fiberId, uint64_t time,
+             uint32_t elapse, LogLevel::Level level);
 
     const char *getFile() const { return m_file; };
     int32_t getLine() const { return m_line; };
@@ -108,6 +109,10 @@ class LogEventWrap {
  * %T 制表符
  * %F 协程ID
  * %N 线程名
+ * %c 日志名称
+ * 默认formatter'pattern = "%d{%Y-%m-%d
+ %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n";
+
  */
 class LogFormatter {
   public:
@@ -167,12 +172,17 @@ class LogAppender {
     virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
                      LogEvent::ptr event) = 0;
 
-    void setFormatter(LogFormatter::ptr val) { m_formatter = val; };
-    LogFormatter::ptr getFormatter() { return m_formatter; };
+    void setFormatter(LogFormatter::ptr val) {
+        m_formatter = val;
+        m_has_formattern = true;
+    };
+    LogFormatter::ptr getFormatter() const { return m_formatter; };
+    bool hasFormatter() const { return m_has_formattern; };
 
   protected:
     LogLevel::Level m_level;
     LogFormatter::ptr m_formatter;
+    bool m_has_formattern = false;
 };
 //输出到控制台的Appender
 class StdoutLogAppender : public LogAppender {
@@ -203,6 +213,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
     typedef std::shared_ptr<Logger> ptr;
     Logger(const std::string &name = "root");
 
+    void setDefaultFormatter(LogFormatter::ptr formatter);
     void addAppender(LogAppender::ptr appender);
     void delAppender(LogAppender::ptr appender);
 
@@ -215,13 +226,35 @@ class Logger : public std::enable_shared_from_this<Logger> {
     void fatal(LogEvent::ptr event);
 
     LogLevel::Level getLevel() const { return m_level; };
+    const std::string &getName() const { return m_name; };
     void setLevel(LogLevel::Level val) { m_level = val; };
 
   private:
     std::string m_name;
     LogLevel::Level m_level; //满足该级别的日志才会被输出
+    /**
+     * @m_formatter
+     * 默认的formatter，如果添加的终端没有设置formatter就为其添加默认的formatter
+     */
+    LogFormatter::ptr m_formatter;
+    /**
+     * @m_appenders 输出终端列表
+     */
     std::list<LogAppender::ptr> m_appenders;
 };
+
+class LoggerManager {
+  public:
+    std::shared_ptr<LoggerManager> ptr;
+    Logger::ptr getLogger(const std::string &name);
+    Logger::ptr getRoot();
+
+  private:
+    std::unordered_map<std::string, Logger::ptr> m_loggers;
+    Logger::ptr m_root_logger;
+};
+
+typedef Singleton<LoggerManager> loggerMgr;
 
 } // namespace lyon
 

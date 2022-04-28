@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 3.23.1)
+project(lyon)
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -O3 -g -std=c++11")
+
+set(
+  LIB_SRC
+  lyon/log.cc
+  lyon/util.cc
+)
+
+add_library(lyon SHARED ${LIB_SRC})
+add_executable(test tests/test_log.cc)
+add_dependencies(test lyon)
+target_link_libraries(test lyon)
+
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)

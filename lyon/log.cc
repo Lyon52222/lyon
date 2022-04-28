@@ -123,21 +123,39 @@ class FiberIdFormatItem : public LogFormatter::FormatItem {
     }
 };
 
+class LoggerNameFormatItem : public LogFormatter::FormatItem {
+  public:
+    LoggerNameFormatItem(const std::string &str = "") {}
+    void format(std::ostream &os, std::shared_ptr<Logger> logger,
+                LogLevel::Level level, LogEvent::ptr event) override {
+        os << event->getLogger()->getName();
+    }
+};
+
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, const char *file,
-                   int32_t line, uint32_t threadId,
-                   const std::string &threadName, uint32_t fiberId,
+                   int32_t line, uint32_t threadId, uint32_t fiberId,
                    uint64_t time, uint32_t elapse, LogLevel::Level level)
     : m_logger(logger), m_file(file), m_line(line), m_threadId(threadId),
-      m_threadName(threadName), m_fiberId(fiberId), m_time(time),
-      m_elapse(elapse), m_level(level) {}
+      m_fiberId(fiberId), m_time(time), m_elapse(elapse), m_level(level) {}
 
 LogEventWrap::~LogEventWrap() {
     m_event->getLogger()->log(m_event->getLevel(), m_event);
 }
 
-Logger::Logger(const std::string &name) : m_name(name) {}
+void Logger::setDefaultFormatter(LogFormatter::ptr formatter) {
+    m_formatter = formatter;
+}
+
+Logger::Logger(const std::string &name)
+    : m_name(name), m_level(LogLevel::DEBUG) {
+    m_formatter.reset(new LogFormatter(
+        "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
+}
 
 void Logger::addAppender(LogAppender::ptr appender) {
+    if (!appender->hasFormatter()) {
+        appender->setFormatter(m_formatter);
+    }
     m_appenders.push_back(appender);
 }
 
@@ -201,6 +219,20 @@ const char *LogLevel::toString(LogLevel::Level level) {
         return "UNKNOWN";
     }
     return "UNKNOWN";
+}
+
+LogLevel::Level LogLevel::fromString(const std::string &level) {
+#define XX(name)                                                               \
+    if (level == #name)                                                        \
+        return LogLevel::name;
+    XX(UNKNOWN)
+    XX(DEBUG)
+    XX(INFO)
+    XX(WARN)
+    XX(ERROR)
+    XX(FATAL)
+#undef XX
+    return LogLevel::UNKNOWN;
 }
 
 LogFormatter::LogFormatter(const std::string &pattern) : m_pattern(pattern) {
@@ -275,13 +307,6 @@ void LogFormatter::parsePattern() {
         vec.emplace_back(sstr, std::string(), 0);
     }
 
-    // TEST:print test
-    for (int i = 0; i < vec.size(); i++) {
-        std::cout << "key:" << std::get<0>(vec[i])
-                  << "value:" << std::get<1>(vec[i])
-                  << "type:" << std::get<2>(vec[i]) << std::endl;
-    }
-
     for (int i = 0; i < vec.size(); i++) {
         int item_type = std::get<2>(vec[i]);
         if (item_type == 0) {
@@ -333,11 +358,29 @@ std::unordered_map<std::string, std::function<LogFormatter::FormatItem::ptr(
         XX(d, DataTimeFormatItem),   XX(f, FileNameFormatItem),
         XX(l, FileLineFormatItem),   XX(n, NewLineFomatItem),
         XX(T, TabFomatItem),         XX(F, FiberIdFormatItem),
-        XX(N, ThreadNameFormatItem),
+        XX(N, ThreadNameFormatItem), XX(r, LoggerNameFormatItem),
+
 #undef XX
         // {"p", [](const std::string &fmt) {
         //      return FormatItem::ptr(new LevelFormatItem(fmt));
         //  }}
 };
+
+Logger::ptr LoggerManager::getLogger(const std::string &name) {
+    auto item = m_loggers.find(name);
+    if (item == m_loggers.end()) {
+        auto logger = Logger::ptr(new Logger(name));
+        m_loggers[name] = logger;
+        return logger;
+    } else {
+        return item->second;
+    }
+}
+Logger::ptr LoggerManager::getRoot() {
+    if (!m_root_logger) {
+        m_root_logger.reset(new Logger());
+    }
+    return m_root_logger;
+}
 
 } // namespace lyon
