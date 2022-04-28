@@ -1,4 +1,5 @@
 #include "log.h"
+#include <memory>
 
 namespace lyon {
 
@@ -82,7 +83,7 @@ class ThreadIdFormatItem : public LogFormatter::FormatItem {
     ThreadIdFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
-        os << event->getThreaId();
+        os << event->getThreadId();
     }
 };
 
@@ -91,7 +92,7 @@ class ThreadNameFormatItem : public LogFormatter::FormatItem {
     ThreadNameFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
-        os << event->getThreaName();
+        os << event->getThreadName();
     }
 };
 
@@ -122,12 +123,17 @@ class FiberIdFormatItem : public LogFormatter::FormatItem {
     }
 };
 
-LogEvent::LogEvent(const char *file, int32_t line, uint32_t threadId,
-                   std::string &threadName, uint32_t fiberId, uint64_t time,
-                   uint32_t elapse, std::string &content, LogLevel::Level level)
-    : m_file(file), m_line(line), m_threadId(threadId),
+LogEvent::LogEvent(std::shared_ptr<Logger> logger, const char *file,
+                   int32_t line, uint32_t threadId,
+                   const std::string &threadName, uint32_t fiberId,
+                   uint64_t time, uint32_t elapse, LogLevel::Level level)
+    : m_logger(logger), m_file(file), m_line(line), m_threadId(threadId),
       m_threadName(threadName), m_fiberId(fiberId), m_time(time),
-      m_elapse(elapse), m_content(content), m_level(level) {}
+      m_elapse(elapse), m_level(level) {}
+
+LogEventWrap::~LogEventWrap() {
+    m_event->getLogger()->log(m_event->getLevel(), m_event);
+}
 
 Logger::Logger(const std::string &name) : m_name(name) {}
 

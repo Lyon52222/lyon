@@ -1,5 +1,6 @@
 #ifndef __LYON_LOG_H__
 #define __LYON_LOG_H__
+#include "util.h"
 #include <ctime>
 #include <fstream>
 #include <iostream>
@@ -11,6 +12,22 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
+// TODO:add getThreadName
+#define LYON_LOG_LEVEL(logger, level)                                          \
+    if (logger->getLevel() <= level)                                           \
+    lyon::LogEventWrap(                                                        \
+        lyon::LogEvent::ptr(new lyon::LogEvent(                                \
+            logger, __FILE__, __LINE__, lyon::GetThreadId(),                   \
+            lyon::GetThreadName(), lyon::GetFiberId(), time(0), 0, level)))    \
+        .getSS()
+
+#define LYON_LOG_DEBUG(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::DEBUG)
+#define LYON_LOG_INFO(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::INFO)
+#define LYON_LOG_WARN(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::WARN)
+#define LYON_LOG_ERROR(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::ERROR)
+#define LYON_LOG_FATAL(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::FATAL)
+
 namespace lyon {
 
 class Logger;
@@ -22,21 +39,25 @@ class LogLevel {
     static const char *toString(LogLevel::Level level);
 };
 
+/**
+ * @brief Log事件类，这个类主要对一个log事件进行封装。
+ */
 class LogEvent {
   public:
     typedef std::shared_ptr<LogEvent> ptr;
-    LogEvent(const char *file, int32_t line, uint32_t threadId,
-             std::string &threadName, uint32_t fiberId, uint64_t time,
-             uint32_t elapse, std::string &content, LogLevel::Level level);
+    LogEvent(std::shared_ptr<Logger> logger, const char *file, int32_t line,
+             uint32_t threadId, const std::string &threadName, uint32_t fiberId,
+             uint64_t time, uint32_t elapse, LogLevel::Level level);
 
     const char *getFile() const { return m_file; };
     int32_t getLine() const { return m_line; };
-    uint32_t getThreaId() const { return m_threadId; };
-    std::string getThreaName() const { return m_threadName; };
+    uint32_t getThreadId() const { return m_threadId; };
+    std::string getThreadName() const { return m_threadName; };
     uint32_t getFiberId() const { return m_fiberId; };
     uint64_t getTime() const { return m_time; };
     uint32_t getElapse() const { return m_elapse; };
-    std::string getContent() const { return m_content; };
+    std::string getContent() const { return m_ss.str(); };
+    std::stringstream &getSS() { return m_ss; };
     std::shared_ptr<Logger> getLogger() const { return m_logger; };
     const LogLevel::Level getLevel() const { return m_level; };
 
@@ -48,10 +69,30 @@ class LogEvent {
     uint32_t m_fiberId = 0;       //协程ID
     uint64_t m_time = 0;          //时间戳
     uint32_t m_elapse = 0;
-    std::string m_content;
+    // std::string m_content;
+    /**
+     * @m_ss 这里使用stringstream 来代替string这样可以将信息保存到流中。
+     */
+    std::stringstream m_ss;
 
     std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
+};
+
+class LogEventWrap {
+  public:
+    LogEventWrap(LogEvent::ptr event) : m_event(event){};
+    /**
+     * @brief
+     * 在析构时调用event对应的logger对暂存在stringstream中的content进行统一的输出
+     *
+     */
+    ~LogEventWrap();
+
+    std::stringstream &getSS() { return m_event->getSS(); };
+
+  private:
+    LogEvent::ptr m_event;
 };
 
 //日志格式化
@@ -115,7 +156,9 @@ class LogFormatter {
         format_items;
 };
 
-//日志输出地
+/**
+ * @brief 日志的输出终端，在这里将stdout流或者fstream流传递给对应的formatter。
+ */
 class LogAppender {
   public:
     typedef std::shared_ptr<LogAppender> ptr;
