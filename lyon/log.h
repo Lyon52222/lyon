@@ -28,6 +28,10 @@
 #define LYON_LOG_ERROR(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::ERROR)
 #define LYON_LOG_FATAL(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::FATAL)
 
+#define LYON_LOG_GET_ROOT() lyon::LoggerMgr::getInstance()->getRoot()
+#define LYON_LOG_GET_LOGGER(name)                                              \
+    lyon::LoggerMgr::getInstance()->getLogger(name)
+
 namespace lyon {
 
 class Logger;
@@ -180,7 +184,7 @@ class LogAppender {
     bool hasFormatter() const { return m_has_formattern; };
 
   protected:
-    LogLevel::Level m_level;
+    LogLevel::Level m_level = LogLevel::DEBUG;
     LogFormatter::ptr m_formatter;
     bool m_has_formattern = false;
 };
@@ -254,7 +258,7 @@ class LoggerManager {
     Logger::ptr m_root_logger;
 };
 
-typedef Singleton<LoggerManager> loggerMgr;
+typedef Singleton<LoggerManager> LoggerMgr;
 
 } // namespace lyon
 

@@ -180,7 +180,10 @@ void Logger::warn(LogEvent::ptr event) { log(LogLevel::WARN, event); }
 void Logger::error(LogEvent::ptr event) { log(LogLevel::ERROR, event); }
 void Logger::fatal(LogEvent::ptr event) { log(LogLevel::FATAL, event); }
 
-FileLogAppender::FileLogAppender(const std::string &name) : m_fname(name) {}
+FileLogAppender::FileLogAppender(const std::string &name) : m_fname(name) {
+    reopen();
+}
+
 bool FileLogAppender::reopen() {
     if (m_fstream) {
         m_fstream.close();
@@ -273,7 +276,7 @@ void LogFormatter::parsePattern() {
             }
 
             if (fmt_status == 0 && m_pattern[j] == '{') {
-                sstr = m_pattern.substr(i, j - i);
+                sstr = m_pattern.substr(i + 1, j - i - 1);
                 fmt_status = 1;
                 fmt_start = j + 1;
             } else if (fmt_status == 1 && m_pattern[j] == '}') {
@@ -302,6 +305,12 @@ void LogFormatter::parsePattern() {
         }
         i = j - 1;
     }
+
+    // for (auto &i : vec) {
+    //     std::cout << "key: " << std::get<0>(i) << "\t value: " <<
+    //     std::get<1>(i)
+    //               << "\t type: " << std::get<2>(i) << std::endl;
+    // }
 
     if (!sstr.empty()) {
         vec.emplace_back(sstr, std::string(), 0);
@@ -379,6 +388,8 @@ Logger::ptr LoggerManager::getLogger(const std::string &name) {
 Logger::ptr LoggerManager::getRoot() {
     if (!m_root_logger) {
         m_root_logger.reset(new Logger());
+        m_root_logger->addAppender(LogAppender::ptr(new StdoutLogAppender()));
+        m_loggers[m_root_logger->getName()] = m_root_logger;
     }
     return m_root_logger;
 }

@@ -8,6 +8,7 @@ pid_t GetThreadId();
 
 uint32_t GetFiberId();
 
+bool IsConfigNameAvilable(const std::string &name);
 } // namespace lyon
 
 #endif // !__LYON_UTIL_H__

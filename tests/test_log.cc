@@ -1,8 +1,8 @@
 #include "lyon/log.h"
 #include <memory>
 int main(int argc, char *argv[]) {
-    std::shared_ptr<lyon::Logger> logger(new lyon::Logger());
 
+    lyon::Logger::ptr logger = LYON_LOG_GET_ROOT();
     std::shared_ptr<lyon::LogAppender> stdo(new lyon::StdoutLogAppender());
     logger->addAppender(stdo);
 
