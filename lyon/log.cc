@@ -367,7 +367,7 @@ std::unordered_map<std::string, std::function<LogFormatter::FormatItem::ptr(
         XX(d, DataTimeFormatItem),   XX(f, FileNameFormatItem),
         XX(l, FileLineFormatItem),   XX(n, NewLineFomatItem),
         XX(T, TabFomatItem),         XX(F, FiberIdFormatItem),
-        XX(N, ThreadNameFormatItem), XX(r, LoggerNameFormatItem),
+        XX(N, ThreadNameFormatItem), XX(c, LoggerNameFormatItem),
 
 #undef XX
         // {"p", [](const std::string &fmt) {

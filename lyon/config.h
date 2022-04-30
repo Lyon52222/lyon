@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <util.h>
+#include <yaml-cpp/yaml.h>
 namespace lyon {
 /**
  * @brief 配置项基类，包含配置名，和配置描述
@@ -75,20 +76,15 @@ class Config {
                                              const T &default_value,
                                              const std::string &description) {
 
+        if (!checkName(name)) {
+            // throw std::invalid_argument(name);
+            return nullptr;
+        }
         auto tmp = Lookup<T>(name);
         if (tmp) {
             LYON_LOG_INFO(LYON_LOG_GET_ROOT())
                 << "Config: " << name << " is exists";
             return tmp;
-        }
-
-        if (!IsConfigNameAvilable(name)) {
-            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-                << "Name : " << name
-                << " is not avilable : Config name should be start with "
-                   "[a-zA-Z0-9_]";
-
-            throw std::invalid_argument(name);
         }
 
         typename ConfigVar<T>::ptr v(
@@ -106,7 +102,23 @@ class Config {
         return std::dynamic_pointer_cast<ConfigVar<T>>(itr->second);
     }
 
+    static void LoadFromConfigFile(const std::string &path);
+
+    static void LoadFromYaml(const YAML::Node &root);
+
   private:
+    static bool checkName(const std::string &name) {
+
+        if (!IsConfigNameAvilable(name)) {
+            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+                << "Name : " << name
+                << " is not avilable : Config name should be start with "
+                   "[a-zA-Z0-9_]";
+
+            return false;
+        }
+        return true;
+    }
     static ConfigVarMap m_configs;
 };
 
