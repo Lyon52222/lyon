@@ -4,8 +4,6 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <yaml-cpp/node/node.h>
-#include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
 
 const std::string YAMLType[5] = {"Undefined", "Null", "Scalar", "Sequence",
@@ -38,8 +36,19 @@ void printYAML(const YAML::Node &node, int level) {
 }
 
 int main() {
+    lyon::Config::Lookup<std::string>("ip", "127.0.0.1", "ipv4_addr");
+
+    std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
+              << std::endl;
+    std::cout << "------------------------------" << std::endl;
     YAML::Node root =
         YAML::LoadFile("/Users/admin/Code/C++/lyon/bin/conf/log.yml");
     printYAML(root, 0);
+    std::cout << "------------------------------" << std::endl;
+
+    lyon::Config::LoadFromConfigFile(
+        "/Users/admin/Code/C++/lyon/bin/conf/log.yml");
+    std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
+              << std::endl;
     return 0;
 }

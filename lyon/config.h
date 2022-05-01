@@ -76,7 +76,7 @@ class Config {
                                              const T &default_value,
                                              const std::string &description) {
 
-        if (!checkName(name)) {
+        if (!CheckName(name)) {
             // throw std::invalid_argument(name);
             return nullptr;
         }
@@ -89,25 +89,24 @@ class Config {
 
         typename ConfigVar<T>::ptr v(
             new ConfigVar<T>(name, default_value, description));
-        m_configs[name] = v;
+        GetConfigs()[name] = v;
         return v;
     }
 
     template <class T>
     static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
-        auto itr = m_configs.find(name);
-        if (itr == m_configs.end()) {
+        auto itr = GetConfigs().find(name);
+        if (itr == GetConfigs().end()) {
             return nullptr;
         }
         return std::dynamic_pointer_cast<ConfigVar<T>>(itr->second);
     }
 
-    static void LoadFromConfigFile(const std::string &path);
-
     static void LoadFromYaml(const YAML::Node &root);
 
-  private:
-    static bool checkName(const std::string &name) {
+    static void LoadFromConfigFile(const std::string &path);
+
+    static bool CheckName(const std::string &name) {
 
         if (!IsConfigNameAvilable(name)) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
@@ -119,7 +118,20 @@ class Config {
         }
         return true;
     }
-    static ConfigVarMap m_configs;
+
+    // static ConfigVarMap m_configs;
+    // 因为类的静态成员变量需要在类的外部进行初始化。
+    /**
+     * @brief 返回配置项
+     *
+     * @return 配置项
+     */
+    static ConfigVarMap &GetConfigs() {
+        static ConfigVarMap m_configs;
+        return m_configs;
+    }
+
+  private:
 };
 
 } // namespace lyon

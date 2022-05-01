@@ -13,6 +13,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <yaml-cpp/yaml.h>
 
 // TODO:add getThreadName
 #define LYON_LOG_LEVEL(logger, level)                                          \
@@ -67,6 +68,7 @@ class LogEvent {
     const LogLevel::Level getLevel() const { return m_level; };
 
   private:
+    std::shared_ptr<Logger> m_logger;
     const char *m_file = nullptr; //文件名
     int32_t m_line = 0;           //行号
     uint32_t m_threadId = 0;      //线程ID
@@ -80,7 +82,6 @@ class LogEvent {
      */
     std::stringstream m_ss;
 
-    std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
 };
 

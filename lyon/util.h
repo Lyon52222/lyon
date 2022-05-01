@@ -8,7 +8,10 @@ pid_t GetThreadId();
 
 uint32_t GetFiberId();
 
-bool IsConfigNameAvilable(const std::string &name);
+inline bool IsConfigNameAvilable(const std::string &name) {
+    return name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ"
+                                  "RSTUVWXYZ_0123456789") == std::string::npos;
+}
 } // namespace lyon
 
 #endif // !__LYON_UTIL_H__
