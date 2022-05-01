@@ -36,7 +36,7 @@ void printYAML(const YAML::Node &node, int level) {
 }
 
 int main() {
-    lyon::Config::AddConfig<std::string>("ip", "127.0.0.1", "ipv4_addr");
+    lyon::Config::SetConfig<std::string>("ip", "127.0.0.1", "ipv4_addr");
 
     std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
               << std::endl;
@@ -53,5 +53,8 @@ int main() {
     std::cout << lyon::Config::Lookup<std::string>("author.name")->toString()
               << std::endl;
 
+    lyon::Config::SetConfig("port", std::vector<int>{8080, 8081}, "open port");
+    std::cout << lyon::Config::Lookup<std::vector<int>>("port")->toString()
+              << std::endl;
     return 0;
 }

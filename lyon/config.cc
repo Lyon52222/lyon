@@ -55,23 +55,23 @@ void Config::LoadFromYaml(const YAML::Node &root) {
         } else {
             auto &val = number.second;
             if (val.IsScalar()) {
-                AddConfig(key, val.Scalar(), key);
+                SetConfig(key, val.Scalar(), key);
             } else {
                 std::stringstream ss;
                 ss << val;
 
-                AddConfig(key, ss.str(), key);
+                SetConfig(key, ss.str(), key);
             }
         }
     }
 }
 
 void Config::LoadFromConfigFile(const std::string &path) {
-    YAML::Node root = YAML::LoadFile(path);
-    LoadFromYaml(root);
     try {
+        YAML::Node root = YAML::LoadFile(path);
         LYON_LOG_INFO(LYON_LOG_GET_ROOT())
             << "LoadConfig: " << path << "Success!";
+        LoadFromYaml(root);
     } catch (...) {
         LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
             << "LoadConfig: " << path << "Failed!";

@@ -32,11 +32,43 @@ class ConfigVarBase {
 };
 
 /**
+ * @brief 两种类型的转换
+ *
+ * @tparam T 原本类型
+ * @tparam V 目标类型
+ */
+template <class V, class T> class LexicalCast {
+  public:
+    V operator()(const T &t) { return boost::lexical_cast<V>(t); };
+};
+
+template <class T> class LexicalCast<std::vector<T>, std::string> {
+  public:
+    std::vector<T> operator()(const std::string &t) {
+        std::vector<T> v;
+        return v;
+    }
+};
+
+// TODO:add stl container convert
+template <class T> class LexicalCast<std::string, std::vector<T>> {
+  public:
+    std::string operator()(const std::vector<T> &t) { std::stringstream ss; }
+};
+
+// template <class V> class LexicalCast<V, std::string> {
+//   public:
+//     V operator()(const std::string &t) {}
+// };
+
+/**
  * @brief 配置项模版类，增加了配置值（模版值）
  *
  * @tparam T 配置项值的类型
  */
-template <class T> class ConfigVar : public ConfigVarBase {
+template <class T, class FromStr = LexicalCast<T, std::string>,
+          class ToStr = LexicalCast<std::string, T>>
+class ConfigVar : public ConfigVarBase {
   public:
     typedef std::shared_ptr<ConfigVar> ptr;
     ConfigVar(const std::string &name, const T &default_value,
@@ -44,7 +76,8 @@ template <class T> class ConfigVar : public ConfigVarBase {
         : ConfigVarBase(name, description), m_val(default_value) {}
     std::string toString() override {
         try {
-            return boost::lexical_cast<std::string>(m_val);
+            // return boost::lexical_cast<std::string>(m_val);
+            return ToStr()(m_val);
         } catch (std::exception &e) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
                 << "ConfigVar::toString exception" << e.what()
@@ -55,7 +88,8 @@ template <class T> class ConfigVar : public ConfigVarBase {
 
     bool fromString(const std::string &str) override {
         try {
-            m_val = boost ::lexical_cast<T>(str);
+            // m_val = boost ::lexical_cast<T>(str);
+            m_val = FromStr()(str);
             return true;
         } catch (std::exception &e) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
@@ -77,7 +111,7 @@ class Config {
 
     template <class T>
     static typename ConfigVar<T>::ptr
-    AddConfig(const std::string &name, const T &default_value,
+    SetConfig(const std::string &name, const T &default_value,
               const std::string &description) {
 
         if (!CheckName(name)) {
