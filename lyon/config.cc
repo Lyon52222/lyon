@@ -12,8 +12,11 @@ ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
     if (!Config::CheckName(prefix)) {
         return;
     }
-
-    numbers.emplace_back(prefix, node);
+    // NOTE: 这里只处理了常量类型。
+    if (node.IsScalar()) {
+        // std::cout << prefix << " : " << node << std::endl;
+        numbers.emplace_back(prefix, node);
+    }
     if (node.IsMap()) {
         for (auto itr = node.begin(); itr != node.end(); itr++) {
             ListAllYamlNumbers(prefix.empty()
@@ -21,14 +24,17 @@ ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
                                    : prefix + "." + itr->first.Scalar(),
                                itr->second, numbers);
         }
+    } else if (node.IsSequence()) {
+        for (size_t i = 0; i < node.size(); i++) {
+            ListAllYamlNumbers(prefix, node[i], numbers);
+        }
     }
 }
 
 void Config::LoadFromYaml(const YAML::Node &root) {
     std::list<std::pair<std::string, YAML::Node>> numbers;
-    // ListAllYamlNumbers("", root, numbers);
+    ListAllYamlNumbers("", root, numbers);
 
-    // YAML::Node t = YAML::LoadFile("test.txt");
     for (auto &number : numbers) {
         std::string key = number.first;
         if (key.empty()) {
@@ -46,20 +52,30 @@ void Config::LoadFromYaml(const YAML::Node &root) {
                 ss << val;
                 conf->second->fromString(ss.str());
             }
+        } else {
+            auto &val = number.second;
+            if (val.IsScalar()) {
+                AddConfig(key, val.Scalar(), key);
+            } else {
+                std::stringstream ss;
+                ss << val;
+
+                AddConfig(key, ss.str(), key);
+            }
         }
     }
 }
 
 void Config::LoadFromConfigFile(const std::string &path) {
-    std::cout << path << std::endl;
-    // YAML::Node root = YAML::LoadFile(path);
-    // try {
-    //     LYON_LOG_INFO(LYON_LOG_GET_ROOT())
-    //         << "LoadConfig: " << path << "Success!";
-    // } catch (...) {
-    //     LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-    //         << "LoadConfig: " << path << "Failed!";
-    // }
+    YAML::Node root = YAML::LoadFile(path);
+    LoadFromYaml(root);
+    try {
+        LYON_LOG_INFO(LYON_LOG_GET_ROOT())
+            << "LoadConfig: " << path << "Success!";
+    } catch (...) {
+        LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+            << "LoadConfig: " << path << "Failed!";
+    }
 }
 
 } // namespace lyon

@@ -52,13 +52,17 @@ template <class T> class ConfigVar : public ConfigVarBase {
         }
         return "";
     }
+
     bool fromString(const std::string &str) override {
         try {
             m_val = boost ::lexical_cast<T>(str);
+            return true;
         } catch (std::exception &e) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
                 << "ConfigVar::fromString exception" << e.what()
                 << "convert: string to " << typeid(m_val).name();
+
+            return false;
         }
     }
 
@@ -72,9 +76,9 @@ class Config {
     typedef std::unordered_map<std::string, ConfigVarBase::ptr> ConfigVarMap;
 
     template <class T>
-    static typename ConfigVar<T>::ptr Lookup(const std::string &name,
-                                             const T &default_value,
-                                             const std::string &description) {
+    static typename ConfigVar<T>::ptr
+    AddConfig(const std::string &name, const T &default_value,
+              const std::string &description) {
 
         if (!CheckName(name)) {
             // throw std::invalid_argument(name);
@@ -97,6 +101,8 @@ class Config {
     static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
         auto itr = GetConfigs().find(name);
         if (itr == GetConfigs().end()) {
+            LYON_LOG_INFO(LYON_LOG_GET_ROOT())
+                << "Config: " << name << " is not exists";
             return nullptr;
         }
         return std::dynamic_pointer_cast<ConfigVar<T>>(itr->second);
@@ -111,7 +117,7 @@ class Config {
         if (!IsConfigNameAvilable(name)) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
                 << "Name : " << name
-                << " is not avilable : Config name should be start with "
+                << " is not avilable : Config name should be named with "
                    "[a-zA-Z0-9_]";
 
             return false;

@@ -36,7 +36,7 @@ void printYAML(const YAML::Node &node, int level) {
 }
 
 int main() {
-    lyon::Config::Lookup<std::string>("ip", "127.0.0.1", "ipv4_addr");
+    lyon::Config::AddConfig<std::string>("ip", "127.0.0.1", "ipv4_addr");
 
     std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
               << std::endl;
@@ -50,5 +50,8 @@ int main() {
         "/Users/admin/Code/C++/lyon/bin/conf/log.yml");
     std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
               << std::endl;
+    std::cout << lyon::Config::Lookup<std::string>("author.name")->toString()
+              << std::endl;
+
     return 0;
 }

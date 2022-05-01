@@ -18,11 +18,12 @@ set(
 
 
 add_library(lyon SHARED ${LIB_SRC})
+target_link_libraries(lyon PRIVATE yaml-cpp)
 
 set(
   LIBS
   lyon
-  yaml-cpp
+  # yaml-cpp
 )
 
 # add_executable(test_log tests/test_log.cc)
