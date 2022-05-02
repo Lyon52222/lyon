@@ -2,14 +2,121 @@
 #define __LYON_CONFIG_H__
 
 #include "log.h"
+#include "util.h"
 #include <boost/lexical_cast.hpp>
+#include <cstdint>
 #include <exception>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
-#include <util.h>
+#include <yaml-cpp/node/parse.h>
+#include <yaml-cpp/node/type.h>
 #include <yaml-cpp/yaml.h>
 namespace lyon {
+
+/**
+ * @brief 两种类型的转换
+ *
+ * @tparam F 原本类型
+ * @tparam T 目标类型
+ */
+template <class F, class T> class LexicalCast {
+  public:
+    T operator()(const F &f) { return boost::lexical_cast<T>(f); };
+};
+
+/**
+ * @brief 将由T类型构成的vector转化为string。  使用YAML::Load来完成中间的转化
+ *
+ * @tparam T vector类型
+ */
+template <class T> class LexicalCast<std::vector<T>, std::string> {
+  public:
+    std::string operator()(const std::vector<T> &v) {
+        YAML::Node node(YAML::NodeType::Sequence);
+        for (auto &i : v) {
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(i)));
+        }
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+/**
+ * @brief 将string转化为由T类型构成的vector。 使用YAML::Load来完成中间的转化
+ *
+ * @tparam T vector类型
+ */
+template <class T> class LexicalCast<std::string, std::vector<T>> {
+  public:
+    std::vector<T> operator()(const std::string &s) {
+        YAML::Node node = YAML::Load(s);
+        typename std::vector<T> vec;
+        for (size_t i = 0; i < node.size(); i++) {
+            std::stringstream ss;
+            ss << node[i];
+            vec.push_back(LexicalCast<std::string, T>()(ss.str()));
+        }
+        return vec;
+    }
+};
+
+template <class T> class LexicalCast<std::list<T>, std::string> {
+  public:
+    std::string operator()(const std::list<T> &l) {
+        YAML::Node node(YAML::NodeType::Sequence);
+        for (auto &i : l) {
+            node.push_back(LexicalCast<T, std::string>()(i));
+        }
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template <class T> class LexicalCast<std::string, std::list<T>> {
+  public:
+    std::list<T> operator()(const std::string &s) {
+        YAML::Node node = YAML::Load(s);
+        typename std::list<T> l;
+        for (size_t i = 0; i < node.size(); i++) {
+            std::stringstream ss;
+            ss << node[i];
+            l.push_back(LexicalCast<std::string, T>()(ss.str()));
+        }
+        return l;
+    }
+};
+
+template <class T> class LexicalCast<std::map<std::string, T>, std::string> {
+  public:
+    std::string operator()(const std::map<std::string, T> &m) {
+        YAML::Node node(YAML::NodeType::Map);
+        for (auto itr = m.begin(); itr != m.end(); itr++) {
+            node.force_insert(itr->first,
+                              LexicalCast<T, std::string>()(itr->second));
+        }
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template <class T> class LexicalCast<std::string, std::map<std::string, T>> {
+  public:
+    std::map<std::string, T> operator()(const std::string &s) {
+        YAML::Node node = YAML::Load(s);
+        typename std::map<std::string, T> m;
+        for (auto itr = node.begin(); itr != m.end(); itr++) {
+            std::stringstream ss;
+            ss << itr->second;
+            m[itr->first] = LexicalCast<std::string, T>()(ss.str());
+        }
+        return m;
+    }
+};
+
 /**
  * @brief 配置项基类，包含配置名，和配置描述
  */
@@ -32,45 +139,18 @@ class ConfigVarBase {
 };
 
 /**
- * @brief 两种类型的转换
- *
- * @tparam T 原本类型
- * @tparam V 目标类型
- */
-template <class V, class T> class LexicalCast {
-  public:
-    V operator()(const T &t) { return boost::lexical_cast<V>(t); };
-};
-
-template <class T> class LexicalCast<std::vector<T>, std::string> {
-  public:
-    std::vector<T> operator()(const std::string &t) {
-        std::vector<T> v;
-        return v;
-    }
-};
-
-// TODO:add stl container convert
-template <class T> class LexicalCast<std::string, std::vector<T>> {
-  public:
-    std::string operator()(const std::vector<T> &t) { std::stringstream ss; }
-};
-
-// template <class V> class LexicalCast<V, std::string> {
-//   public:
-//     V operator()(const std::string &t) {}
-// };
-
-/**
  * @brief 配置项模版类，增加了配置值（模版值）
  *
  * @tparam T 配置项值的类型
  */
-template <class T, class FromStr = LexicalCast<T, std::string>,
-          class ToStr = LexicalCast<std::string, T>>
+template <class T, class FromStr = LexicalCast<std::string, T>,
+          class ToStr = LexicalCast<T, std::string>>
 class ConfigVar : public ConfigVarBase {
   public:
     typedef std::shared_ptr<ConfigVar> ptr;
+    typedef std::function<void(const T &old_val, const T &new_val)>
+        on_change_cb;
+
     ConfigVar(const std::string &name, const T &default_value,
               const std::string &description = "")
         : ConfigVarBase(name, description), m_val(default_value) {}
@@ -89,7 +169,7 @@ class ConfigVar : public ConfigVarBase {
     bool fromString(const std::string &str) override {
         try {
             // m_val = boost ::lexical_cast<T>(str);
-            m_val = FromStr()(str);
+            setVal(FromStr()(str));
             return true;
         } catch (std::exception &e) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
@@ -100,8 +180,41 @@ class ConfigVar : public ConfigVarBase {
         }
     }
 
+    const T &getVal() { return m_val; }
+
+    void setVal(const T &val) {
+        if (val != m_val) {
+            onChange(m_val, val);
+            m_val = val;
+        }
+    }
+
+    uint32_t addOnChange(const on_change_cb cb) {
+        static uint32_t cb_id = 0;
+        m_cbs[cb_id++] = cb;
+        return cb_id - 1;
+    }
+
+    bool delOnChange(uint32_t cb_id) {
+        if (m_cbs.find(cb_id) == m_cbs.end()) {
+            return false;
+        } else {
+            m_cbs.erase(cb_id);
+            return true;
+        }
+    }
+
+    void clearOnChange() { m_cbs.clear(); }
+
   private:
     T m_val;
+    std::map<uint32_t, on_change_cb> m_cbs;
+
+    void onChange(const T &old_val, const T &new_val) {
+        for (auto itr = m_cbs.begin(); itr != m_cbs.end(); itr++) {
+            itr->second(old_val, new_val);
+        }
+    }
 };
 
 class Config {

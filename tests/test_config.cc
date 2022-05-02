@@ -36,25 +36,34 @@ void printYAML(const YAML::Node &node, int level) {
 }
 
 int main() {
-    lyon::Config::SetConfig<std::string>("ip", "127.0.0.1", "ipv4_addr");
-
-    std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
-              << std::endl;
-    std::cout << "------------------------------" << std::endl;
     YAML::Node root =
         YAML::LoadFile("/Users/admin/Code/C++/lyon/bin/conf/log.yml");
     printYAML(root, 0);
-    std::cout << "------------------------------" << std::endl;
 
-    lyon::Config::LoadFromConfigFile(
-        "/Users/admin/Code/C++/lyon/bin/conf/log.yml");
+    std::cout << "------------------------------" << std::endl;
+    lyon::Config::SetConfig<std::string>("ip", "127.0.0.1", "ipv4_addr");
+
+    lyon::Config::Lookup<std::string>("ip")->addOnChange(
+        [](const std::string &old_val, const std::string &new_val) {
+            LYON_LOG_INFO(LYON_LOG_GET_ROOT()) << "Config ip has changed";
+        });
     std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
-              << std::endl;
-    std::cout << lyon::Config::Lookup<std::string>("author.name")->toString()
               << std::endl;
 
     lyon::Config::SetConfig("port", std::vector<int>{8080, 8081}, "open port");
     std::cout << lyon::Config::Lookup<std::vector<int>>("port")->toString()
               << std::endl;
+    std::cout << "------------------------------" << std::endl;
+
+    lyon::Config::LoadFromConfigFile(
+        "/Users/admin/Code/C++/lyon/bin/conf/log.yml");
+
+    std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
+              << std::endl;
+    std::cout << lyon::Config::Lookup<std::vector<int>>("port")->toString()
+              << std::endl;
+    std::cout << lyon::Config::Lookup<std::string>("author.name")->toString()
+              << std::endl;
+
     return 0;
 }

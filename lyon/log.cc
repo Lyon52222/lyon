@@ -1,5 +1,8 @@
 #include "log.h"
+#include "config.h"
 #include <memory>
+#include <sstream>
+#include <yaml-cpp/node/parse.h>
 
 namespace lyon {
 
@@ -133,7 +136,7 @@ class LoggerNameFormatItem : public LogFormatter::FormatItem {
 };
 
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, const char *file,
-                   int32_t line, uint32_t threadId, uint32_t fiberId,
+                   int32_t line, uint64_t threadId, uint32_t fiberId,
                    uint64_t time, uint32_t elapse, LogLevel::Level level)
     : m_logger(logger), m_file(file), m_line(line), m_threadId(threadId),
       m_fiberId(fiberId), m_time(time), m_elapse(elapse), m_level(level) {}
@@ -179,6 +182,17 @@ void Logger::info(LogEvent::ptr event) { log(LogLevel::INFO, event); }
 void Logger::warn(LogEvent::ptr event) { log(LogLevel::WARN, event); }
 void Logger::error(LogEvent::ptr event) { log(LogLevel::ERROR, event); }
 void Logger::fatal(LogEvent::ptr event) { log(LogLevel::FATAL, event); }
+
+LogAppender::LogAppenderType
+LogAppender::getTypeByString(const std::string &str) {
+    if (str == "FileLogAppender") {
+        return FILE;
+    } else if (str == "StdoutLogAppender") {
+        return STD;
+    } else {
+        return UNKNOW;
+    }
+}
 
 FileLogAppender::FileLogAppender(const std::string &name) : m_fname(name) {
     reopen();
@@ -353,8 +367,8 @@ std::ostream &LogFormatter::format(std::ostream &os,
     return os;
 }
 
-std::unordered_map<std::string, std::function<LogFormatter::FormatItem::ptr(
-                                    const std::string &str)>>
+std::map<std::string,
+         std::function<LogFormatter::FormatItem::ptr(const std::string &str)>>
     LogFormatter::format_items = {
 #define XX(str, C)                                                             \
     {                                                                          \
@@ -393,5 +407,77 @@ Logger::ptr LoggerManager::getRoot() {
     }
     return m_root_logger;
 }
+
+/**
+ * struct ConfigAppender - Config文件中appender对应的解析类
+ */
+struct ConfigAppender {
+    LogAppender::LogAppenderType type;
+    std::string file;
+    LogLevel::Level level;
+    std::string formatter;
+};
+
+/**
+ * @brief 将string转化为ConfigAppender //TODO:添加存在性和可靠性检查
+ */
+template <> class LexicalCast<std::string, ConfigAppender> {
+  public:
+    ConfigAppender operator()(const std::string &s) {
+        YAML::Node app = YAML::Load(s);
+        ConfigAppender appender;
+        appender.type =
+            LogAppender::getTypeByString(app["type"].as<std::string>());
+        appender.file = app["file"].as<std::string>();
+        appender.level = LogLevel::fromString(app["level"].as<std::string>());
+        appender.formatter = app["formatter"].as<std::string>();
+        return appender;
+    }
+};
+
+template <> class LexicalCast<ConfigAppender, std::string> {
+  public:
+    std::string operator()(const ConfigAppender &appender) {
+        // TODO::add convert
+        return "";
+    }
+};
+
+/**
+ * struct ConfigLogger Config文件中logger对应的解析类
+ */
+struct ConfigLogger {
+    std::string name;
+    LogLevel::Level level;
+    std::string formatter;
+    std::vector<ConfigAppender> appenders;
+};
+
+/**
+ * @brief 将string转化为ConfigLogger //TODO:添加存在性和可靠性检查
+ */
+template <> class LexicalCast<std::string, ConfigLogger> {
+  public:
+    ConfigLogger operator()(const std::string &s) {
+        YAML::Node log = YAML::Load(s);
+        ConfigLogger logger;
+        logger.name = log["name"].as<std::string>();
+        logger.level = LogLevel::fromString(log["level"].as<std::string>());
+        logger.formatter = log["formatter"].as<std::string>();
+        logger.appenders =
+            LexicalCast<std::string, std::vector<ConfigAppender>>()(
+                log["appenders"].as<std::string>());
+
+        return logger;
+    }
+};
+
+template <> class LexicalCast<ConfigLogger, std::string> {
+  public:
+    std::string operator()(const ConfigLogger &logger) {
+        // TODO:add convert
+        return "";
+    }
+};
 
 } // namespace lyon

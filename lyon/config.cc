@@ -14,7 +14,11 @@ ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
     }
     // NOTE: 这里只处理了常量类型。
     if (node.IsScalar()) {
-        // std::cout << prefix << " : " << node << std::endl;
+        std::cout << prefix << " : " << node << std::endl;
+        numbers.emplace_back(prefix, node);
+    }
+    if (node.IsSequence()) {
+        std::cout << prefix << " : " << node << std::endl;
         numbers.emplace_back(prefix, node);
     }
     if (node.IsMap()) {
@@ -24,11 +28,13 @@ ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
                                    : prefix + "." + itr->first.Scalar(),
                                itr->second, numbers);
         }
-    } else if (node.IsSequence()) {
-        for (size_t i = 0; i < node.size(); i++) {
-            ListAllYamlNumbers(prefix, node[i], numbers);
-        }
     }
+    // INFO:这里只对Map进行递归处理，其余项目使用fromString进行解析
+    // else if (node.IsSequence()) {
+    //         for (size_t i = 0; i < node.size(); i++) {
+    //             ListAllYamlNumbers(prefix, node[i], numbers);
+    //         }
+    //     }
 }
 
 void Config::LoadFromYaml(const YAML::Node &root) {
@@ -52,7 +58,9 @@ void Config::LoadFromYaml(const YAML::Node &root) {
                 ss << val;
                 conf->second->fromString(ss.str());
             }
-        } else {
+        }
+        // INFO:这里觉得是否将为约定的配置项加入到配置中,这里构建时，无法确定配置项具体的类型。只能将其保存为string类型。
+        else {
             auto &val = number.second;
             if (val.IsScalar()) {
                 SetConfig(key, val.Scalar(), key);

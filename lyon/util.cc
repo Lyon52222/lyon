@@ -1,7 +1,18 @@
 #include "util.h"
+#include <pthread.h>
+#include <thread>
 
 namespace lyon {
-pid_t GetThreadId() { return 0; }
+/**
+ * @brief 获取线程ID: //INFO: syscall 在macos10. 后被弃用了。
+ *
+ * @return 线程的ID
+ */
+uint64_t GetThreadId() {
+    uint64_t id;
+    pthread_threadid_np(0, &id);
+    return id;
+}
 uint32_t GetFiberId() { return 0; }
 
 } // namespace lyon

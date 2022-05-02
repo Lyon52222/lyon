@@ -13,6 +13,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
 
 // TODO:add getThreadName
@@ -42,7 +43,7 @@ class LogLevel {
     enum Level { UNKNOWN = 0, DEBUG, INFO, WARN, ERROR, FATAL };
 
     static const char *toString(LogLevel::Level level);
-    LogLevel::Level fromString(const std::string &level);
+    static LogLevel::Level fromString(const std::string &level);
 };
 
 /**
@@ -52,12 +53,12 @@ class LogEvent {
   public:
     typedef std::shared_ptr<LogEvent> ptr;
     LogEvent(std::shared_ptr<Logger> logger, const char *file, int32_t line,
-             uint32_t threadId, uint32_t fiberId, uint64_t time,
+             uint64_t threadId, uint32_t fiberId, uint64_t time,
              uint32_t elapse, LogLevel::Level level);
 
     const char *getFile() const { return m_file; };
     int32_t getLine() const { return m_line; };
-    uint32_t getThreadId() const { return m_threadId; };
+    uint64_t getThreadId() const { return m_threadId; };
     std::string getThreadName() const { return m_threadName; };
     uint32_t getFiberId() const { return m_fiberId; };
     uint64_t getTime() const { return m_time; };
@@ -71,7 +72,7 @@ class LogEvent {
     std::shared_ptr<Logger> m_logger;
     const char *m_file = nullptr; //文件名
     int32_t m_line = 0;           //行号
-    uint32_t m_threadId = 0;      //线程ID
+    uint64_t m_threadId = 0;      //线程ID
     std::string m_threadName;     //线程名称
     uint32_t m_fiberId = 0;       //协程ID
     uint64_t m_time = 0;          //时间戳
@@ -160,9 +161,8 @@ class LogFormatter {
   private:
     std::string m_pattern;
     std::list<FormatItem::ptr> m_items;
-    static std::unordered_map<
-        std::string,
-        std::function<LogFormatter::FormatItem::ptr(const std::string &str)>>
+    static std::map<std::string, std::function<LogFormatter::FormatItem::ptr(
+                                     const std::string &str)>>
         format_items;
 };
 
@@ -172,10 +172,14 @@ class LogFormatter {
 class LogAppender {
   public:
     typedef std::shared_ptr<LogAppender> ptr;
-    virtual ~LogAppender() {}
+    enum LogAppenderType { UNKNOW, FILE, STD };
 
+    virtual ~LogAppender() {}
+    virtual LogAppenderType getType() = 0;
     virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
                      LogEvent::ptr event) = 0;
+
+    static LogAppenderType getTypeByString(const std::string &str);
 
     void setFormatter(LogFormatter::ptr val) {
         m_formatter = val;
@@ -193,6 +197,7 @@ class LogAppender {
 class StdoutLogAppender : public LogAppender {
   public:
     typedef std::shared_ptr<StdoutLogAppender> ptr;
+    LogAppenderType getType() override { return FILE; }
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
 };
@@ -202,6 +207,7 @@ class FileLogAppender : public LogAppender {
   public:
     FileLogAppender(const std::string &name);
     typedef std::shared_ptr<FileLogAppender> prt;
+    LogAppenderType getType() override { return FILE; }
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
 
@@ -248,6 +254,9 @@ class Logger : public std::enable_shared_from_this<Logger> {
     std::list<LogAppender::ptr> m_appenders;
 };
 
+/**
+ * @brief Logger的管理类
+ */
 class LoggerManager {
   public:
     std::shared_ptr<LoggerManager> ptr;

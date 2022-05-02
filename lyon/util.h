@@ -1,10 +1,13 @@
 #ifndef __LYON_UTIL_H__
 #define __LYON_UTIL_H__
+#include <pthread.h>
 #include <stdint.h>
+#include <sys/syscall.h>
 #include <thread>
+#include <unistd.h>
 namespace lyon {
 
-pid_t GetThreadId();
+uint64_t GetThreadId();
 
 uint32_t GetFiberId();
 
