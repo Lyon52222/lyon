@@ -2,6 +2,7 @@
 #include "config.h"
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <yaml-cpp/node/parse.h>
 
 namespace lyon {
@@ -149,6 +150,10 @@ void Logger::setDefaultFormatter(LogFormatter::ptr formatter) {
     m_formatter = formatter;
 }
 
+void Logger::setDefaultFormatter(const std::string &str) {
+    m_formatter->setPattern(str);
+}
+
 Logger::Logger(const std::string &name)
     : m_name(name), m_level(LogLevel::DEBUG) {
     m_formatter.reset(new LogFormatter(
@@ -169,6 +174,8 @@ void Logger::delAppender(LogAppender::ptr appender) {
     }
 }
 
+void Logger::clearAppenders() { m_appenders.clear(); }
+
 void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         auto self = shared_from_this();
@@ -187,14 +194,24 @@ LogAppender::LogAppenderType
 LogAppender::getTypeByString(const std::string &str) {
     if (str == "FileLogAppender") {
         return FILE;
-    } else if (str == "StdoutLogAppender") {
+    } else if (str == "StdOutAppender") {
         return STD;
     } else {
-        return UNKNOW;
+        return UNKNOWN;
     }
 }
 
-FileLogAppender::FileLogAppender(const std::string &name) : m_fname(name) {
+std::string LogAppender::getStringByType(LogAppender::LogAppenderType type) {
+    if (type == FILE) {
+        return "FileLogAppender";
+    } else if (type == STD) {
+        return "StdOutAppender";
+    } else {
+        return "unknown";
+    }
+}
+
+FileLogAppender::FileLogAppender(const std::string &path) : m_fpath(path) {
     reopen();
 }
 
@@ -202,7 +219,7 @@ bool FileLogAppender::reopen() {
     if (m_fstream) {
         m_fstream.close();
     }
-    m_fstream.open(m_fname);
+    m_fstream.open(m_fpath);
     return !!m_fstream;
 }
 
@@ -213,8 +230,8 @@ void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
     }
 }
 
-void StdoutLogAppender::log(std::shared_ptr<Logger> logger,
-                            LogLevel::Level level, LogEvent::ptr event) {
+void StdOutAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
+                         LogEvent::ptr event) {
     if (level >= m_level) {
         m_formatter->format(std::cout, logger, level, event);
     }
@@ -389,6 +406,200 @@ std::map<std::string,
         //  }}
 };
 
+/**
+ * struct ConfigAppender - Config文件中appender对应的解析类
+ */
+struct ConfigAppender {
+    LogAppender::LogAppenderType type;
+    std::string file;
+    LogLevel::Level level = LogLevel::UNKNOWN;
+    std::string formatter;
+
+    bool operator==(const ConfigAppender &oth) const {
+        return type == oth.type && file == oth.file && level == oth.level &&
+               formatter == oth.formatter;
+    }
+};
+
+/**
+ * @brief 将string转化为ConfigAppender
+ */
+template <> class LexicalCast<std::string, ConfigAppender> {
+  public:
+    ConfigAppender operator()(const std::string &s) {
+        YAML::Node app = YAML::Load(s);
+        if (!app["type"].IsDefined()) {
+            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+                << "Config appender must have a type!";
+            throw std::logic_error("Config appender must have a type!");
+        }
+        ConfigAppender appender;
+        LogAppender::LogAppenderType apptype =
+            LogAppender ::getTypeByString(app["type"].as<std::string>());
+        if (apptype == LogAppender::UNKNOWN) {
+            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+                << "Config appender type - " << app["type"].as<std::string>()
+                << " unknown!";
+            throw std::logic_error("Config appender type unknown!");
+        } else {
+            appender.type = apptype;
+        }
+
+        if (appender.type == LogAppender::FILE && (!app["file"].IsDefined())) {
+            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+                << "Config appender type FileLogAppender must indicate it's "
+                   "file!";
+            throw std::logic_error(
+                "Config appender type FileLogAppender must indicate it's "
+                "file!");
+        }
+
+        if (app["file"].IsDefined())
+            appender.file = app["file"].as<std::string>();
+        if (app["level"].IsDefined())
+            appender.level =
+                LogLevel::fromString(app["level"].as<std::string>());
+        if (app["formatter"].IsDefined())
+            appender.formatter = app["formatter"].as<std::string>();
+        return appender;
+    }
+};
+
+template <> class LexicalCast<ConfigAppender, std::string> {
+  public:
+    std::string operator()(const ConfigAppender &appender) {
+        YAML::Node node;
+        node["type"] = LogAppender::getStringByType(appender.type);
+        node["file"] = appender.file;
+        node["level"] = LogLevel::toString(appender.level);
+        node["formatter"] = appender.formatter;
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+/**
+ * struct ConfigLogger Config文件中logger对应的解析类
+ */
+struct ConfigLogger {
+    std::string name;
+    LogLevel::Level level = LogLevel::UNKNOWN;
+    std::string formatter;
+    std::vector<ConfigAppender> appenders;
+
+    bool operator==(const ConfigLogger &oth) const {
+        return name == oth.name && level == oth.level &&
+               formatter == oth.formatter && appenders == oth.appenders;
+    }
+
+    bool operator<(const ConfigLogger &oth) const { return name < oth.name; }
+};
+
+/**
+ * @brief 将string转化为ConfigLogger
+ */
+template <> class LexicalCast<std::string, ConfigLogger> {
+  public:
+    ConfigLogger operator()(const std::string &s) {
+        YAML::Node log = YAML::Load(s);
+
+        if (!log["name"].IsDefined()) {
+            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+                << "Config logs must have a name!";
+            throw std::logic_error("Config logs must have a name!");
+        }
+        ConfigLogger logger;
+        logger.name = log["name"].as<std::string>();
+        if (log["level"].IsDefined())
+            logger.level = LogLevel::fromString(log["level"].as<std::string>());
+        if (log["formatter"].IsDefined())
+            logger.formatter = log["formatter"].as<std::string>();
+        if (log["appenders"].IsDefined()) {
+            std::stringstream ss;
+            ss << log["appenders"];
+            logger.appenders =
+                LexicalCast<std::string, std::vector<ConfigAppender>>()(
+                    ss.str());
+        }
+
+        return logger;
+    }
+};
+
+/**
+ * @brief 将ConfigLogger转化为string
+ */
+template <> class LexicalCast<ConfigLogger, std::string> {
+  public:
+    std::string operator()(const ConfigLogger &logger) {
+        YAML::Node node;
+        node["name"] = logger.name;
+        node["level"] = LogLevel::toString(logger.level);
+        node["formatter"] = logger.formatter;
+
+        for (size_t i = 0; i < logger.appenders.size(); i++) {
+            node["appenders"].push_back(
+                LexicalCast<ConfigAppender, std::string>()(
+                    logger.appenders[i]));
+        }
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+/**
+ * @brief 全局变量 logs的Config变量。
+ *
+ */
+ConfigVar<std::set<ConfigLogger>>::ptr g_log_defines = lyon::Config::SetConfig(
+    "logs", std::set<lyon::ConfigLogger>{}, "config of logs");
+
+struct LogConfigInit {
+    LogConfigInit() {
+        g_log_defines->addOnChange([](const std::set<ConfigLogger> &old_val,
+                                      const std::set<ConfigLogger> &new_val) {
+            Logger::ptr logger;
+            for (auto itr_new = new_val.cbegin(); itr_new != new_val.cend();
+                 itr_new++) {
+                const auto itr_old = old_val.find(*itr_new);
+                if (itr_old == old_val.end()) {
+                    logger = LYON_LOG_GET_LOGGER(itr_new->name);
+                } else {
+                    if ((*itr_old) == (*itr_new)) {
+                        continue;
+                    } else {
+                        logger = LYON_LOG_GET_LOGGER(itr_new->name);
+                    }
+                }
+                if (itr_new->level != LogLevel::UNKNOWN)
+                    logger->setLevel((*itr_new).level);
+                if (!(itr_new->formatter).empty())
+                    logger->setDefaultFormatter(itr_new->formatter);
+
+                logger->clearAppenders();
+                for (auto &app : itr_new->appenders) {
+                    LogAppender::ptr appender;
+                    if (app.type == LogAppender::FILE) {
+                        appender.reset(new FileLogAppender(app.file));
+                    } else if (app.type == LogAppender::STD) {
+                        appender.reset(new StdOutAppender());
+                    }
+                    if (app.level != LogLevel::UNKNOWN)
+                        appender->setLevel(app.level);
+                    if (!(app.formatter.empty()))
+                        appender->setFormatter(app.formatter);
+                    logger->addAppender(appender);
+                }
+            }
+            // TODO:delete old
+        });
+    }
+};
+
+static LogConfigInit __log_config_init;
+
 Logger::ptr LoggerManager::getLogger(const std::string &name) {
     auto item = m_loggers.find(name);
     if (item == m_loggers.end()) {
@@ -402,82 +613,12 @@ Logger::ptr LoggerManager::getLogger(const std::string &name) {
 Logger::ptr LoggerManager::getRoot() {
     if (!m_root_logger) {
         m_root_logger.reset(new Logger());
-        m_root_logger->addAppender(LogAppender::ptr(new StdoutLogAppender()));
+        m_root_logger->addAppender(LogAppender::ptr(new StdOutAppender()));
         m_loggers[m_root_logger->getName()] = m_root_logger;
     }
     return m_root_logger;
 }
 
-/**
- * struct ConfigAppender - Config文件中appender对应的解析类
- */
-struct ConfigAppender {
-    LogAppender::LogAppenderType type;
-    std::string file;
-    LogLevel::Level level;
-    std::string formatter;
-};
-
-/**
- * @brief 将string转化为ConfigAppender //TODO:添加存在性和可靠性检查
- */
-template <> class LexicalCast<std::string, ConfigAppender> {
-  public:
-    ConfigAppender operator()(const std::string &s) {
-        YAML::Node app = YAML::Load(s);
-        ConfigAppender appender;
-        appender.type =
-            LogAppender::getTypeByString(app["type"].as<std::string>());
-        appender.file = app["file"].as<std::string>();
-        appender.level = LogLevel::fromString(app["level"].as<std::string>());
-        appender.formatter = app["formatter"].as<std::string>();
-        return appender;
-    }
-};
-
-template <> class LexicalCast<ConfigAppender, std::string> {
-  public:
-    std::string operator()(const ConfigAppender &appender) {
-        // TODO::add convert
-        return "";
-    }
-};
-
-/**
- * struct ConfigLogger Config文件中logger对应的解析类
- */
-struct ConfigLogger {
-    std::string name;
-    LogLevel::Level level;
-    std::string formatter;
-    std::vector<ConfigAppender> appenders;
-};
-
-/**
- * @brief 将string转化为ConfigLogger //TODO:添加存在性和可靠性检查
- */
-template <> class LexicalCast<std::string, ConfigLogger> {
-  public:
-    ConfigLogger operator()(const std::string &s) {
-        YAML::Node log = YAML::Load(s);
-        ConfigLogger logger;
-        logger.name = log["name"].as<std::string>();
-        logger.level = LogLevel::fromString(log["level"].as<std::string>());
-        logger.formatter = log["formatter"].as<std::string>();
-        logger.appenders =
-            LexicalCast<std::string, std::vector<ConfigAppender>>()(
-                log["appenders"].as<std::string>());
-
-        return logger;
-    }
-};
-
-template <> class LexicalCast<ConfigLogger, std::string> {
-  public:
-    std::string operator()(const ConfigLogger &logger) {
-        // TODO:add convert
-        return "";
-    }
-};
+// void LoggerManager::setLoggersFromConfig() {}
 
 } // namespace lyon

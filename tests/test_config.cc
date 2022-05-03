@@ -41,6 +41,7 @@ int main() {
     printYAML(root, 0);
 
     std::cout << "------------------------------" << std::endl;
+
     lyon::Config::SetConfig<std::string>("ip", "127.0.0.1", "ipv4_addr");
 
     lyon::Config::Lookup<std::string>("ip")->addOnChange(

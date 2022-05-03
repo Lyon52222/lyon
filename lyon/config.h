@@ -117,6 +117,33 @@ template <class T> class LexicalCast<std::string, std::map<std::string, T>> {
     }
 };
 
+template <class T> class LexicalCast<std::set<T>, std::string> {
+  public:
+    std::string operator()(const std::set<T> &s) {
+        YAML::Node node;
+        for (auto itr = s.begin(); itr != s.end(); itr++) {
+            node.push_back(LexicalCast<T, std::string>()(*itr));
+        }
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template <class T> class LexicalCast<std::string, std::set<T>> {
+  public:
+    std::set<T> operator()(const std::string &s) {
+        YAML::Node node = YAML::Load(s);
+        typename std::set<T> st;
+        for (auto itr = node.begin(); itr != node.end(); itr++) {
+            std::stringstream ss;
+            ss << (*itr);
+            st.insert(LexicalCast<std::string, T>()(ss.str()));
+        }
+        return st;
+    }
+};
+
 /**
  * @brief 配置项基类，包含配置名，和配置描述
  */
@@ -160,21 +187,20 @@ class ConfigVar : public ConfigVarBase {
             return ToStr()(m_val);
         } catch (std::exception &e) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-                << "ConfigVar::toString exception" << e.what()
-                << "convert: " << typeid(m_val).name() << "to string";
+                << "ConfigVar::toString exception " << e.what()
+                << " convert: " << typeid(m_val).name() << " to string";
         }
         return "";
     }
 
     bool fromString(const std::string &str) override {
         try {
-            // m_val = boost ::lexical_cast<T>(str);
             setVal(FromStr()(str));
             return true;
         } catch (std::exception &e) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-                << "ConfigVar::fromString exception" << e.what()
-                << "convert: string to " << typeid(m_val).name();
+                << "ConfigVar::fromString exception " << e.what()
+                << " convert: string to " << typeid(m_val).name();
 
             return false;
         }

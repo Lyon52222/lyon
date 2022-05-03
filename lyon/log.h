@@ -172,7 +172,7 @@ class LogFormatter {
 class LogAppender {
   public:
     typedef std::shared_ptr<LogAppender> ptr;
-    enum LogAppenderType { UNKNOW, FILE, STD };
+    enum LogAppenderType { UNKNOWN, FILE, STD };
 
     virtual ~LogAppender() {}
     virtual LogAppenderType getType() = 0;
@@ -180,11 +180,20 @@ class LogAppender {
                      LogEvent::ptr event) = 0;
 
     static LogAppenderType getTypeByString(const std::string &str);
+    static std::string getStringByType(LogAppenderType type);
 
-    void setFormatter(LogFormatter::ptr val) {
+    void setFormatter(const LogFormatter::ptr val) {
         m_formatter = val;
         m_has_formattern = true;
-    };
+    }
+
+    void setFormatter(const std::string &pattern) {
+        if (m_formatter != nullptr) {
+            m_formatter->setPattern(pattern);
+        }
+    }
+
+    void setLevel(LogLevel::Level level) { m_level = level; };
     LogFormatter::ptr getFormatter() const { return m_formatter; };
     bool hasFormatter() const { return m_has_formattern; };
 
@@ -194,9 +203,9 @@ class LogAppender {
     bool m_has_formattern = false;
 };
 //输出到控制台的Appender
-class StdoutLogAppender : public LogAppender {
+class StdOutAppender : public LogAppender {
   public:
-    typedef std::shared_ptr<StdoutLogAppender> ptr;
+    typedef std::shared_ptr<StdOutAppender> ptr;
     LogAppenderType getType() override { return FILE; }
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
@@ -205,8 +214,8 @@ class StdoutLogAppender : public LogAppender {
 //输出到文件的Appender
 class FileLogAppender : public LogAppender {
   public:
-    FileLogAppender(const std::string &name);
-    typedef std::shared_ptr<FileLogAppender> prt;
+    FileLogAppender(const std::string &path);
+    typedef std::shared_ptr<FileLogAppender> ptr;
     LogAppenderType getType() override { return FILE; }
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
@@ -214,7 +223,7 @@ class FileLogAppender : public LogAppender {
     bool reopen();
 
   private:
-    std::string m_fname;
+    std::string m_fpath;
     std::ofstream m_fstream;
 };
 
@@ -225,8 +234,10 @@ class Logger : public std::enable_shared_from_this<Logger> {
     Logger(const std::string &name = "root");
 
     void setDefaultFormatter(LogFormatter::ptr formatter);
+    void setDefaultFormatter(const std::string &str);
     void addAppender(LogAppender::ptr appender);
     void delAppender(LogAppender::ptr appender);
+    void clearAppenders();
 
     void log(LogLevel::Level level, LogEvent::ptr event);
 
@@ -262,6 +273,8 @@ class LoggerManager {
     std::shared_ptr<LoggerManager> ptr;
     Logger::ptr getLogger(const std::string &name);
     Logger::ptr getRoot();
+
+    // void setLoggersFromConfig();
 
   private:
     std::unordered_map<std::string, Logger::ptr> m_loggers;
