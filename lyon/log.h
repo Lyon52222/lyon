@@ -203,9 +203,9 @@ class LogAppender {
     bool m_has_formattern = false;
 };
 //输出到控制台的Appender
-class StdOutAppender : public LogAppender {
+class StdOutLogAppender : public LogAppender {
   public:
-    typedef std::shared_ptr<StdOutAppender> ptr;
+    typedef std::shared_ptr<StdOutLogAppender> ptr;
     LogAppenderType getType() override { return FILE; }
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;

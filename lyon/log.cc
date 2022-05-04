@@ -194,7 +194,7 @@ LogAppender::LogAppenderType
 LogAppender::getTypeByString(const std::string &str) {
     if (str == "FileLogAppender") {
         return FILE;
-    } else if (str == "StdOutAppender") {
+    } else if (str == "StdOutLogAppender") {
         return STD;
     } else {
         return UNKNOWN;
@@ -205,7 +205,7 @@ std::string LogAppender::getStringByType(LogAppender::LogAppenderType type) {
     if (type == FILE) {
         return "FileLogAppender";
     } else if (type == STD) {
-        return "StdOutAppender";
+        return "StdOutLogAppender";
     } else {
         return "unknown";
     }
@@ -230,8 +230,8 @@ void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
     }
 }
 
-void StdOutAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
-                         LogEvent::ptr event) {
+void StdOutLogAppender::log(std::shared_ptr<Logger> logger,
+                            LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         m_formatter->format(std::cout, logger, level, event);
     }
@@ -584,7 +584,7 @@ struct LogConfigInit {
                     if (app.type == LogAppender::FILE) {
                         appender.reset(new FileLogAppender(app.file));
                     } else if (app.type == LogAppender::STD) {
-                        appender.reset(new StdOutAppender());
+                        appender.reset(new StdOutLogAppender());
                     }
                     if (app.level != LogLevel::UNKNOWN)
                         appender->setLevel(app.level);
@@ -613,7 +613,7 @@ Logger::ptr LoggerManager::getLogger(const std::string &name) {
 Logger::ptr LoggerManager::getRoot() {
     if (!m_root_logger) {
         m_root_logger.reset(new Logger());
-        m_root_logger->addAppender(LogAppender::ptr(new StdOutAppender()));
+        m_root_logger->addAppender(LogAppender::ptr(new StdOutLogAppender()));
         m_loggers[m_root_logger->getName()] = m_root_logger;
     }
     return m_root_logger;
