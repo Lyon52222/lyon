@@ -14,6 +14,8 @@ set(
   lyon/log.cc
   lyon/util.cc
   lyon/config.cc
+  lyon/thread.cc
+  lyon/utils/file_system_util.cc
 )
 
 
@@ -23,7 +25,6 @@ target_link_libraries(lyon PRIVATE yaml-cpp)
 set(
   LIBS
   lyon
-  # yaml-cpp
 )
 
 # add_executable(test_log tests/test_log.cc)

@@ -188,8 +188,11 @@ class LogAppender {
     }
 
     void setFormatter(const std::string &pattern) {
-        if (m_formatter != nullptr) {
+        if (m_has_formattern) {
             m_formatter->setPattern(pattern);
+        } else {
+            m_formatter.reset(new LogFormatter(pattern));
+            m_has_formattern = true;
         }
     }
 

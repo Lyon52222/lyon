@@ -1,5 +1,6 @@
 #include "log.h"
 #include "config.h"
+#include "utils/file_system_util.h"
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -219,13 +220,18 @@ bool FileLogAppender::reopen() {
     if (m_fstream) {
         m_fstream.close();
     }
-    m_fstream.open(m_fpath);
-    return !!m_fstream;
+    FSUtil::OpenForWrite(m_fstream, m_fpath, std::ios::app);
+    if (!m_fstream.is_open()) {
+        LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+            << "FileLogAppender: open " << m_fpath << " failed!";
+        return false;
+    }
+    return true;
 }
 
 void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
                           LogEvent::ptr event) {
-    if (level >= m_level) {
+    if (m_fstream.is_open() && level >= m_level) {
         m_formatter->format(m_fstream, logger, level, event);
     }
 }
@@ -594,6 +600,9 @@ struct LogConfigInit {
                 }
             }
             // TODO:delete old
+
+            LYON_LOG_INFO(LYON_LOG_GET_LOGGER("system"))
+                << "system logger test";
         });
     }
 };
