@@ -127,7 +127,7 @@ class LogFormatter {
     LogFormatter(const std::string &pattern);
     void setPattern(std::string pattern);
     /**
-     * @brief 对m_pattern进行解析，得到基本的元素组件
+     * @brief 将m_pattern解析为对应的FormatItem并保存在m_items中
      *
      */
     void parsePattern();
@@ -274,7 +274,16 @@ class Logger : public std::enable_shared_from_this<Logger> {
 class LoggerManager {
   public:
     std::shared_ptr<LoggerManager> ptr;
+    /**
+     * @brief 通过名称获取日志器，没有时则自动创建
+     *
+     * @param name 日志器名
+     */
     Logger::ptr getLogger(const std::string &name);
+    /**
+     * @brief 获取根日志器，没有则自动创建
+     *
+     */
     Logger::ptr getRoot();
 
     // void setLoggersFromConfig();

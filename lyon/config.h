@@ -274,8 +274,8 @@ class Config {
     static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
         auto itr = GetConfigs().find(name);
         if (itr == GetConfigs().end()) {
-            LYON_LOG_INFO(LYON_LOG_GET_ROOT())
-                << "Config: " << name << " is not exists";
+            // LYON_LOG_INFO(LYON_LOG_GET_ROOT())
+            //     << "Config: " << name << " is not exists";
             return nullptr;
         }
         return std::dynamic_pointer_cast<ConfigVar<T>>(itr->second);

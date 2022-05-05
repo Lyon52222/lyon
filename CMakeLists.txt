@@ -27,12 +27,10 @@ set(
   lyon
 )
 
-# add_executable(test_log tests/test_log.cc)
-# add_dependencies(test_log lyon)
-# target_link_libraries(test_log lyon yaml-cpp)
 lyon_add_executable(test_log "tests/test_log.cc" lyon "${LIBS}")
-
 lyon_add_executable(test_config "tests/test_config.cc" lyon "${LIBS}")
+lyon_add_executable(test_fsutils "tests/test_fsutils.cc" lyon "${LIBS}")
+lyon_add_executable(test_thread "tests/test_thread.cc" lyon "${LIBS}")
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)

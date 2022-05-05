@@ -110,6 +110,7 @@ static bool __mkdir(const char *dirname) {
  * @param dirname 文件夹名
  * @return 文件夹创建是否成功
  */
+// FIX: 无法创建绝对路线下的文件，比如"/apps/logs/log.txt"
 bool FSUtil::MakeDir(const std::string &dirname) {
     if (__lstat(dirname.c_str()) == 0) {
         return true;

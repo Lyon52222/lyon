@@ -343,12 +343,6 @@ void LogFormatter::parsePattern() {
         i = j - 1;
     }
 
-    // for (auto &i : vec) {
-    //     std::cout << "key: " << std::get<0>(i) << "\t value: " <<
-    //     std::get<1>(i)
-    //               << "\t type: " << std::get<2>(i) << std::endl;
-    // }
-
     if (!sstr.empty()) {
         vec.emplace_back(sstr, std::string(), 0);
     }
@@ -556,7 +550,7 @@ template <> class LexicalCast<ConfigLogger, std::string> {
 };
 
 /**
- * @brief 全局变量 logs的Config变量。
+ * @brief 全局变量 logs的Config变量。用于在配置中添加一条空的logs记录
  *
  */
 ConfigVar<std::set<ConfigLogger>>::ptr g_log_defines = lyon::Config::SetConfig(
@@ -599,14 +593,26 @@ struct LogConfigInit {
                     logger->addAppender(appender);
                 }
             }
-            // TODO:delete old
 
-            LYON_LOG_INFO(LYON_LOG_GET_LOGGER("system"))
-                << "system logger test";
+            for (auto &itr_old : old_val) {
+                const auto itr_new = new_val.find(itr_old);
+                if (itr_new == new_val.end()) {
+                    auto logger = LYON_LOG_GET_LOGGER(itr_old.name);
+                    logger->setLevel(LogLevel::UNKNOWN);
+                    logger->clearAppenders();
+                }
+            }
+
+            // LYON_LOG_INFO(LYON_LOG_GET_LOGGER("system"))
+            //     << "system logger test";
         });
     }
 };
 
+/**
+ * @brief
+ * Log的初始化类全局变量，用于给配置项logs添加一个回调函数用于在logs配置文件发生变化时自动同步到Config类中
+ */
 static LogConfigInit __log_config_init;
 
 Logger::ptr LoggerManager::getLogger(const std::string &name) {
@@ -619,6 +625,7 @@ Logger::ptr LoggerManager::getLogger(const std::string &name) {
         return item->second;
     }
 }
+
 Logger::ptr LoggerManager::getRoot() {
     if (!m_root_logger) {
         m_root_logger.reset(new Logger());

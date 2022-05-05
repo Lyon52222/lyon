@@ -78,11 +78,11 @@ void Config::LoadFromConfigFile(const std::string &path) {
     try {
         YAML::Node root = YAML::LoadFile(path);
         LYON_LOG_INFO(LYON_LOG_GET_ROOT())
-            << "LoadConfig: " << path << "Success!";
+            << "LoadConfig: " << path << " Success!";
         LoadFromYaml(root);
     } catch (...) {
         LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-            << "LoadConfig: " << path << "Failed!";
+            << "LoadConfig: " << path << " Failed!";
     }
 }
 
