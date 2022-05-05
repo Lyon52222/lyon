@@ -1,4 +1,5 @@
 #include "thread.h"
+#include "log.h"
 
 namespace lyon {
 

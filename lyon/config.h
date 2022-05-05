@@ -4,7 +4,6 @@
 #include "log.h"
 #include "util.h"
 #include <boost/lexical_cast.hpp>
-#include <cstdint>
 #include <exception>
 #include <memory>
 #include <sstream>
@@ -183,7 +182,6 @@ class ConfigVar : public ConfigVarBase {
         : ConfigVarBase(name, description), m_val(default_value) {}
     std::string toString() override {
         try {
-            // return boost::lexical_cast<std::string>(m_val);
             return ToStr()(m_val);
         } catch (std::exception &e) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
@@ -285,18 +283,7 @@ class Config {
 
     static void LoadFromConfigFile(const std::string &path);
 
-    static bool CheckName(const std::string &name) {
-
-        if (!IsConfigNameAvilable(name)) {
-            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-                << "Name : " << name
-                << " is not avilable : Config name should be named with "
-                   "[a-zA-Z0-9_]";
-
-            return false;
-        }
-        return true;
-    }
+    static bool CheckName(const std::string &name);
 
     // static ConfigVarMap m_configs;
     // 因为类的静态成员变量需要在类的外部进行初始化。

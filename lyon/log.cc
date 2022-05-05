@@ -138,10 +138,12 @@ class LoggerNameFormatItem : public LogFormatter::FormatItem {
 };
 
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, const char *file,
-                   int32_t line, uint64_t threadId, uint32_t fiberId,
+                   int32_t line, uint64_t threadId,
+                   const std::string &threadName, uint32_t fiberId,
                    uint64_t time, uint32_t elapse, LogLevel::Level level)
     : m_logger(logger), m_file(file), m_line(line), m_threadId(threadId),
-      m_fiberId(fiberId), m_time(time), m_elapse(elapse), m_level(level) {}
+      m_threadName(threadName), m_fiberId(fiberId), m_time(time),
+      m_elapse(elapse), m_level(level) {}
 
 LogEventWrap::~LogEventWrap() {
     m_event->getLogger()->log(m_event->getLevel(), m_event);

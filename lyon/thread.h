@@ -1,6 +1,5 @@
 #ifndef __LYON__THREAD_H__
 #define __LYON__THREAD_H__
-#include "log.h"
 #include "util.h"
 #include <boost/noncopyable.hpp>
 #include <functional>
@@ -10,6 +9,9 @@
 
 namespace lyon {
 
+/**
+ * @brief pthread的封装类
+ */
 class Thread : boost::noncopyable {
   public:
     typedef std::shared_ptr<Thread> ptr;

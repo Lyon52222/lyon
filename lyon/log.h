@@ -1,6 +1,7 @@
 #ifndef __LYON_LOG_H__
 #define __LYON_LOG_H__
 #include "singleton.h"
+#include "thread.h"
 #include "util.h"
 #include <ctime>
 #include <fstream>
@@ -19,9 +20,10 @@
 // TODO:add getThreadName
 #define LYON_LOG_LEVEL(logger, level)                                          \
     if (logger->getLevel() <= level)                                           \
-    lyon::LogEventWrap(lyon::LogEvent::ptr(new lyon::LogEvent(                 \
-                           logger, __FILE__, __LINE__, lyon::GetThreadId(),    \
-                           lyon::GetFiberId(), time(0), 0, level)))            \
+    lyon::LogEventWrap(                                                        \
+        lyon::LogEvent::ptr(new lyon::LogEvent(                                \
+            logger, __FILE__, __LINE__, lyon::GetThreadId(),                   \
+            lyon::Thread::GetName(), lyon::GetFiberId(), time(0), 0, level)))  \
         .getSS()
 
 #define LYON_LOG_DEBUG(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::DEBUG)
@@ -53,8 +55,8 @@ class LogEvent {
   public:
     typedef std::shared_ptr<LogEvent> ptr;
     LogEvent(std::shared_ptr<Logger> logger, const char *file, int32_t line,
-             uint64_t threadId, uint32_t fiberId, uint64_t time,
-             uint32_t elapse, LogLevel::Level level);
+             uint64_t threadId, const std::string &threadName, uint32_t fiberId,
+             uint64_t time, uint32_t elapse, LogLevel::Level level);
 
     const char *getFile() const { return m_file; };
     int32_t getLine() const { return m_line; };

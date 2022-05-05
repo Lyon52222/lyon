@@ -12,16 +12,11 @@ ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
     if (!Config::CheckName(prefix)) {
         return;
     }
-    // NOTE: 这里只处理了常量类型。
     if (node.IsScalar()) {
-        std::cout << prefix << " : " << node << std::endl;
         numbers.emplace_back(prefix, node);
-    }
-    if (node.IsSequence()) {
-        std::cout << prefix << " : " << node << std::endl;
+    } else if (node.IsSequence()) {
         numbers.emplace_back(prefix, node);
-    }
-    if (node.IsMap()) {
+    } else if (node.IsMap()) {
         for (auto itr = node.begin(); itr != node.end(); itr++) {
             ListAllYamlNumbers(prefix.empty()
                                    ? itr->first.Scalar()
@@ -29,12 +24,6 @@ ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
                                itr->second, numbers);
         }
     }
-    // INFO:这里只对Map进行递归处理，其余项目使用fromString进行解析
-    // else if (node.IsSequence()) {
-    //         for (size_t i = 0; i < node.size(); i++) {
-    //             ListAllYamlNumbers(prefix, node[i], numbers);
-    //         }
-    //     }
 }
 
 void Config::LoadFromYaml(const YAML::Node &root) {
@@ -82,8 +71,21 @@ void Config::LoadFromConfigFile(const std::string &path) {
         LoadFromYaml(root);
     } catch (...) {
         LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-            << "LoadConfig: " << path << " Failed!";
+            << "LoadConfig: " << path << " Fail!";
     }
+}
+
+bool Config::CheckName(const std::string &name) {
+
+    if (!IsConfigNameAvilable(name)) {
+        LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+            << "Name : " << name
+            << " is not avilable : Config name should be named with "
+               "[a-zA-Z0-9_]";
+
+        return false;
+    }
+    return true;
 }
 
 } // namespace lyon
