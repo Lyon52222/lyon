@@ -17,7 +17,6 @@
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
 
-// TODO:add getThreadName
 #define LYON_LOG_LEVEL(logger, level)                                          \
     if (logger->getLevel() <= level)                                           \
     lyon::LogEventWrap(                                                        \
