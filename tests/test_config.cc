@@ -55,8 +55,7 @@ int main() {
               << std::endl;
     std::cout << "------------------------------" << std::endl;
 
-    lyon::Config::LoadFromConfigFile(
-        "/Users/admin/Code/C++/lyon/bin/conf/log.yml");
+    lyon::Config::LoadFromConfigFile("/Users/admin/Code/C++/lyon/conf/log.yml");
 
     std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
               << std::endl;

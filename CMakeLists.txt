@@ -15,6 +15,7 @@ set(
   lyon/util.cc
   lyon/config.cc
   lyon/thread.cc
+  lyon/mutex.cc
   lyon/utils/file_system_util.cc
 )
 
