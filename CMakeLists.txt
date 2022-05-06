@@ -34,6 +34,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_log "tests/test_log.cc" lyon "${LIBS}")
   lyon_add_executable(test_config "tests/test_config.cc" lyon "${LIBS}")
   lyon_add_executable(test_fsutils "tests/test_fsutils.cc" lyon "${LIBS}")
+  lyon_add_executable(test_util "tests/test_util.cc" lyon "${LIBS}")
   lyon_add_executable(test_thread "tests/test_thread.cc" lyon "${LIBS}")
 endif()
 
