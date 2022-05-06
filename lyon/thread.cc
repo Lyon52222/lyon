@@ -42,6 +42,7 @@ void *Thread::run(void *arg) {
     std::function<void()> cb;
     cb.swap(thread->m_cb);
 
+    thread->m_semaphore.notify();
     cb();
     return 0;
 }
@@ -56,6 +57,7 @@ Thread::Thread(std::function<void()> cb, const std::string &name)
             << "Pthread create thread: " << name << " fail, rt = " << rt;
         throw std::logic_error("Pthread create error");
     }
+    m_semaphore.wait();
 }
 
 Thread::~Thread() {

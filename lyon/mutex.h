@@ -10,7 +10,7 @@
 namespace lyon {
 class Semaphore : boost::noncopyable {
 public:
-    Semaphore(uint32_t count);
+    Semaphore(uint32_t count = 0);
     ~Semaphore();
     void wait();
     void notify();
@@ -19,6 +19,11 @@ private:
     sem_t m_semaphore;
 };
 
+/**
+ * struct ScopeLockImpl - 局部锁封装，当离开锁的作用域时，析构函数会自动解锁
+ *
+ * @tparam T 锁类型
+ */
 template <class T> struct ScopeLockImpl {
 public:
     ScopeLockImpl(T &mutex) : m_mutex(mutex) {
@@ -47,6 +52,11 @@ private:
     bool m_locked = false;
 };
 
+/**
+ * struct ReadScopeLockImpl - 读局部锁封装
+ *
+ * @tparam T 锁类型
+ */
 template <class T> struct ReadScopeLockImpl {
 public:
     ReadScopeLockImpl(T &mutex) : m_mutex(mutex) {
@@ -75,6 +85,11 @@ private:
     bool m_locked = false;
 };
 
+/**
+ * struct WriteScopeLockImpl - 写局部锁封装
+ *
+ * @tparam T 锁类型
+ */
 template <class T> struct WriteScopeLockImpl {
 public:
     WriteScopeLockImpl(T &mutex) : m_mutex(mutex) {

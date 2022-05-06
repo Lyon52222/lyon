@@ -150,11 +150,27 @@ LogEventWrap::~LogEventWrap() {
 }
 
 void Logger::setDefaultFormatter(LogFormatter::ptr formatter) {
+    MutexType::Lock lock(m_mutex);
     m_formatter = formatter;
 }
 
 void Logger::setDefaultFormatter(const std::string &str) {
+    MutexType::Lock lock(m_mutex);
     m_formatter->setPattern(str);
+}
+
+void Logger::setFormatter(LogFormatter::ptr formatter) {
+    MutexType::Lock lock(m_mutex);
+    for (auto &appender : m_appenders) {
+        appender->setFormatter(formatter);
+    }
+}
+
+void Logger::setFormatter(const std::string &str) {
+    MutexType::Lock lock(m_mutex);
+    for (auto &appender : m_appenders) {
+        appender->setFormatter(str);
+    }
 }
 
 Logger::Logger(const std::string &name)
@@ -164,6 +180,7 @@ Logger::Logger(const std::string &name)
 }
 
 void Logger::addAppender(LogAppender::ptr appender) {
+    MutexType::Lock lock(m_mutex);
     if (!appender->hasFormatter()) {
         appender->setFormatter(m_formatter);
     }
@@ -171,17 +188,22 @@ void Logger::addAppender(LogAppender::ptr appender) {
 }
 
 void Logger::delAppender(LogAppender::ptr appender) {
+    MutexType::Lock lock(m_mutex);
     auto itr = std::find(m_appenders.begin(), m_appenders.end(), appender);
     if (itr != m_appenders.end()) {
         m_appenders.erase(itr);
     }
 }
 
-void Logger::clearAppenders() { m_appenders.clear(); }
+void Logger::clearAppenders() {
+    MutexType::Lock lock(m_mutex);
+    m_appenders.clear();
+}
 
 void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         auto self = shared_from_this();
+        MutexType::Lock lock(m_mutex);
         for (auto appender : m_appenders) {
             appender->log(self, level, event);
         }
@@ -214,11 +236,27 @@ std::string LogAppender::getStringByType(LogAppender::LogAppenderType type) {
     }
 }
 
+void LogAppender::setFormatter(const LogFormatter::ptr val) {
+    MutexType::Lock lock(m_mutex);
+    m_formatter = val;
+    m_has_formattern = true;
+}
+
+void LogAppender::setFormatter(const std::string &pattern) {
+    MutexType::Lock lock(m_mutex);
+    if (m_has_formattern) {
+        m_formatter->setPattern(pattern);
+    } else {
+        m_formatter.reset(new LogFormatter(pattern));
+        m_has_formattern = true;
+    }
+}
 FileLogAppender::FileLogAppender(const std::string &path) : m_fpath(path) {
     reopen();
 }
 
 bool FileLogAppender::reopen() {
+    MutexType::Lock lock(m_mutex);
     if (m_fstream) {
         m_fstream.close();
     }
@@ -234,6 +272,7 @@ bool FileLogAppender::reopen() {
 void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
                           LogEvent::ptr event) {
     if (m_fstream.is_open() && level >= m_level) {
+        MutexType::Lock lock(m_mutex);
         m_formatter->format(m_fstream, logger, level, event);
     }
 }
@@ -241,6 +280,7 @@ void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
 void StdOutLogAppender::log(std::shared_ptr<Logger> logger,
                             LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
+        MutexType::Lock lock(m_mutex);
         m_formatter->format(std::cout, logger, level, event);
     }
 }
@@ -618,6 +658,7 @@ struct LogConfigInit {
 static LogConfigInit __log_config_init;
 
 Logger::ptr LoggerManager::getLogger(const std::string &name) {
+    MutexType::Lock lock(m_mutex);
     auto item = m_loggers.find(name);
     if (item == m_loggers.end()) {
         auto logger = Logger::ptr(new Logger(name));
@@ -629,6 +670,7 @@ Logger::ptr LoggerManager::getLogger(const std::string &name) {
 }
 
 Logger::ptr LoggerManager::getRoot() {
+    MutexType::Lock lock(m_mutex);
     if (!m_root_logger) {
         m_root_logger.reset(new Logger());
         m_root_logger->addAppender(LogAppender::ptr(new StdOutLogAppender()));

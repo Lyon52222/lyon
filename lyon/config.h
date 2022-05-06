@@ -6,12 +6,14 @@
 #include <boost/lexical_cast.hpp>
 #include <exception>
 #include <memory>
+#include <mutex.h>
 #include <sstream>
 #include <stdexcept>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/node/type.h>
 #include <yaml-cpp/yaml.h>
 namespace lyon {
+// TODO: add lock
 
 /**
  * @brief 两种类型的转换
@@ -20,7 +22,7 @@ namespace lyon {
  * @tparam T 目标类型
  */
 template <class F, class T> class LexicalCast {
-  public:
+public:
     T operator()(const F &f) { return boost::lexical_cast<T>(f); };
 };
 
@@ -30,7 +32,7 @@ template <class F, class T> class LexicalCast {
  * @tparam T vector类型
  */
 template <class T> class LexicalCast<std::vector<T>, std::string> {
-  public:
+public:
     std::string operator()(const std::vector<T> &v) {
         YAML::Node node(YAML::NodeType::Sequence);
         for (auto &i : v) {
@@ -48,7 +50,7 @@ template <class T> class LexicalCast<std::vector<T>, std::string> {
  * @tparam T vector类型
  */
 template <class T> class LexicalCast<std::string, std::vector<T>> {
-  public:
+public:
     std::vector<T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
         typename std::vector<T> vec;
@@ -62,7 +64,7 @@ template <class T> class LexicalCast<std::string, std::vector<T>> {
 };
 
 template <class T> class LexicalCast<std::list<T>, std::string> {
-  public:
+public:
     std::string operator()(const std::list<T> &l) {
         YAML::Node node(YAML::NodeType::Sequence);
         for (auto &i : l) {
@@ -75,7 +77,7 @@ template <class T> class LexicalCast<std::list<T>, std::string> {
 };
 
 template <class T> class LexicalCast<std::string, std::list<T>> {
-  public:
+public:
     std::list<T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
         typename std::list<T> l;
@@ -89,7 +91,7 @@ template <class T> class LexicalCast<std::string, std::list<T>> {
 };
 
 template <class T> class LexicalCast<std::map<std::string, T>, std::string> {
-  public:
+public:
     std::string operator()(const std::map<std::string, T> &m) {
         YAML::Node node(YAML::NodeType::Map);
         for (auto itr = m.begin(); itr != m.end(); itr++) {
@@ -103,7 +105,7 @@ template <class T> class LexicalCast<std::map<std::string, T>, std::string> {
 };
 
 template <class T> class LexicalCast<std::string, std::map<std::string, T>> {
-  public:
+public:
     std::map<std::string, T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
         typename std::map<std::string, T> m;
@@ -117,7 +119,7 @@ template <class T> class LexicalCast<std::string, std::map<std::string, T>> {
 };
 
 template <class T> class LexicalCast<std::set<T>, std::string> {
-  public:
+public:
     std::string operator()(const std::set<T> &s) {
         YAML::Node node;
         for (auto itr = s.begin(); itr != s.end(); itr++) {
@@ -130,7 +132,7 @@ template <class T> class LexicalCast<std::set<T>, std::string> {
 };
 
 template <class T> class LexicalCast<std::string, std::set<T>> {
-  public:
+public:
     std::set<T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
         typename std::set<T> st;
@@ -147,7 +149,7 @@ template <class T> class LexicalCast<std::string, std::set<T>> {
  * @brief 配置项基类，包含配置名，和配置描述
  */
 class ConfigVarBase {
-  public:
+public:
     typedef std::shared_ptr<ConfigVarBase> ptr;
     ConfigVarBase(const std::string &name, const std::string &description = "")
         : m_name(name), m_description(description){};
@@ -159,7 +161,7 @@ class ConfigVarBase {
     virtual std::string toString() = 0;
     virtual bool fromString(const std::string &str) = 0;
 
-  protected:
+protected:
     std::string m_name;
     std::string m_description;
 };
@@ -172,10 +174,11 @@ class ConfigVarBase {
 template <class T, class FromStr = LexicalCast<std::string, T>,
           class ToStr = LexicalCast<T, std::string>>
 class ConfigVar : public ConfigVarBase {
-  public:
+public:
     typedef std::shared_ptr<ConfigVar> ptr;
     typedef std::function<void(const T &old_val, const T &new_val)>
         on_change_cb;
+    typedef RWMutex MutexType;
 
     ConfigVar(const std::string &name, const T &default_value,
               const std::string &description = "")
@@ -204,7 +207,10 @@ class ConfigVar : public ConfigVarBase {
         }
     }
 
-    const T &getVal() { return m_val; }
+    const T &getVal() {
+        MutexType::RDLock lock(m_mutex);
+        return m_val;
+    }
 
     void setVal(const T &val) {
         if (val != m_val) {
@@ -230,7 +236,7 @@ class ConfigVar : public ConfigVarBase {
 
     void clearOnChange() { m_cbs.clear(); }
 
-  private:
+private:
     T m_val;
     std::map<uint32_t, on_change_cb> m_cbs;
 
@@ -239,10 +245,12 @@ class ConfigVar : public ConfigVarBase {
             itr->second(old_val, new_val);
         }
     }
+
+    MutexType m_mutex;
 };
 
 class Config {
-  public:
+public:
     typedef std::shared_ptr<Config> ptr;
     typedef std::unordered_map<std::string, ConfigVarBase::ptr> ConfigVarMap;
 
@@ -297,7 +305,7 @@ class Config {
         return m_configs;
     }
 
-  private:
+private:
 };
 
 } // namespace lyon

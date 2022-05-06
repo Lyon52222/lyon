@@ -1,5 +1,6 @@
 #ifndef __LYON_LOG_H__
 #define __LYON_LOG_H__
+#include "mutex.h"
 #include "singleton.h"
 #include "thread.h"
 #include "util.h"
@@ -18,12 +19,12 @@
 #include <yaml-cpp/yaml.h>
 
 #define LYON_LOG_LEVEL(logger, level)                                          \
-  if (logger->getLevel() <= level)                                             \
-  lyon::LogEventWrap(                                                          \
-      lyon::LogEvent::ptr(new lyon::LogEvent(                                  \
-          logger, __FILE__, __LINE__, lyon::GetThreadId(),                     \
-          lyon::Thread::GetName(), lyon::GetFiberId(), time(0), 0, level)))    \
-      .getSS()
+    if (logger->getLevel() <= level)                                           \
+    lyon::LogEventWrap(                                                        \
+        lyon::LogEvent::ptr(new lyon::LogEvent(                                \
+            logger, __FILE__, __LINE__, lyon::GetThreadId(),                   \
+            lyon::Thread::GetName(), lyon::GetFiberId(), time(0), 0, level)))  \
+        .getSS()
 
 #define LYON_LOG_DEBUG(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::DEBUG)
 #define LYON_LOG_INFO(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::INFO)
@@ -33,7 +34,7 @@
 
 #define LYON_LOG_GET_ROOT() lyon::LoggerMgr::getInstance()->getRoot()
 #define LYON_LOG_GET_LOGGER(name)                                              \
-  lyon::LoggerMgr::getInstance()->getLogger(name)
+    lyon::LoggerMgr::getInstance()->getLogger(name)
 
 namespace lyon {
 
@@ -41,10 +42,10 @@ class Logger;
 //日志级别
 class LogLevel {
 public:
-  enum Level { UNKNOWN = 0, DEBUG, INFO, WARN, ERROR, FATAL };
+    enum Level { UNKNOWN = 0, DEBUG, INFO, WARN, ERROR, FATAL };
 
-  static const char *toString(LogLevel::Level level);
-  static LogLevel::Level fromString(const std::string &level);
+    static const char *toString(LogLevel::Level level);
+    static LogLevel::Level fromString(const std::string &level);
 };
 
 /**
@@ -52,55 +53,55 @@ public:
  */
 class LogEvent {
 public:
-  typedef std::shared_ptr<LogEvent> ptr;
-  LogEvent(std::shared_ptr<Logger> logger, const char *file, int32_t line,
-           uint64_t threadId, const std::string &threadName, uint32_t fiberId,
-           uint64_t time, uint32_t elapse, LogLevel::Level level);
+    typedef std::shared_ptr<LogEvent> ptr;
+    LogEvent(std::shared_ptr<Logger> logger, const char *file, int32_t line,
+             uint64_t threadId, const std::string &threadName, uint32_t fiberId,
+             uint64_t time, uint32_t elapse, LogLevel::Level level);
 
-  const char *getFile() const { return m_file; };
-  int32_t getLine() const { return m_line; };
-  uint64_t getThreadId() const { return m_threadId; };
-  std::string getThreadName() const { return m_threadName; };
-  uint32_t getFiberId() const { return m_fiberId; };
-  uint64_t getTime() const { return m_time; };
-  uint32_t getElapse() const { return m_elapse; };
-  std::string getContent() const { return m_ss.str(); };
-  std::stringstream &getSS() { return m_ss; };
-  std::shared_ptr<Logger> getLogger() const { return m_logger; };
-  const LogLevel::Level getLevel() const { return m_level; };
+    const char *getFile() const { return m_file; };
+    int32_t getLine() const { return m_line; };
+    uint64_t getThreadId() const { return m_threadId; };
+    std::string getThreadName() const { return m_threadName; };
+    uint32_t getFiberId() const { return m_fiberId; };
+    uint64_t getTime() const { return m_time; };
+    uint32_t getElapse() const { return m_elapse; };
+    std::string getContent() const { return m_ss.str(); };
+    std::stringstream &getSS() { return m_ss; };
+    std::shared_ptr<Logger> getLogger() const { return m_logger; };
+    const LogLevel::Level getLevel() const { return m_level; };
 
 private:
-  std::shared_ptr<Logger> m_logger;
-  const char *m_file = nullptr; //文件名
-  int32_t m_line = 0;           //行号
-  uint64_t m_threadId = 0;      //线程ID
-  std::string m_threadName;     //线程名称
-  uint32_t m_fiberId = 0;       //协程ID
-  uint64_t m_time = 0;          //时间戳
-  uint32_t m_elapse = 0;
-  // std::string m_content;
-  /**
-   * @m_ss 这里使用stringstream 来代替string这样可以将信息保存到流中。
-   */
-  std::stringstream m_ss;
+    std::shared_ptr<Logger> m_logger;
+    const char *m_file = nullptr; //文件名
+    int32_t m_line = 0;           //行号
+    uint64_t m_threadId = 0;      //线程ID
+    std::string m_threadName;     //线程名称
+    uint32_t m_fiberId = 0;       //协程ID
+    uint64_t m_time = 0;          //时间戳
+    uint32_t m_elapse = 0;
+    // std::string m_content;
+    /**
+     * @m_ss 这里使用stringstream 来代替string这样可以将信息保存到流中。
+     */
+    std::stringstream m_ss;
 
-  LogLevel::Level m_level;
+    LogLevel::Level m_level;
 };
 
 class LogEventWrap {
 public:
-  LogEventWrap(LogEvent::ptr event) : m_event(event){};
-  /**
-   * @brief
-   * 在析构时调用event对应的logger对暂存在stringstream中的content进行统一的输出
-   *
-   */
-  ~LogEventWrap();
+    LogEventWrap(LogEvent::ptr event) : m_event(event){};
+    /**
+     * @brief
+     * 在析构时调用event对应的logger对暂存在stringstream中的content进行统一的输出
+     *
+     */
+    ~LogEventWrap();
 
-  std::stringstream &getSS() { return m_event->getSS(); };
+    std::stringstream &getSS() { return m_event->getSS(); };
 
 private:
-  LogEvent::ptr m_event;
+    LogEvent::ptr m_event;
 };
 
 //日志格式化
@@ -123,48 +124,48 @@ private:
  */
 class LogFormatter {
 public:
-  typedef std::shared_ptr<LogFormatter> ptr;
+    typedef std::shared_ptr<LogFormatter> ptr;
 
-  LogFormatter(const std::string &pattern);
-  void setPattern(std::string pattern);
-  /**
-   * @brief 将m_pattern解析为对应的FormatItem并保存在m_items中
-   *
-   */
-  void parsePattern();
-  /**
-   * @brief 以pattern格式直接返回一个log描述
-   *
-   * @param logger 日志器
-   * @param level 日志等级
-   * @param event 日志事件
-   */
-  std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
-                     LogEvent::ptr event);
-  /**
-   * @brief 以pattern格式格式化事件，并直接输出到流
-   *
-   * @param logger 日志器
-   * @param level 日志等级
-   * @param event 日志事件
-   */
-  std::ostream &format(std::ostream &os, std::shared_ptr<Logger> logger,
-                       LogLevel::Level level, LogEvent::ptr event);
+    LogFormatter(const std::string &pattern);
+    void setPattern(std::string pattern);
+    /**
+     * @brief 将m_pattern解析为对应的FormatItem并保存在m_items中
+     *
+     */
+    void parsePattern();
+    /**
+     * @brief 以pattern格式直接返回一个log描述
+     *
+     * @param logger 日志器
+     * @param level 日志等级
+     * @param event 日志事件
+     */
+    std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
+                       LogEvent::ptr event);
+    /**
+     * @brief 以pattern格式格式化事件，并直接输出到流
+     *
+     * @param logger 日志器
+     * @param level 日志等级
+     * @param event 日志事件
+     */
+    std::ostream &format(std::ostream &os, std::shared_ptr<Logger> logger,
+                         LogLevel::Level level, LogEvent::ptr event);
 
-  class FormatItem {
-  public:
-    typedef std::shared_ptr<FormatItem> ptr;
-    virtual ~FormatItem(){};
-    virtual void format(std::ostream &os, std::shared_ptr<Logger> logger,
-                        LogLevel::Level level, LogEvent::ptr event) = 0;
-  };
+    class FormatItem {
+    public:
+        typedef std::shared_ptr<FormatItem> ptr;
+        virtual ~FormatItem(){};
+        virtual void format(std::ostream &os, std::shared_ptr<Logger> logger,
+                            LogLevel::Level level, LogEvent::ptr event) = 0;
+    };
 
 private:
-  std::string m_pattern;
-  std::list<FormatItem::ptr> m_items;
-  static std::map<std::string, std::function<LogFormatter::FormatItem::ptr(
-                                   const std::string &str)>>
-      format_items;
+    std::string m_pattern;
+    std::list<FormatItem::ptr> m_items;
+    static std::map<std::string, std::function<LogFormatter::FormatItem::ptr(
+                                     const std::string &str)>>
+        format_items;
 };
 
 /**
@@ -172,101 +173,110 @@ private:
  */
 class LogAppender {
 public:
-  typedef std::shared_ptr<LogAppender> ptr;
-  enum LogAppenderType { UNKNOWN, FILE, STD };
+    typedef std::shared_ptr<LogAppender> ptr;
+    typedef SpinLock MutexType;
 
-  virtual ~LogAppender() {}
-  virtual LogAppenderType getType() = 0;
-  virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
-                   LogEvent::ptr event) = 0;
+    enum LogAppenderType { UNKNOWN, FILE, STD };
 
-  static LogAppenderType getTypeByString(const std::string &str);
-  static std::string getStringByType(LogAppenderType type);
+    virtual ~LogAppender() {}
+    virtual LogAppenderType getType() = 0;
+    virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
+                     LogEvent::ptr event) = 0;
 
-  void setFormatter(const LogFormatter::ptr val) {
-    m_formatter = val;
-    m_has_formattern = true;
-  }
+    static LogAppenderType getTypeByString(const std::string &str);
+    static std::string getStringByType(LogAppenderType type);
 
-  void setFormatter(const std::string &pattern) {
-    if (m_has_formattern) {
-      m_formatter->setPattern(pattern);
-    } else {
-      m_formatter.reset(new LogFormatter(pattern));
-      m_has_formattern = true;
-    }
-  }
+    void setFormatter(const LogFormatter::ptr val);
 
-  void setLevel(LogLevel::Level level) { m_level = level; };
-  LogFormatter::ptr getFormatter() const { return m_formatter; };
-  bool hasFormatter() const { return m_has_formattern; };
+    void setFormatter(const std::string &pattern);
+
+    void setLevel(LogLevel::Level level) { m_level = level; };
+    LogFormatter::ptr getFormatter() const { return m_formatter; };
+    bool hasFormatter() const { return m_has_formattern; };
 
 protected:
-  LogLevel::Level m_level = LogLevel::DEBUG;
-  LogFormatter::ptr m_formatter;
-  bool m_has_formattern = false;
+    LogLevel::Level m_level = LogLevel::DEBUG;
+    LogFormatter::ptr m_formatter;
+    bool m_has_formattern = false;
+    MutexType m_mutex;
 };
 //输出到控制台的Appender
 class StdOutLogAppender : public LogAppender {
 public:
-  typedef std::shared_ptr<StdOutLogAppender> ptr;
-  LogAppenderType getType() override { return FILE; }
-  void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
-           LogEvent::ptr event) override;
+    typedef std::shared_ptr<StdOutLogAppender> ptr;
+    LogAppenderType getType() override { return FILE; }
+    void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
+             LogEvent::ptr event) override;
 };
 
 //输出到文件的Appender
 class FileLogAppender : public LogAppender {
 public:
-  FileLogAppender(const std::string &path);
-  typedef std::shared_ptr<FileLogAppender> ptr;
-  LogAppenderType getType() override { return FILE; }
-  void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
-           LogEvent::ptr event) override;
+    FileLogAppender(const std::string &path);
+    typedef std::shared_ptr<FileLogAppender> ptr;
+    LogAppenderType getType() override { return FILE; }
+    void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
+             LogEvent::ptr event) override;
 
-  bool reopen();
+    bool reopen();
 
 private:
-  std::string m_fpath;
-  std::ofstream m_fstream;
+    std::string m_fpath;
+    std::ofstream m_fstream;
 };
 
 //日志输出器
 class Logger : public std::enable_shared_from_this<Logger> {
 public:
-  typedef std::shared_ptr<Logger> ptr;
-  Logger(const std::string &name = "root");
+    typedef std::shared_ptr<Logger> ptr;
+    typedef SpinLock MutexType;
 
-  void setDefaultFormatter(LogFormatter::ptr formatter);
-  void setDefaultFormatter(const std::string &str);
-  void addAppender(LogAppender::ptr appender);
-  void delAppender(LogAppender::ptr appender);
-  void clearAppenders();
+    Logger(const std::string &name = "root");
 
-  void log(LogLevel::Level level, LogEvent::ptr event);
+    /**
+     * @brief 修改默认的格式器
+     *
+     * @param formatter 格式器
+     */
+    void setDefaultFormatter(LogFormatter::ptr formatter);
+    void setDefaultFormatter(const std::string &str);
+    /**
+     * @brief 修改所有输出端的格式器
+     *
+     * @param formatter 格式器
+     */
+    void setFormatter(LogFormatter::ptr formatter);
+    void setFormatter(const std::string &str);
+    void addAppender(LogAppender::ptr appender);
+    void delAppender(LogAppender::ptr appender);
+    void clearAppenders();
 
-  void debug(LogEvent::ptr event);
-  void info(LogEvent::ptr event);
-  void warn(LogEvent::ptr event);
-  void error(LogEvent::ptr event);
-  void fatal(LogEvent::ptr event);
+    void log(LogLevel::Level level, LogEvent::ptr event);
 
-  LogLevel::Level getLevel() const { return m_level; };
-  const std::string &getName() const { return m_name; };
-  void setLevel(LogLevel::Level val) { m_level = val; };
+    void debug(LogEvent::ptr event);
+    void info(LogEvent::ptr event);
+    void warn(LogEvent::ptr event);
+    void error(LogEvent::ptr event);
+    void fatal(LogEvent::ptr event);
+
+    LogLevel::Level getLevel() const { return m_level; };
+    const std::string &getName() const { return m_name; };
+    void setLevel(LogLevel::Level val) { m_level = val; };
 
 private:
-  std::string m_name;
-  LogLevel::Level m_level; //满足该级别的日志才会被输出
-  /**
-   * @m_formatter
-   * 默认的formatter，如果添加的终端没有设置formatter就为其添加默认的formatter
-   */
-  LogFormatter::ptr m_formatter;
-  /**
-   * @m_appenders 输出终端列表
-   */
-  std::list<LogAppender::ptr> m_appenders;
+    std::string m_name;
+    LogLevel::Level m_level; //满足该级别的日志才会被输出
+    /**
+     * @m_formatter
+     * 默认的formatter，如果添加的终端没有设置formatter就为其添加默认的formatter
+     */
+    LogFormatter::ptr m_formatter;
+    /**
+     * @m_appenders 输出终端列表
+     */
+    std::list<LogAppender::ptr> m_appenders;
+
+    MutexType m_mutex;
 };
 
 /**
@@ -274,24 +284,26 @@ private:
  */
 class LoggerManager {
 public:
-  std::shared_ptr<LoggerManager> ptr;
-  /**
-   * @brief 通过名称获取日志器，没有时则自动创建
-   *
-   * @param name 日志器名
-   */
-  Logger::ptr getLogger(const std::string &name);
-  /**
-   * @brief 获取根日志器，没有则自动创建
-   *
-   */
-  Logger::ptr getRoot();
+    typedef std::shared_ptr<LoggerManager> ptr;
+    typedef SpinLock MutexType;
+    /**
+     * @brief 通过名称获取日志器，没有时则自动创建
+     *
+     * @param name 日志器名
+     */
+    Logger::ptr getLogger(const std::string &name);
+    /**
+     * @brief 获取根日志器，没有则自动创建
+     *
+     */
+    Logger::ptr getRoot();
 
-  // void setLoggersFromConfig();
+    // void setLoggersFromConfig();
 
 private:
-  std::unordered_map<std::string, Logger::ptr> m_loggers;
-  Logger::ptr m_root_logger;
+    std::unordered_map<std::string, Logger::ptr> m_loggers;
+    Logger::ptr m_root_logger;
+    MutexType m_mutex;
 };
 
 typedef Singleton<LoggerManager> LoggerMgr;
