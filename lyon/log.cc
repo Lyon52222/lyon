@@ -9,19 +9,19 @@
 namespace lyon {
 
 class StringFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     StringFormatItem(const std::string &str = "") : m_str(str) {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
         os << m_str;
     }
 
-  private:
+private:
     std::string m_str;
 };
 
 class MessageFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     MessageFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -30,7 +30,7 @@ class MessageFormatItem : public LogFormatter::FormatItem {
 };
 
 class LevelFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     LevelFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -39,7 +39,7 @@ class LevelFormatItem : public LogFormatter::FormatItem {
 };
 
 class ElapseFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     ElapseFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -48,7 +48,7 @@ class ElapseFormatItem : public LogFormatter::FormatItem {
 };
 
 class DataTimeFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     DataTimeFormatItem(const std::string &format = "%Y-%m-%d %H-%M-%S")
         : m_format(format) {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
@@ -61,12 +61,12 @@ class DataTimeFormatItem : public LogFormatter::FormatItem {
         os << buf;
     }
 
-  private:
+private:
     std::string m_format;
 };
 
 class FileNameFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     FileNameFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -75,7 +75,7 @@ class FileNameFormatItem : public LogFormatter::FormatItem {
 };
 
 class FileLineFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     FileLineFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -84,7 +84,7 @@ class FileLineFormatItem : public LogFormatter::FormatItem {
 };
 
 class ThreadIdFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     ThreadIdFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -93,7 +93,7 @@ class ThreadIdFormatItem : public LogFormatter::FormatItem {
 };
 
 class ThreadNameFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     ThreadNameFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -102,7 +102,7 @@ class ThreadNameFormatItem : public LogFormatter::FormatItem {
 };
 
 class NewLineFomatItem : public LogFormatter::FormatItem {
-  public:
+public:
     NewLineFomatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -111,7 +111,7 @@ class NewLineFomatItem : public LogFormatter::FormatItem {
 };
 
 class TabFomatItem : public LogFormatter::FormatItem {
-  public:
+public:
     TabFomatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -120,7 +120,7 @@ class TabFomatItem : public LogFormatter::FormatItem {
 };
 
 class FiberIdFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     FiberIdFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -129,7 +129,7 @@ class FiberIdFormatItem : public LogFormatter::FormatItem {
 };
 
 class LoggerNameFormatItem : public LogFormatter::FormatItem {
-  public:
+public:
     LoggerNameFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, std::shared_ptr<Logger> logger,
                 LogLevel::Level level, LogEvent::ptr event) override {
@@ -349,7 +349,7 @@ void LogFormatter::parsePattern() {
         vec.emplace_back(sstr, std::string(), 0);
     }
 
-    for (int i = 0; i < vec.size(); i++) {
+    for (size_t i = 0; i < vec.size(); i++) {
         int item_type = std::get<2>(vec[i]);
         if (item_type == 0) {
             m_items.push_back(
@@ -427,7 +427,7 @@ struct ConfigAppender {
  * @brief 将string转化为ConfigAppender
  */
 template <> class LexicalCast<std::string, ConfigAppender> {
-  public:
+public:
     ConfigAppender operator()(const std::string &s) {
         YAML::Node app = YAML::Load(s);
         if (!app["type"].IsDefined()) {
@@ -468,7 +468,7 @@ template <> class LexicalCast<std::string, ConfigAppender> {
 };
 
 template <> class LexicalCast<ConfigAppender, std::string> {
-  public:
+public:
     std::string operator()(const ConfigAppender &appender) {
         YAML::Node node;
         node["type"] = LogAppender::getStringByType(appender.type);
@@ -502,7 +502,7 @@ struct ConfigLogger {
  * @brief 将string转化为ConfigLogger
  */
 template <> class LexicalCast<std::string, ConfigLogger> {
-  public:
+public:
     ConfigLogger operator()(const std::string &s) {
         YAML::Node log = YAML::Load(s);
 
@@ -533,7 +533,7 @@ template <> class LexicalCast<std::string, ConfigLogger> {
  * @brief 将ConfigLogger转化为string
  */
 template <> class LexicalCast<ConfigLogger, std::string> {
-  public:
+public:
     std::string operator()(const ConfigLogger &logger) {
         YAML::Node node;
         node["name"] = logger.name;

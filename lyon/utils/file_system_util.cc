@@ -1,4 +1,5 @@
 #include "file_system_util.h"
+#include <string.h>
 namespace lyon {
 
 /**

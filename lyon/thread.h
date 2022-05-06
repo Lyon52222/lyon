@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <pthread.h>
+#include <string>
 #include <thread>
 
 namespace lyon {
@@ -13,7 +14,7 @@ namespace lyon {
  * @brief pthread的封装类
  */
 class Thread : boost::noncopyable {
-  public:
+public:
     typedef std::shared_ptr<Thread> ptr;
     Thread(std::function<void()> cb, const std::string &name);
     ~Thread();
@@ -26,7 +27,7 @@ class Thread : boost::noncopyable {
     static Thread *GetThis();
     void join();
 
-  private:
+private:
     static void *run(void *arg);
 
     std::string m_name;

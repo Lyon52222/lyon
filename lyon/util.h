@@ -2,6 +2,7 @@
 #define __LYON_UTIL_H__
 #include <pthread.h>
 #include <stdint.h>
+#include <string>
 #include <sys/syscall.h>
 #include <thread>
 #include <unistd.h>

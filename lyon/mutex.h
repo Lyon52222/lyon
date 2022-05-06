@@ -8,21 +8,19 @@
 #include <string>
 
 namespace lyon {
-// NOTE: macos 不支持创建无名信号量
-class NamedSemaphore : boost::noncopyable {
-  public:
-    NamedSemaphore(const std::string &name, uint32_t count);
-    ~NamedSemaphore();
+class Semaphore : boost::noncopyable {
+public:
+    Semaphore(uint32_t count);
+    ~Semaphore();
     void wait();
     void notify();
 
-  private:
-    sem_t *m_semaphore;
-    std::string m_name;
+private:
+    sem_t m_semaphore;
 };
 
 template <class T> struct ScopeLockImpl {
-  public:
+public:
     ScopeLockImpl(T &mutex) : m_mutex(mutex) {
         m_mutex.lock();
         m_locked = true;
@@ -44,13 +42,13 @@ template <class T> struct ScopeLockImpl {
 
     ~ScopeLockImpl() { unlock(); }
 
-  private:
+private:
     T &m_mutex;
     bool m_locked = false;
 };
 
 template <class T> struct ReadScopeLockImpl {
-  public:
+public:
     ReadScopeLockImpl(T &mutex) : m_mutex(mutex) {
         m_mutex.rdlock();
         m_locked = true;
@@ -72,13 +70,13 @@ template <class T> struct ReadScopeLockImpl {
 
     ~ReadScopeLockImpl() { unlock(); }
 
-  private:
+private:
     T &m_mutex;
     bool m_locked = false;
 };
 
 template <class T> struct WriteScopeLockImpl {
-  public:
+public:
     WriteScopeLockImpl(T &mutex) : m_mutex(mutex) {
         m_mutex.wrlock();
         m_locked = true;
@@ -100,13 +98,13 @@ template <class T> struct WriteScopeLockImpl {
 
     ~WriteScopeLockImpl() { unlock(); }
 
-  private:
+private:
     T &m_mutex;
     bool m_locked = false;
 };
 
 class Mutex : boost::noncopyable {
-  public:
+public:
     typedef ScopeLockImpl<Mutex> Lock;
     Mutex() { pthread_mutex_init(&m_mutex, nullptr); }
 
@@ -116,12 +114,12 @@ class Mutex : boost::noncopyable {
 
     ~Mutex() { pthread_mutex_destroy(&m_mutex); }
 
-  private:
+private:
     pthread_mutex_t m_mutex;
 };
 
 class RWMutex : boost::noncopyable {
-  public:
+public:
     typedef ReadScopeLockImpl<RWMutex> RDLock;
     typedef WriteScopeLockImpl<RWMutex> WRLock;
 
@@ -135,19 +133,27 @@ class RWMutex : boost::noncopyable {
 
     ~RWMutex() { pthread_rwlock_destroy(&m_mutex); }
 
-  private:
+private:
     pthread_rwlock_t m_mutex;
 };
 
-// class SpinLock : boost::noncopyable {
-//   public:
-//     typedef ScopeLockImpl<SpinLock> Lock;
+class SpinLock : boost::noncopyable {
+public:
+    typedef ScopeLockImpl<SpinLock> Lock;
+    SpinLock() { pthread_spin_init(&m_mutex, 0); }
 
-//   private:
-// };
+    void lock() { pthread_spin_lock(&m_mutex); }
+
+    void unlock() { pthread_spin_unlock(&m_mutex); }
+
+    ~SpinLock() { pthread_spin_destroy(&m_mutex); }
+
+private:
+    pthread_spinlock_t m_mutex;
+};
 
 class CASLock : boost::noncopyable {
-  public:
+public:
     typedef ScopeLockImpl<CASLock> Lock;
     CASLock() { m_mutex.clear(); }
     ~CASLock() {}
@@ -163,7 +169,7 @@ class CASLock : boost::noncopyable {
                                                std::memory_order_release);
     }
 
-  private:
+private:
     volatile std::atomic_flag m_mutex;
 };
 

@@ -36,8 +36,8 @@ void *Thread::run(void *arg) {
     t_thread = thread;
     t_thread_name = thread->m_name;
     thread->m_id = GetThreadId();
-    // INFO: macos 只支持这一种pthread_setname_np
-    pthread_setname_np(thread->m_name.substr(0, 15).c_str());
+
+    pthread_setname_np(pthread_self(), thread->m_name.substr(0, 15).c_str());
 
     std::function<void()> cb;
     cb.swap(thread->m_cb);

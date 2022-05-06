@@ -11,7 +11,7 @@
 namespace lyon {
 
 class FSUtil {
-  public:
+public:
     static std::string Dirname(const std::string &filename);
     static std::string Basename(const std::string &filename);
     static void ListAllFile(const std::string &path, const std::string &subfix,

@@ -1,6 +1,8 @@
 #include "util.h"
 #include <pthread.h>
+#include <sys/syscall.h>
 #include <thread>
+#include <unistd.h>
 
 namespace lyon {
 /**
@@ -10,8 +12,7 @@ namespace lyon {
  */
 uint64_t GetThreadId() {
     uint64_t id;
-    // NOTE: syscall 在macos10. 后被弃用了。
-    pthread_threadid_np(0, &id);
+    syscall(SYS_gettid);
     return id;
 }
 uint32_t GetFiberId() { return 0; }
