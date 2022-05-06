@@ -36,8 +36,7 @@ void printYAML(const YAML::Node &node, int level) {
 }
 
 int main() {
-    YAML::Node root =
-        YAML::LoadFile("/Users/admin/Code/C++/lyon/bin/conf/log.yml");
+    YAML::Node root = YAML::LoadFile("/Users/admin/Code/C++/lyon/conf/log.yml");
     printYAML(root, 0);
 
     std::cout << "------------------------------" << std::endl;
