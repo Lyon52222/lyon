@@ -36,8 +36,7 @@ void printYAML(const YAML::Node &node, int level) {
 }
 
 int main() {
-    YAML::Node root =
-        YAML::LoadFile("/Users/admin/Code/C++/lyon/bin/conf/log.yml");
+    YAML::Node root = YAML::LoadFile("/home/lyon/code/C++/lyon/conf/log.yml");
     printYAML(root, 0);
 
     std::cout << "------------------------------" << std::endl;
@@ -56,8 +55,7 @@ int main() {
               << std::endl;
     std::cout << "------------------------------" << std::endl;
 
-    lyon::Config::LoadFromConfigFile(
-        "/Users/admin/Code/C++/lyon/bin/conf/log.yml");
+    lyon::Config::LoadFromConfigFile("/home/lyon/code/C++/lyon/conf/log.yml");
 
     std::cout << lyon::Config::Lookup<std::string>("ip")->toString()
               << std::endl;

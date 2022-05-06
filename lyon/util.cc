@@ -12,7 +12,7 @@ namespace lyon {
  */
 uint64_t GetThreadId() {
     uint64_t id;
-    syscall(SYS_gettid);
+    id = syscall(SYS_gettid);
     return id;
 }
 uint32_t GetFiberId() { return 0; }

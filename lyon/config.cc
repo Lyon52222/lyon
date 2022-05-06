@@ -88,4 +88,11 @@ bool Config::CheckName(const std::string &name) {
     return true;
 }
 
+void Config::VisitConfigs(std::function<void(ConfigVarBase::ptr)> f) {
+    RWMutexType::RDLock lock(GetRWMutex());
+    for (auto &config : GetConfigs()) {
+        f(config.second);
+    }
+}
+
 } // namespace lyon

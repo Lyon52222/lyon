@@ -2,18 +2,17 @@
 #define __LYON_CONFIG_H__
 
 #include "log.h"
+#include "mutex.h"
 #include "util.h"
 #include <boost/lexical_cast.hpp>
 #include <exception>
 #include <memory>
-#include <mutex.h>
 #include <sstream>
 #include <stdexcept>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/node/type.h>
 #include <yaml-cpp/yaml.h>
 namespace lyon {
-// TODO: add lock
 
 /**
  * @brief 两种类型的转换
@@ -178,14 +177,19 @@ public:
     typedef std::shared_ptr<ConfigVar> ptr;
     typedef std::function<void(const T &old_val, const T &new_val)>
         on_change_cb;
-    typedef RWMutex MutexType;
+    typedef RWMutex RWMutexType;
 
     ConfigVar(const std::string &name, const T &default_value,
               const std::string &description = "")
         : ConfigVarBase(name, description), m_val(default_value) {}
+
+    /**
+     * @brief 将配置项转换为Yaml string
+     *
+     */
     std::string toString() override {
         try {
-            return ToStr()(m_val);
+            return ToStr()(getVal());
         } catch (std::exception &e) {
             LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
                 << "ConfigVar::toString exception " << e.what()
@@ -194,6 +198,12 @@ public:
         return "";
     }
 
+    /**
+     * @brief 从Yaml string 构建配置项
+     *
+     * @param str Yaml string
+     * @return 构建是否成功
+     */
     bool fromString(const std::string &str) override {
         try {
             setVal(FromStr()(str));
@@ -208,24 +218,38 @@ public:
     }
 
     const T &getVal() {
-        MutexType::RDLock lock(m_mutex);
+        RWMutexType::RDLock lock(m_mutex);
         return m_val;
     }
 
     void setVal(const T &val) {
-        if (val != m_val) {
+        {
+            RWMutexType::RDLock lock(m_mutex);
+            if (val == m_val) {
+                return;
+            }
             onChange(m_val, val);
-            m_val = val;
         }
+
+        RWMutexType::WRLock lock(m_mutex);
+        m_val = val;
     }
 
+    /**
+     * @brief 设置配置项发生改变时的回调函数
+     *
+     * @param cb 回调函数
+     * @return 回调函数唯一标识
+     */
     uint32_t addOnChange(const on_change_cb cb) {
         static uint32_t cb_id = 0;
+        RWMutexType::WRLock lock(m_mutex);
         m_cbs[cb_id++] = cb;
         return cb_id - 1;
     }
 
     bool delOnChange(uint32_t cb_id) {
+        RWMutexType::WRLock lock(m_mutex);
         if (m_cbs.find(cb_id) == m_cbs.end()) {
             return false;
         } else {
@@ -234,7 +258,10 @@ public:
         }
     }
 
-    void clearOnChange() { m_cbs.clear(); }
+    void clearOnChange() {
+        RWMutexType::WRLock lock(m_mutex);
+        m_cbs.clear();
+    }
 
 private:
     T m_val;
@@ -246,14 +273,23 @@ private:
         }
     }
 
-    MutexType m_mutex;
+    RWMutexType m_mutex;
 };
 
 class Config {
 public:
     typedef std::shared_ptr<Config> ptr;
     typedef std::unordered_map<std::string, ConfigVarBase::ptr> ConfigVarMap;
+    typedef RWMutex RWMutexType;
 
+    /**
+     * @brief 添加配置项
+     *
+     * @tparam T 配置项类型
+     * @param name 配置名
+     * @param default_value 配置项值
+     * @param description 配置项描述
+     */
     template <class T>
     static typename ConfigVar<T>::ptr
     SetConfig(const std::string &name, const T &default_value,
@@ -272,12 +308,20 @@ public:
 
         typename ConfigVar<T>::ptr v(
             new ConfigVar<T>(name, default_value, description));
+        RWMutexType::WRLock lock(GetRWMutex());
         GetConfigs()[name] = v;
         return v;
     }
 
+    /**
+     * @brief 检查配置项是否存在并返回
+     *
+     * @tparam T 配置项类型
+     * @param name 配置名
+     */
     template <class T>
     static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
+        RWMutexType::RDLock lock(GetRWMutex());
         auto itr = GetConfigs().find(name);
         if (itr == GetConfigs().end()) {
             // LYON_LOG_INFO(LYON_LOG_GET_ROOT())
@@ -287,11 +331,34 @@ public:
         return std::dynamic_pointer_cast<ConfigVar<T>>(itr->second);
     }
 
+    /**
+     * @brief 从Yaml节点加载配置项
+     *
+     * @param root Yaml节点
+     */
     static void LoadFromYaml(const YAML::Node &root);
 
+    /**
+     * @brief 从配置文件加载配置项
+     *
+     * @param path 配置文件路径
+     */
     static void LoadFromConfigFile(const std::string &path);
 
+    /**
+     * @brief 检查配置名的合法性
+     *
+     * @param name 配置名
+     * @return 配置名是否合法
+     */
     static bool CheckName(const std::string &name);
+
+    /**
+     * @brief 使用访问函数f对所有配置项进行访问
+     *
+     * @param f 访问函数
+     */
+    static void VisitConfigs(std::function<void(ConfigVarBase::ptr)> f);
 
     // static ConfigVarMap m_configs;
     // 因为类的静态成员变量需要在类的外部进行初始化。
@@ -305,7 +372,13 @@ public:
         return m_configs;
     }
 
+    static RWMutexType &GetRWMutex() {
+        static RWMutexType m_mutex;
+        return m_mutex;
+    }
+
 private:
+    RWMutexType m_mutex;
 };
 
 } // namespace lyon

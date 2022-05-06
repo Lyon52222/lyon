@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.23.1)
 project(lyon)
 
+option(BUILD_TEST "ON for complile test" ON)
+
 include(cmake/utils.cmake)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -15,6 +17,7 @@ set(
   lyon/util.cc
   lyon/config.cc
   lyon/thread.cc
+  lyon/mutex.cc
   lyon/utils/file_system_util.cc
 )
 
@@ -27,10 +30,12 @@ set(
   lyon
 )
 
-lyon_add_executable(test_log "tests/test_log.cc" lyon "${LIBS}")
-lyon_add_executable(test_config "tests/test_config.cc" lyon "${LIBS}")
-lyon_add_executable(test_fsutils "tests/test_fsutils.cc" lyon "${LIBS}")
-lyon_add_executable(test_thread "tests/test_thread.cc" lyon "${LIBS}")
+if(BUILD_TEST)
+  lyon_add_executable(test_log "tests/test_log.cc" lyon "${LIBS}")
+  lyon_add_executable(test_config "tests/test_config.cc" lyon "${LIBS}")
+  lyon_add_executable(test_fsutils "tests/test_fsutils.cc" lyon "${LIBS}")
+  lyon_add_executable(test_thread "tests/test_thread.cc" lyon "${LIBS}")
+endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
