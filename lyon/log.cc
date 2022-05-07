@@ -378,9 +378,10 @@ void LogFormatter::parsePattern() {
             vec.emplace_back(sstr, fmt, 2);
             sstr.clear();
         } else {
-            std::cout << "pattern parse error:" << m_pattern << '-'
-                      << m_pattern.substr(i) << std::endl;
-            vec.emplace_back("<pattern erroe>", fmt, 0);
+            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+                << "pattern parse error:" << m_pattern << '-'
+                << m_pattern.substr(i) << std::endl;
+            vec.emplace_back("<pattern error>", fmt, 0);
         }
         i = j - 1;
     }
@@ -647,6 +648,7 @@ struct LogConfigInit {
 
             // LYON_LOG_INFO(LYON_LOG_GET_LOGGER("system"))
             //     << "system logger test";
+            LYON_LOG_INFO(LYON_LOG_GET_ROOT()) << "Config logs has changed";
         });
     }
 };
@@ -663,6 +665,9 @@ Logger::ptr LoggerManager::getLogger(const std::string &name) {
     if (item == m_loggers.end()) {
         auto logger = Logger::ptr(new Logger(name));
         m_loggers[name] = logger;
+        if (name == "root") {
+            m_root_logger = logger;
+        }
         return logger;
     } else {
         return item->second;

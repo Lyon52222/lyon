@@ -1,4 +1,5 @@
 #include "util.h"
+#include "fiber.h"
 #include "log.h"
 #include <cstdlib>
 #include <execinfo.h>
@@ -12,18 +13,13 @@ namespace lyon {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
-/**
- * @brief 获取线程ID
- *
- * @return 线程的ID
- */
 uint64_t GetThreadId() {
     uint64_t id;
     id = syscall(SYS_gettid);
     return id;
 }
 
-uint32_t GetFiberId() { return 0; }
+uint32_t GetFiberId() { return Fiber::GetFiberId(); }
 
 void BackTrace(std::vector<std::string> &bt, int size, int skip) {
     void **array = (void **)malloc(sizeof(void *) * size);

@@ -18,6 +18,8 @@ set(
   lyon/config.cc
   lyon/thread.cc
   lyon/mutex.cc
+  lyon/fiber.cc
+  lyon/scheduler.cc
   lyon/utils/file_system_util.cc
 )
 
@@ -36,6 +38,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_fsutils "tests/test_fsutils.cc" lyon "${LIBS}")
   lyon_add_executable(test_util "tests/test_util.cc" lyon "${LIBS}")
   lyon_add_executable(test_thread "tests/test_thread.cc" lyon "${LIBS}")
+  lyon_add_executable(test_fiber "tests/test_fiber.cc" lyon "${LIBS}")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

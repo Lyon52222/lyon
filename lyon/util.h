@@ -30,7 +30,7 @@ uint32_t GetFiberId();
  * @param size 查询的调用深度
  * @param skip 跳过深度
  */
-void BackTrace(std::vector<std::string> &bt, int size, int skip);
+void BackTrace(std::vector<std::string> &bt, int size = 64, int skip = 1);
 
 /**
  * @brief 将函数调用栈转化为string
@@ -39,7 +39,8 @@ void BackTrace(std::vector<std::string> &bt, int size, int skip);
  * @param skip 查询的跳过深度
  * @param prefix 调用栈的字符串前缀
  */
-std::string BackTraceToString(int size, int skip, const std::string &prefix);
+std::string BackTraceToString(int size = 64, int skip = 2,
+                              const std::string &prefix = " ");
 
 /**
  * @brief 检查配置名的有效性

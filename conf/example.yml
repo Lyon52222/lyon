@@ -1,0 +1,18 @@
+logs:
+    - name: root
+      level: info
+      appenders:
+        - type: FileLogAppender
+          level: DEBUG
+          file: logs/lyon/root.txt
+        - type: StdOutLogAppender
+          formatter : "%f%T%l%m%n%T"
+    - name: system
+      level: info
+      appenders:
+        - type: FileLogAppender
+          file: logs/lyon/system.txt
+        - type: StdOutLogAppender
+
+fiber:
+      stack_size: 4096

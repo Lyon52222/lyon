@@ -42,15 +42,21 @@ public:
      * @param use_caller 是否在Mainfiber上调度
      */
     Fiber(std::function<void()> cb, uint32_t stacksize = 0,
-          bool use_caller = false);
+          bool use_caller = true);
     ~Fiber();
 
+    uint64_t getId() { return m_id; }
+
     /**
-     * @brief 重置协程调用函数
+     * @brief 重置协程调用函数,用于重复利用协程的栈空间
      *
      * @param cb 协程调用函数
      */
     void reset(std::function<void()> cb);
+
+    void call();
+
+    void back();
 
     /**
      * @brief 切换到当前协程
@@ -78,17 +84,17 @@ public:
     static void CallerMainFunc();
 
     /**
-     * @brief 设置当前协程
+     * @brief 设置当前正在运行的协程
      *
      * @param f 协程指针
      */
-    static void SetThis(Fiber *f);
+    static void SetCurentFiber(Fiber *f);
 
     /**
-     * @brief 获取当前协程
+     * @brief 获取当前正在运行的协程
      *
      */
-    static Fiber::ptr GetThis();
+    static Fiber::ptr GetCurrentFiber();
 
     /**
      * @brief 协程切换到后台并且设置为ready状态
@@ -102,10 +108,22 @@ public:
      */
     static void YieldToHold();
 
+    /**
+     * @brief 获取总协程数
+     *
+     * @return 当前线程中的协程数
+     */
     static uint64_t TotalFibers();
 
+    /**
+     * @brief 获取当前协程Id
+     *
+     * @return 协程Id
+     */
+    static uint64_t GetFiberId();
+
 private:
-    uint64_t m_id;
+    uint64_t m_id = 0;
     uint32_t m_stacksize = 0;
     bool m_use_caller = false;
     State m_state = INIT;
