@@ -118,6 +118,10 @@ private:
     bool m_locked = false;
 };
 
+/**
+ * @brief 互斥量，等待的线程会陷入休眠，涉及到系统态的上下文切换。
+ * 常用于需要长时间等待的互斥操作
+ */
 class Mutex : boost::noncopyable {
 public:
     typedef ScopeLockImpl<Mutex> Lock;
@@ -133,6 +137,10 @@ private:
     pthread_mutex_t m_mutex;
 };
 
+/**
+ * @brief 读写锁，读写分离。读读不互斥。
+ * 常用于读多写少的情况
+ */
 class RWMutex : boost::noncopyable {
 public:
     typedef ReadScopeLockImpl<RWMutex> RDLock;
@@ -152,6 +160,11 @@ private:
     pthread_rwlock_t m_mutex;
 };
 
+/**
+ * @brief
+ * 自旋锁，系统实现的自旋锁，一般是先自旋等待一段时间，然后在休眠。自选等待不休眠，占用CPU。
+ * 常用于短时间占用的锁
+ */
 class SpinLock : boost::noncopyable {
 public:
     typedef ScopeLockImpl<SpinLock> Lock;
@@ -167,6 +180,9 @@ private:
     pthread_spinlock_t m_mutex;
 };
 
+/**
+ * @brief 自己通过CAS操作实现的自旋转锁，一只占用CPU
+ */
 class CASLock : boost::noncopyable {
 public:
     typedef ScopeLockImpl<CASLock> Lock;

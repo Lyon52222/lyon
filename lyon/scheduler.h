@@ -2,6 +2,8 @@
 #define __LYON_SCHEDULER_H__
 
 #include "fiber.h"
+#include "mutex.h"
+#include "thread.h"
 #include <memory>
 namespace lyon {
 
@@ -11,9 +13,13 @@ namespace lyon {
 class Scheduler {
 public:
     typedef std::shared_ptr<Scheduler> ptr;
+    typedef Mutex MutexType;
 
 public:
     static Fiber *GetMainFiber();
+
+private:
+    MutexType m_mutex;
 };
 
 } // namespace lyon
