@@ -51,6 +51,9 @@ Thread *Thread::GetThis() { return t_thread; }
 
 Thread::Thread(std::function<void()> cb, const std::string &name)
     : m_name(name), m_cb(cb) {
+    if (name.empty()) {
+        m_name = "UNKNOWN";
+    }
     int rt = pthread_create(&m_thread, nullptr, &Thread::run, this);
     if (rt) {
         LYON_LOG_ERROR(g_logger)

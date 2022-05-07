@@ -28,13 +28,14 @@
         assert(x);                                                             \
     }
 
-#define LYON_ASSERT2(x, m)                                                     \
+// BUG:输出w就会显示乱码
+#define LYON_ASSERT2(x, w)                                                     \
     if (LYON_UNLIKELY(!(x))) {                                                 \
         LYON_LOG_ERROR(LYON_LOG_GET_ROOT())                                    \
             << std::endl                                                       \
-            << m << std::endl                                                  \
-            << "ASSERTION: " #x << "\nbacktrace:\n"                            \
+            << w << "ASSERTION: " #x << "\nbacktrace:\n"                       \
             << lyon::BackTraceToString(20, 2, "  ");                           \
         assert(x);                                                             \
     }
+
 #endif // !__LYON_MACRO_H__

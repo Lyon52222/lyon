@@ -12,6 +12,10 @@ namespace lyon {
 
 class Fiber : public std::enable_shared_from_this<Fiber> {
 private:
+    /**
+     * @brief 主协程的构造函数
+     *
+     */
     Fiber();
 
 public:
@@ -20,17 +24,17 @@ public:
      * @{name} 协程状态
      */
     enum State {
-        //初始化
+        //初始化, 协程正在初始化中，不保证stack已经分配
         INIT,
-        //暂停
-        HOLD,
-        //执行
-        EXEC,
-        //结束
-        TERM,
-        //就绪
+        //就绪，协程已经完成初始化工作，可以随时调度
         READY,
-        //异常
+        //暂停，协程被暂停，资源依然保存，可随时运行
+        HOLD,
+        //执行，正在执行中
+        EXEC,
+        //结束，协程正常结束
+        TERM,
+        //异常，协程非正常结束
         EXCEPT
     };
 
@@ -42,7 +46,7 @@ public:
      * @param use_caller 是否在Mainfiber上调度
      */
     Fiber(std::function<void()> cb, uint32_t stacksize = 0,
-          bool use_caller = true);
+          bool use_caller = false);
     ~Fiber();
 
     uint64_t getId() { return m_id; }
@@ -64,6 +68,7 @@ public:
      */
     void swapIn();
 
+private:
     /**
      * @brief 将当前协程切换到后台
      *
@@ -97,13 +102,13 @@ public:
     static Fiber::ptr GetCurrentFiber();
 
     /**
-     * @brief 协程切换到后台并且设置为ready状态
+     * @brief 将当前正在运行的协程切换到后台并且设置为ready状态
      *
      */
     static void YieldToReady();
 
     /**
-     * @brief 协程切换到后台并且设置为hold状态
+     * @brief 将当前正在运行的协程切换到后台并且设置为hold状态
      *
      */
     static void YieldToHold();
