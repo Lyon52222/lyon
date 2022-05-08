@@ -13,7 +13,7 @@ void fun1() {
     LYON_LOG_INFO(g_logger)
         << "name: " << lyon::Thread::GetName()
         << "\t this.name: " << lyon::Thread::GetThis()->getName()
-        << "\t id: " << lyon::GetThreadId()
+        << "\t id: " << lyon::GetCurrentThreadId()
         << "\t this.id: " << lyon::Thread::GetThis()->getId();
 
     for (int i = 0; i < 100000; i++) {

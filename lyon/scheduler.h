@@ -25,9 +25,16 @@ public:
 
     void start();
     void stop();
+    void run();
 
-    template <class FiberOrCb>
-    bool scheduleWithLock(FiberOrCb f, pthread_t thread) {
+    /**
+     * @brief 加锁添加调度任务
+     *
+     * @tparam FiberOrCb 任务类型
+     * @param f 调度任务
+     * @param thread 任务在哪个线程上执行
+     */
+    template <class FiberOrCb> void scheduleWithLock(FiberOrCb f, int thread) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
@@ -37,9 +44,16 @@ public:
             tickle();
     }
 
+    /**
+     * @brief 加锁批量添加调度任务
+     *
+     * @tparam InputIterator 迭代器类型
+     * @param begin 开始迭代器
+     * @param end 结束迭代器
+     * @param thread 任务在哪个线程上执行
+     */
     template <class InputIterator>
-    bool scheduleWithLock(InputIterator begin, InputIterator end,
-                          pthread_t thread) {
+    void scheduleWithLock(InputIterator begin, InputIterator end, int thread) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
@@ -55,12 +69,23 @@ public:
 
 public:
     static Fiber *GetMainFiber();
-    static Scheduler *GetThis();
+    /**
+     * @brief 获取当前线程的调度器
+     *
+     */
+    static Scheduler *GetCurrentScheduler();
 
 protected:
     virtual void tickle();
+    /**
+     * @brief 虚函数，子类实现用于做一些清理收尾工作
+     *
+     */
+    virtual bool stopping();
 
 private:
+    void setAsCurrentScheduler();
+
     /**
      * @brief 添加调度任务
      *
@@ -70,7 +95,7 @@ private:
      * @return 是否需要通知唤醒线程
      */
     template <class FiberOrCb>
-    bool scheduleWithoutLock(FiberOrCb f, pthread_t thread) {
+    bool scheduleWithoutLock(FiberOrCb f, int thread) {
         bool tickle = m_fibers.empty();
         FiberAndFunc ft(f, thread);
         if (ft.fiber || ft.cb) {
@@ -85,7 +110,7 @@ private:
     struct FiberAndFunc {
         Fiber::ptr fiber = nullptr;
         std::function<void()> cb = nullptr;
-        long long thread;
+        int thread;
         FiberAndFunc(Fiber::ptr f, int thr) : fiber(f), thread(thr) {}
 
         FiberAndFunc(Fiber::ptr *f, int thr) : thread(thr) { fiber.swap(*f); }
@@ -99,6 +124,15 @@ private:
         FiberAndFunc() : thread(-1) {}
     };
 
+protected:
+    std::vector<int> m_threadIds;
+    size_t m_threadCount = 0;
+    size_t m_activeThreadCount = 0;
+    size_t m_idleThreadCount = 0;
+    bool m_stopping = true;
+    bool m_autoStop = false;
+    int m_rootThread = 0;
+
 private:
     MutexType m_mutex;
     /**
@@ -109,6 +143,7 @@ private:
      * @m_fibers 需要被调度的工作
      */
     std::list<FiberAndFunc> m_fibers;
+    Fiber::ptr m_rootFiber;
     std::string m_name;
 };
 

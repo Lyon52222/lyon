@@ -1,6 +1,6 @@
 #include "config.h"
+#include "log.h"
 #include <algorithm>
-#include <log.h>
 #include <sstream>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/parser.h>

@@ -14,14 +14,14 @@ namespace lyon {
  *
  * @return 线程ID
  */
-uint64_t GetThreadId();
+uint64_t GetCurrentThreadId();
 
 /**
  * @brief 获取协程ID
  *
  * @return 协程ID
  */
-uint32_t GetFiberId();
+uint32_t GetCurrentFiberId();
 
 /**
  * @brief 查询函数的调用栈

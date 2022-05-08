@@ -50,6 +50,7 @@ public:
     ~Fiber();
 
     uint64_t getId() { return m_id; }
+    State getState() { return m_state; }
 
     /**
      * @brief 重置协程调用函数,用于重复利用协程的栈空间

@@ -22,8 +22,9 @@
     if (logger->getLevel() <= level)                                           \
     lyon::LogEventWrap(                                                        \
         lyon::LogEvent::ptr(new lyon::LogEvent(                                \
-            logger, __FILE__, __LINE__, lyon::GetThreadId(),                   \
-            lyon::Thread::GetName(), lyon::GetFiberId(), time(0), 0, level)))  \
+            logger, __FILE__, __LINE__, lyon::GetCurrentThreadId(),            \
+            lyon::Thread::GetName(), lyon::GetCurrentFiberId(), time(0), 0,    \
+            level)))                                                           \
         .getSS()
 
 #define LYON_LOG_DEBUG(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::DEBUG)
