@@ -1,10 +1,14 @@
 #include "config.h"
 #include <algorithm>
+#include <log.h>
 #include <sstream>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/parser.h>
 
 namespace lyon {
+
+// static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+static Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
 static void
 ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
@@ -66,19 +70,17 @@ void Config::LoadFromYaml(const YAML::Node &root) {
 void Config::LoadFromConfigFile(const std::string &path) {
     try {
         YAML::Node root = YAML::LoadFile(path);
-        LYON_LOG_INFO(LYON_LOG_GET_ROOT())
-            << "LoadConfig: " << path << " Success!";
+        LYON_LOG_INFO(g_logger) << "LoadConfig: " << path << " Success!";
         LoadFromYaml(root);
     } catch (...) {
-        LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-            << "LoadConfig: " << path << " Fail!";
+        LYON_LOG_ERROR(g_logger) << "LoadConfig: " << path << " Fail!";
     }
 }
 
 bool Config::CheckName(const std::string &name) {
 
     if (!IsConfigNameAvilable(name)) {
-        LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+        LYON_LOG_ERROR(g_logger)
             << "Name : " << name
             << " is not avilable : Config name should be named with "
                "[a-zA-Z0-9_]";

@@ -8,6 +8,9 @@
 
 namespace lyon {
 
+// static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+static Logger::ptr g_logger = LYON_LOG_GET_ROOT();
+
 class StringFormatItem : public LogFormatter::FormatItem {
 public:
     StringFormatItem(const std::string &str = "") : m_str(str) {}
@@ -262,7 +265,7 @@ bool FileLogAppender::reopen() {
     }
     FSUtil::OpenForWrite(m_fstream, m_fpath, std::ios::app);
     if (!m_fstream.is_open()) {
-        LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+        LYON_LOG_ERROR(g_logger)
             << "FileLogAppender: open " << m_fpath << " failed!";
         return false;
     }
@@ -378,9 +381,8 @@ void LogFormatter::parsePattern() {
             vec.emplace_back(sstr, fmt, 2);
             sstr.clear();
         } else {
-            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-                << "pattern parse error:" << m_pattern << '-'
-                << m_pattern.substr(i) << std::endl;
+            LYON_LOG_ERROR(g_logger) << "pattern parse error:" << m_pattern
+                                     << '-' << m_pattern.substr(i) << std::endl;
             vec.emplace_back("<pattern error>", fmt, 0);
         }
         i = j - 1;
@@ -472,15 +474,14 @@ public:
     ConfigAppender operator()(const std::string &s) {
         YAML::Node app = YAML::Load(s);
         if (!app["type"].IsDefined()) {
-            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-                << "Config appender must have a type!";
+            LYON_LOG_ERROR(g_logger) << "Config appender must have a type!";
             throw std::logic_error("Config appender must have a type!");
         }
         ConfigAppender appender;
         LogAppender::LogAppenderType apptype =
             LogAppender ::getTypeByString(app["type"].as<std::string>());
         if (apptype == LogAppender::UNKNOWN) {
-            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+            LYON_LOG_ERROR(g_logger)
                 << "Config appender type - " << app["type"].as<std::string>()
                 << " unknown!";
             throw std::logic_error("Config appender type unknown!");
@@ -489,7 +490,7 @@ public:
         }
 
         if (appender.type == LogAppender::FILE && (!app["file"].IsDefined())) {
-            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
+            LYON_LOG_ERROR(g_logger)
                 << "Config appender type FileLogAppender must indicate it's "
                    "file!";
             throw std::logic_error(
@@ -548,8 +549,7 @@ public:
         YAML::Node log = YAML::Load(s);
 
         if (!log["name"].IsDefined()) {
-            LYON_LOG_ERROR(LYON_LOG_GET_ROOT())
-                << "Config logs must have a name!";
+            LYON_LOG_ERROR(g_logger) << "Config logs must have a name!";
             throw std::logic_error("Config logs must have a name!");
         }
         ConfigLogger logger;
@@ -648,7 +648,7 @@ struct LogConfigInit {
 
             // LYON_LOG_INFO(LYON_LOG_GET_LOGGER("system"))
             //     << "system logger test";
-            LYON_LOG_INFO(LYON_LOG_GET_ROOT()) << "Config logs has changed";
+            LYON_LOG_INFO(g_logger) << "Config logs has changed";
         });
     }
 };
