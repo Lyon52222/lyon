@@ -60,7 +60,11 @@ Fiber::Fiber(std::function<void()> cb, uint32_t stacksize, bool use_caller)
         LYON_ASSERT2(false, "get context");
     }
 
-    Fiber::ptr cur = GetCurrentFiber();
+    //这一步是为了探测主协程是否存在，不存在就创建主协程
+    //不过如果是以调度器协程为主协程就不需要创建了
+    if (!use_caller)
+        Fiber::ptr cur = GetCurrentFiber();
+
     m_context.uc_link = nullptr;
     // m_context.uc_link = &cur->m_context;
     m_context.uc_stack.ss_sp = m_stack;

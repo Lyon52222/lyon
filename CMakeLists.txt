@@ -39,6 +39,8 @@ if(BUILD_TEST)
   lyon_add_executable(test_util "tests/test_util.cc" lyon "${LIBS}")
   lyon_add_executable(test_thread "tests/test_thread.cc" lyon "${LIBS}")
   lyon_add_executable(test_fiber "tests/test_fiber.cc" lyon "${LIBS}")
+  lyon_add_executable(test_scheduler "tests/test_scheduler.cc" lyon "${LIBS}")
+
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

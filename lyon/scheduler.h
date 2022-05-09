@@ -12,19 +12,36 @@ namespace lyon {
 
 /**
  * @brief 协程调度器，负责对协程进行调度
+ * 整个调度的思路是。调度器创建n个线程。每个线程都运行run函数。
+ * run函数遍历需要被调度的工作，并将其运行。
  */
 class Scheduler {
 public:
     typedef std::shared_ptr<Scheduler> ptr;
     typedef Mutex MutexType;
 
+    /**
+     * @brief 调度器构造函数
+     *
+     * @param threads 线程数量
+     * @param use_caller 是否将创建调度器的线程加入线程池中
+     * @param name 调度器名称
+     */
     Scheduler(size_t threads = 1, bool use_caller = true,
               const std::string &name = "");
 
     virtual ~Scheduler();
 
+    /**
+     * @brief 创建并运行线程池
+     *
+     */
     void start();
     void stop();
+    /**
+     * @brief 线程池中的线程运行的函数。用于对job进行调度
+     *
+     */
     void run();
 
     /**
@@ -34,7 +51,8 @@ public:
      * @param f 调度任务
      * @param thread 任务在哪个线程上执行
      */
-    template <class FiberOrCb> void scheduleWithLock(FiberOrCb f, int thread) {
+    template <class FiberOrFunc>
+    void scheduleWithLock(FiberOrFunc f, int thread = -1) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
@@ -53,7 +71,8 @@ public:
      * @param thread 任务在哪个线程上执行
      */
     template <class InputIterator>
-    void scheduleWithLock(InputIterator begin, InputIterator end, int thread) {
+    void scheduleWithLock(InputIterator begin, InputIterator end,
+                          int thread = -1) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
@@ -78,6 +97,11 @@ public:
 protected:
     virtual void tickle();
     /**
+     * @brief 无任务可调度时执行
+     *
+     */
+    virtual void idle();
+    /**
      * @brief 虚函数，子类实现用于做一些清理收尾工作
      *
      */
@@ -94,12 +118,12 @@ private:
      * @param thread 任务需要在那个线程上执行
      * @return 是否需要通知唤醒线程
      */
-    template <class FiberOrCb>
-    bool scheduleWithoutLock(FiberOrCb f, int thread) {
-        bool tickle = m_fibers.empty();
-        FiberAndFunc ft(f, thread);
+    template <class FiberOrFunc>
+    bool scheduleWithoutLock(FiberOrFunc f, int thread) {
+        bool tickle = m_jobs.empty();
+        Job ft(f, thread);
         if (ft.fiber || ft.cb) {
-            m_fibers.push_back(ft);
+            m_jobs.push_back(ft);
         }
         return tickle;
     }
@@ -107,28 +131,32 @@ private:
     /**
      * struct FiberAndFunc - 可被调度的单元，协程或者函数
      */
-    struct FiberAndFunc {
+    struct Job {
         Fiber::ptr fiber = nullptr;
         std::function<void()> cb = nullptr;
-        int thread;
-        FiberAndFunc(Fiber::ptr f, int thr) : fiber(f), thread(thr) {}
+        int thread = -1;
+        Job(Fiber::ptr f, int thr) : fiber(f), thread(thr) {}
 
-        FiberAndFunc(Fiber::ptr *f, int thr) : thread(thr) { fiber.swap(*f); }
+        Job(Fiber::ptr *f, int thr) : thread(thr) { fiber.swap(*f); }
 
-        FiberAndFunc(std::function<void()> f, int thr) : cb(f), thread(thr) {}
+        Job(std::function<void()> f, int thr) : cb(f), thread(thr) {}
 
-        FiberAndFunc(std::function<void()> *f, int thr) : thread(thr) {
-            cb.swap(*f);
+        Job(std::function<void()> *f, int thr) : thread(thr) { cb.swap(*f); }
+
+        Job() : thread(-1) {}
+
+        void reset() {
+            fiber = nullptr;
+            cb = nullptr;
+            thread = -1;
         }
-
-        FiberAndFunc() : thread(-1) {}
     };
 
 protected:
     std::vector<int> m_threadIds;
     size_t m_threadCount = 0;
-    size_t m_activeThreadCount = 0;
-    size_t m_idleThreadCount = 0;
+    std::atomic<size_t> m_activeThreadCount{0};
+    std::atomic<size_t> m_idleThreadCount{0};
     bool m_stopping = true;
     bool m_autoStop = false;
     int m_rootThread = 0;
@@ -142,7 +170,7 @@ private:
     /**
      * @m_fibers 需要被调度的工作
      */
-    std::list<FiberAndFunc> m_fibers;
+    std::list<Job> m_jobs;
     Fiber::ptr m_rootFiber;
     std::string m_name;
 };

@@ -10,7 +10,11 @@
 
 namespace lyon {
 
+// class Scheduler;
+
 class Fiber : public std::enable_shared_from_this<Fiber> {
+    friend class Scheduler;
+
 private:
     /**
      * @brief 主协程的构造函数
