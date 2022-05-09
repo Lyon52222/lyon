@@ -50,7 +50,7 @@ public:
      * @param use_caller 是否在Mainfiber上调度
      */
     Fiber(std::function<void()> cb, uint32_t stacksize = 0,
-          bool use_caller = false);
+          bool back_scheduler = false);
     ~Fiber();
 
     uint64_t getId() { return m_id; }
@@ -63,35 +63,43 @@ public:
      */
     void reset(std::function<void()> cb);
 
-    void call();
-
-    void back();
-
     /**
-     * @brief 切换到当前协程
+     * @brief 从该协程所在线程的主协程切换到该协程
      *
      */
-    void swapIn();
+    void mainFiberIn();
+
+    /**
+     * @brief 切换到该协程所在线程的主协程
+     *
+     */
+    void mainFiberOut();
+
+    /**
+     * @brief 从调度器协程切换到当前协程
+     *
+     */
+    void schedulerIn();
 
 private:
     /**
-     * @brief 将当前协程切换到后台
+     * @brief 将当前协程切换到调度器协程
      *
      */
-    void swapOut();
+    void schedulerOut();
 
 public:
     /**
      * @brief 协程执行函数，完成后返回主协程
      *
      */
-    static void MainFunc();
+    static void SchedulerFunc();
 
     /**
      * @brief 协程执行函数，完成后返回调用协程
      *
      */
-    static void CallerMainFunc();
+    static void MainFiberFunc();
 
     /**
      * @brief 设置当前正在运行的协程
@@ -110,13 +118,17 @@ public:
      * @brief 将当前正在运行的协程切换到后台并且设置为ready状态
      *
      */
-    static void YieldToReady();
+    static void ReadyToScheduler();
 
     /**
      * @brief 将当前正在运行的协程切换到后台并且设置为hold状态
      *
      */
-    static void YieldToHold();
+    static void HoldToScheduler();
+
+    static void ReadyToMainFiber();
+
+    static void HoldToMainFiber();
 
     /**
      * @brief 获取总协程数
@@ -133,6 +145,7 @@ public:
     static uint64_t GetFiberId();
 
 private:
+    //线程未创建协程时 主协程id号为0
     uint64_t m_id = 0;
     uint32_t m_stacksize = 0;
     bool m_use_caller = false;

@@ -1,12 +1,11 @@
 #include "lyon/log.h"
 #include <memory>
+
+static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
+
 int main(int argc, char *argv[]) {
 
-    lyon::Logger::ptr logger = LYON_LOG_GET_ROOT();
-    std::shared_ptr<lyon::LogAppender> stdo(new lyon::StdOutLogAppender());
-    logger->addAppender(stdo);
-
-    LYON_LOG_DEBUG(logger) << "this is a test";
+    LYON_LOG_DEBUG(g_logger) << "this is a test";
 
     return 0;
 }

@@ -14,14 +14,18 @@ void func() {
 }
 
 int main(int argc, char *argv[]) {
+
     LYON_LOG_INFO(g_logger) << "scheduler init";
-    lyon::Scheduler scheduler(3, false, "main");
+    lyon::Scheduler scheduler(1, false, "main");
 
     LYON_LOG_INFO(g_logger) << "scheduler start";
     scheduler.start();
+
     LYON_LOG_INFO(g_logger) << "add job";
     scheduler.scheduleWithLock(func);
-    // scheduler.stop();
 
+    scheduler.stop();
+
+    LYON_LOG_INFO(g_logger) << "end";
     return 0;
 }

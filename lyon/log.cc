@@ -254,6 +254,7 @@ void LogAppender::setFormatter(const std::string &pattern) {
         m_has_formattern = true;
     }
 }
+
 FileLogAppender::FileLogAppender(const std::string &path) : m_fpath(path) {
     reopen();
 }
@@ -278,6 +279,11 @@ void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
         MutexType::Lock lock(m_mutex);
         m_formatter->format(m_fstream, logger, level, event);
     }
+}
+
+LogAppender::ptr StdOutLogAppender::GetSingleton() {
+    static LogAppender::ptr stdoutappender(new StdOutLogAppender());
+    return stdoutappender;
 }
 
 void StdOutLogAppender::log(std::shared_ptr<Logger> logger,
@@ -630,7 +636,8 @@ struct LogConfigInit {
                     if (app.type == LogAppender::FILE) {
                         appender.reset(new FileLogAppender(app.file));
                     } else if (app.type == LogAppender::STD) {
-                        appender.reset(new StdOutLogAppender());
+                        // appender.reset(new StdOutLogAppender());
+                        appender = StdOutLogAppender::GetSingleton();
                     }
                     if (app.level != LogLevel::UNKNOWN)
                         appender->setLevel(app.level);
@@ -667,6 +674,9 @@ Logger::ptr LoggerManager::getLogger(const std::string &name) {
     auto item = m_loggers.find(name);
     if (item == m_loggers.end()) {
         auto logger = Logger::ptr(new Logger(name));
+        // logger->addAppender(LogAppender::ptr(new StdOutLogAppender()));
+        logger->addAppender(StdOutLogAppender::GetSingleton());
+
         m_loggers[name] = logger;
         if (name == "root") {
             m_root_logger = logger;
@@ -681,7 +691,9 @@ Logger::ptr LoggerManager::getRoot() {
     MutexType::Lock lock(m_mutex);
     if (!m_root_logger) {
         m_root_logger.reset(new Logger());
-        m_root_logger->addAppender(LogAppender::ptr(new StdOutLogAppender()));
+        // m_root_logger->addAppender(LogAppender::ptr(new
+        // StdOutLogAppender()));
+        m_root_logger->addAppender(StdOutLogAppender::GetSingleton());
         m_loggers[m_root_logger->getName()] = m_root_logger;
     }
     return m_root_logger;

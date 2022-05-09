@@ -13,7 +13,7 @@ namespace lyon {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
-static std::atomic<uint64_t> s_fiber_id{0};
+static std::atomic<uint64_t> s_fiber_id{1};
 static std::atomic<uint64_t> s_fiber_count{0};
 
 /**
@@ -41,19 +41,20 @@ using StackAllocator = MallocStackAllocator;
 
 Fiber::Fiber() {
     m_state = INIT;
-    m_id = 0;
+    //线程主协程的id是1, 后续协程编号从2开始
+    m_id = 1;
     SetCurentFiber(this);
     if (getcontext(&m_context)) {
         LYON_ASSERT2(false, "get context");
     }
     s_fiber_count++;
-    LYON_LOG_DEBUG(g_logger) << "Fiber::Fiber main";
+    LYON_LOG_DEBUG(g_logger) << "Fiber::Fiber main id = " << m_id
+                             << " fiber_count = " << s_fiber_count;
 }
 
-Fiber::Fiber(std::function<void()> cb, uint32_t stacksize, bool use_caller)
-    : m_id(++s_fiber_id), m_use_caller(use_caller), m_cb(cb) {
+Fiber::Fiber(std::function<void()> cb, uint32_t stacksize, bool back_sheduler)
+    : m_id(++s_fiber_id), m_use_caller(back_sheduler), m_cb(cb) {
     m_state = INIT;
-    s_fiber_count++;
     m_stacksize = stacksize ? stacksize : g_fiber_stack_size->getVal();
     m_stack = StackAllocator::Alloc(m_stacksize);
     if (getcontext(&m_context)) {
@@ -62,25 +63,27 @@ Fiber::Fiber(std::function<void()> cb, uint32_t stacksize, bool use_caller)
 
     //这一步是为了探测主协程是否存在，不存在就创建主协程
     //不过如果是以调度器协程为主协程就不需要创建了
-    if (!use_caller)
+    if (!back_sheduler)
         Fiber::ptr cur = GetCurrentFiber();
 
     m_context.uc_link = nullptr;
-    // m_context.uc_link = &cur->m_context;
+    // INFO: 通过这种方法也可以使得，协程结束后返回主协程，
+    // 如果没有返回主协程的话，该协程结束后，程序会直接结束
+    //  m_context.uc_link = &t_main_fiber->m_context;
     m_context.uc_stack.ss_sp = m_stack;
     m_context.uc_stack.ss_size = m_stacksize;
 
-    if (!use_caller)
-        makecontext(&m_context, Fiber::MainFunc, 0);
+    if (back_sheduler)
+        makecontext(&m_context, Fiber::SchedulerFunc, 0);
     else
-        makecontext(&m_context, Fiber::CallerMainFunc, 0);
-
+        makecontext(&m_context, Fiber::MainFiberFunc, 0);
     m_state = READY;
-    LYON_LOG_DEBUG(g_logger) << "Fiber::Fiber id = " << m_id;
+    s_fiber_count++;
+    LYON_LOG_DEBUG(g_logger)
+        << "Fiber::Fiber id = " << m_id << " fiber_count = " << s_fiber_count;
 }
 
 Fiber::~Fiber() {
-    s_fiber_count--;
     if (m_stack) {
         //只有在以下三种状态才允许析构
         LYON_ASSERT(m_state == INIT || m_state == READY || m_state == TERM ||
@@ -95,6 +98,8 @@ Fiber::~Fiber() {
             SetCurentFiber(nullptr);
         }
     }
+
+    s_fiber_count--;
     LYON_LOG_DEBUG(g_logger)
         << "Fiber:~Fiber id = " << m_id << " total = " << s_fiber_count;
 }
@@ -114,60 +119,74 @@ void Fiber::reset(std::function<void()> cb) {
     m_context.uc_stack.ss_size = m_stacksize;
 
     //使用MainFunc设置上下文，当m_context被载入时会运行MainFunc
-    makecontext(&m_context, Fiber::MainFunc, 0);
+    makecontext(&m_context, Fiber::SchedulerFunc, 0);
 
     m_state = READY;
 }
 
-void Fiber::call() {
+void Fiber::mainFiberIn() {
     SetCurentFiber(this);
     LYON_ASSERT(m_state != EXEC)
-    m_state = EXEC;
-    if (swapcontext(&Scheduler::GetMainFiber()->m_context, &m_context)) {
-        LYON_ASSERT2(false, "swapcontext");
-    }
-}
-
-void Fiber::back() {
-    SetCurentFiber(t_main_fiber.get());
-    // m_state = HOLD;
-    if (swapcontext(&m_context, &Scheduler::GetMainFiber()->m_context)) {
-        LYON_ASSERT2(false, "swapcontext");
-    }
-}
-
-void Fiber::swapIn() {
-    SetCurentFiber(this);
-    LYON_ASSERT(m_state != EXEC);
     m_state = EXEC;
     if (swapcontext(&t_main_fiber->m_context, &m_context)) {
         LYON_ASSERT2(false, "swapcontext");
     }
 }
 
-void Fiber::swapOut() {
-    SetCurentFiber(Scheduler::GetMainFiber());
+void Fiber::mainFiberOut() {
+    SetCurentFiber(t_main_fiber.get());
     // m_state = HOLD;
     if (swapcontext(&m_context, &t_main_fiber->m_context)) {
         LYON_ASSERT2(false, "swapcontext");
     }
 }
 
-void Fiber::YieldToReady() {
+void Fiber::schedulerIn() {
+    SetCurentFiber(this);
+    LYON_ASSERT(m_state != EXEC);
+    m_state = EXEC;
+    if (swapcontext(&Scheduler::GetMainFiber()->m_context, &m_context)) {
+        LYON_ASSERT2(false, "swapcontext");
+    }
+}
+
+void Fiber::schedulerOut() {
+    SetCurentFiber(Scheduler::GetMainFiber());
+    // m_state = HOLD;
+    if (swapcontext(&m_context, &Scheduler::GetMainFiber()->m_context)) {
+        LYON_ASSERT2(false, "swapcontext");
+    }
+}
+
+void Fiber::ReadyToScheduler() {
     Fiber::ptr cur = GetCurrentFiber();
     LYON_ASSERT(cur->m_state == EXEC);
     cur->m_state = READY;
-    cur->swapOut();
+    cur->schedulerOut();
 }
 
-void Fiber::YieldToHold() {
+void Fiber::HoldToScheduler() {
     Fiber::ptr cur = GetCurrentFiber();
     LYON_ASSERT(cur->m_state == EXEC);
     cur->m_state = HOLD;
-    cur->swapOut();
+    cur->schedulerOut();
 }
 
-void Fiber::MainFunc() {
+void Fiber::ReadyToMainFiber() {
+    Fiber::ptr cur = GetCurrentFiber();
+    LYON_ASSERT(cur->m_state == EXEC);
+    cur->m_state = READY;
+    cur->mainFiberOut();
+}
+
+void Fiber::HoldToMainFiber() {
+    Fiber::ptr cur = GetCurrentFiber();
+    LYON_ASSERT(cur->m_state == EXEC);
+    cur->m_state = HOLD;
+    cur->mainFiberOut();
+}
+
+void Fiber::SchedulerFunc() {
     Fiber::ptr cur = GetCurrentFiber();
     try {
         cur->m_cb();
@@ -189,12 +208,12 @@ void Fiber::MainFunc() {
     cur.reset();
     //运行结束后切换为主协程
     // BUG:感觉这里不应该这样返回主协程，这样回将当前协程挂起，而不是结束,导致析构时报错
-    raw_ptr->swapOut();
+    raw_ptr->schedulerOut();
     LYON_ASSERT2(false, "Fiber never reached id = " +
                             std::to_string(raw_ptr->getId()));
 }
 
-void Fiber::CallerMainFunc() {
+void Fiber::MainFiberFunc() {
     Fiber::ptr cur = GetCurrentFiber();
     //在这里尝试运行cb函数
     try {
@@ -216,8 +235,8 @@ void Fiber::CallerMainFunc() {
     auto raw_ptr = cur.get();
     cur.reset();
     //运行结束后切换回线程的主协程
-    // BUG:感觉这里不应该这样返回主协程，这样回将当前协程挂起，而不是结束,导致析构时报错
-    raw_ptr->back();
+    // INFO: 这里是手动切换回主协程,切换回去后该协程不应该在被调度了
+    raw_ptr->mainFiberOut();
     LYON_ASSERT2(false, "Fiber never reached id = " +
                             std::to_string(raw_ptr->getId()));
 }
@@ -225,8 +244,9 @@ void Fiber::CallerMainFunc() {
 void Fiber::SetCurentFiber(Fiber *f) { t_current_fiber = f; }
 
 /**
- * @brief 获取当前的协程，当不存在协程时，创建主协程，并设置为当前协程
- *
+ * @brief 获取当前线程正在运行的协程
+ * 如果当前线程已经有协程在运行，就返回正在运行的协程。
+ * 否则，为当前线程创建协程并且返回
  */
 Fiber::ptr Fiber::GetCurrentFiber() {
     if (t_current_fiber) {

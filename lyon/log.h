@@ -201,15 +201,25 @@ protected:
     bool m_has_formattern = false;
     MutexType m_mutex;
 };
+
 //输出到控制台的Appender
 class StdOutLogAppender : public LogAppender {
 public:
     typedef std::shared_ptr<StdOutLogAppender> ptr;
+
     LogAppenderType getType() override { return FILE; }
+
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
+
+public:
+    static LogAppender::ptr GetSingleton();
+
+private:
+    StdOutLogAppender() {}
 };
 
+// TODO:对于一个文件应该只有一个FileLogAppender与之对应
 //输出到文件的Appender
 class FileLogAppender : public LogAppender {
 public:

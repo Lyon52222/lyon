@@ -21,7 +21,7 @@
 
 #define LYON_ASSERT(x)                                                         \
     if (LYON_UNLIKELY(!(x))) {                                                 \
-        LYON_LOG_ERROR(LYON_LOG_GET_ROOT())                                    \
+        LYON_LOG_ERROR(LYON_LOG_GET_LOGGER("system"))                          \
             << std::endl                                                       \
             << "ASSERTION: " #x << "\nbacktrace:\n"                            \
             << lyon::BackTraceToString(20, 2, "  ");                           \
@@ -31,9 +31,9 @@
 // BUG:输出w就会显示乱码
 #define LYON_ASSERT2(x, w)                                                     \
     if (LYON_UNLIKELY(!(x))) {                                                 \
-        LYON_LOG_ERROR(LYON_LOG_GET_ROOT())                                    \
+        LYON_LOG_ERROR(LYON_LOG_GET_LOGGER("system"))                          \
             << std::endl                                                       \
-            << w << "ASSERTION: " #x << "\nbacktrace:\n"                       \
+            << w << "\nASSERTION: " #x << "\nbacktrace:\n"                     \
             << lyon::BackTraceToString(20, 2, "  ");                           \
         assert(x);                                                             \
     }

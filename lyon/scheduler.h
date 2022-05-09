@@ -171,7 +171,7 @@ private:
      * @m_fibers 需要被调度的工作
      */
     std::list<Job> m_jobs;
-    Fiber::ptr m_rootFiber;
+    Fiber::ptr m_rootFiber = nullptr;
     std::string m_name;
 };
 
