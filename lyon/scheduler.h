@@ -24,10 +24,11 @@ public:
      * @brief 调度器构造函数
      *
      * @param threads 线程数量
-     * @param use_caller 是否将创建调度器的线程加入线程池中
+     * @param join_fiber
+     * 是否将创建调度器的线程加入线程池中,并且将当前代码视作一个工作协程加入调度
      * @param name 调度器名称
      */
-    Scheduler(size_t threads = 1, bool use_caller = true,
+    Scheduler(size_t threads = 1, bool join_fiber = true,
               const std::string &name = "");
 
     virtual ~Scheduler();
@@ -51,8 +52,7 @@ public:
      * @param f 调度任务
      * @param thread 任务在哪个线程上执行
      */
-    template <class FiberOrFunc>
-    void scheduleWithLock(FiberOrFunc f, int thread = -1) {
+    template <class FiberOrFunc> void addJob(FiberOrFunc f, int thread = -1) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
@@ -71,8 +71,7 @@ public:
      * @param thread 任务在哪个线程上执行
      */
     template <class InputIterator>
-    void scheduleWithLock(InputIterator begin, InputIterator end,
-                          int thread = -1) {
+    void addJobs(InputIterator begin, InputIterator end, int thread = -1) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
@@ -171,7 +170,10 @@ private:
      * @m_fibers 需要被调度的工作
      */
     std::list<Job> m_jobs;
-    Fiber::ptr m_rootFiber = nullptr;
+    /**
+     * @m_workFiber 表示当前调度器工作在哪个协程中
+     */
+    Fiber::ptr m_workFiber = nullptr;
     std::string m_name;
 };
 

@@ -106,7 +106,14 @@ public:
      *
      * @param f 协程指针
      */
-    static void SetCurentFiber(Fiber *f);
+    static void SetCurrentFiber(Fiber *f);
+
+    /**
+     * @brief 设置当前线程的主协程
+     *
+     * @param f 协程指针
+     */
+    static void SetMainFiber(Fiber::ptr f);
 
     /**
      * @brief 获取当前正在运行的协程
@@ -149,6 +156,7 @@ private:
     uint64_t m_id = 0;
     uint32_t m_stacksize = 0;
     bool m_use_caller = false;
+    bool m_is_main = false;
     State m_state = INIT;
     ucontext_t m_context;
     void *m_stack = nullptr;

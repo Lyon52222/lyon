@@ -43,11 +43,13 @@ Fiber::Fiber() {
     m_state = INIT;
     //线程主协程的id是1, 后续协程编号从2开始
     m_id = 1;
-    SetCurentFiber(this);
+    SetCurrentFiber(this);
     if (getcontext(&m_context)) {
         LYON_ASSERT2(false, "get context");
     }
     s_fiber_count++;
+    m_is_main = true;
+    m_state = EXEC;
     LYON_LOG_DEBUG(g_logger) << "Fiber::Fiber main id = " << m_id
                              << " fiber_count = " << s_fiber_count;
 }
@@ -90,12 +92,13 @@ Fiber::~Fiber() {
                     m_state == EXCEPT);
         StackAllocator::Dealloc(m_stack, m_stacksize);
     } else {
+        //这种情况可能是初始化未完成，也可能是，该协程是主协程
         LYON_ASSERT(!m_cb);
-        LYON_ASSERT(m_state == INIT)
+        LYON_ASSERT(m_is_main || m_state == INIT)
 
         Fiber *cur = t_current_fiber;
         if (cur == this) {
-            SetCurentFiber(nullptr);
+            SetCurrentFiber(nullptr);
         }
     }
 
@@ -125,7 +128,7 @@ void Fiber::reset(std::function<void()> cb) {
 }
 
 void Fiber::mainFiberIn() {
-    SetCurentFiber(this);
+    SetCurrentFiber(this);
     LYON_ASSERT(m_state != EXEC)
     m_state = EXEC;
     if (swapcontext(&t_main_fiber->m_context, &m_context)) {
@@ -134,7 +137,7 @@ void Fiber::mainFiberIn() {
 }
 
 void Fiber::mainFiberOut() {
-    SetCurentFiber(t_main_fiber.get());
+    SetCurrentFiber(t_main_fiber.get());
     // m_state = HOLD;
     if (swapcontext(&m_context, &t_main_fiber->m_context)) {
         LYON_ASSERT2(false, "swapcontext");
@@ -142,7 +145,7 @@ void Fiber::mainFiberOut() {
 }
 
 void Fiber::schedulerIn() {
-    SetCurentFiber(this);
+    SetCurrentFiber(this);
     LYON_ASSERT(m_state != EXEC);
     m_state = EXEC;
     if (swapcontext(&Scheduler::GetMainFiber()->m_context, &m_context)) {
@@ -151,7 +154,7 @@ void Fiber::schedulerIn() {
 }
 
 void Fiber::schedulerOut() {
-    SetCurentFiber(Scheduler::GetMainFiber());
+    SetCurrentFiber(Scheduler::GetMainFiber());
     // m_state = HOLD;
     if (swapcontext(&m_context, &Scheduler::GetMainFiber()->m_context)) {
         LYON_ASSERT2(false, "swapcontext");
@@ -241,8 +244,9 @@ void Fiber::MainFiberFunc() {
                             std::to_string(raw_ptr->getId()));
 }
 
-void Fiber::SetCurentFiber(Fiber *f) { t_current_fiber = f; }
+void Fiber::SetCurrentFiber(Fiber *f) { t_current_fiber = f; }
 
+void Fiber::SetMainFiber(Fiber::ptr f) { t_main_fiber = f; }
 /**
  * @brief 获取当前线程正在运行的协程
  * 如果当前线程已经有协程在运行，就返回正在运行的协程。

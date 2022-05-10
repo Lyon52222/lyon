@@ -18,24 +18,46 @@ static thread_local Fiber *t_scheduler_fiber = nullptr;
  * @param use_caller 是否将实例化调度器的线程设置为main fiber
  * @param name 调度器名称
  */
-Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name)
+Scheduler::Scheduler(size_t threads, bool join_fiber, const std::string &name)
     : m_name(name) {
     LYON_ASSERT(threads > 0);
 
-    if (use_caller) {
+    if (join_fiber) {
+        // //其实这里就是将目前线程的任务加入到一个协程中。
+        // threads--;
+        // LYON_ASSERT(GetCurrentScheduler() == nullptr);
+        // t_current_scheduler = this;
+        // //此处会为生成该调度器的协程生成一个主协程和子协程，并该子协程会作为
+        // m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0,
+        // true)); Thread::SetName(m_name);
+
+        // //将该运行调度函数的协程设为该调度器和线程的主协程
+        // t_scheduler_fiber = m_rootFiber.get();
+        // m_rootThread = GetCurrentThreadId();
+
+        // //将创建协程的线程也放入线程池中
+        // m_threadIds.push_back(m_rootThread);
+
         threads--;
         LYON_ASSERT(GetCurrentScheduler() == nullptr);
         t_current_scheduler = this;
-        //此处会为生成该调度器的协程生成一个主协程和子协程，并该子协程会作为
-        m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
-        Thread::SetName(m_name);
 
-        //将该运行调度函数的协程设为该调度器和线程的主协程
-        t_scheduler_fiber = m_rootFiber.get();
+        //将当前线程作为工作线程
+        Fiber::ptr job_fiber = Fiber::GetCurrentFiber();
+        //新建一个主线程运行run
+        Fiber::ptr main_fiber =
+            Fiber::ptr(new Fiber(std::bind(&Scheduler::run, this), 0, false));
+
+        //调整工作线程和主线程的位置
+        Fiber::SetMainFiber(main_fiber);
+        Fiber::SetCurrentFiber(job_fiber.get());
+        t_scheduler_fiber = main_fiber.get();
+        m_workFiber = job_fiber;
         m_rootThread = GetCurrentThreadId();
 
-        //将创建协程的线程也放入线程池中
+        Thread::SetName(m_name + "0");
         m_threadIds.push_back(m_rootThread);
+
     } else {
         m_rootThread = -1;
     }
@@ -59,8 +81,9 @@ void Scheduler::start() {
 
     m_threads.resize(m_threadCount);
     for (size_t i = 0; i < m_threadCount; i++) {
+        //这里创建的所有线程都是主协程运行的run，子协程为运行的任务
         m_threads[i].reset(new Thread(std::bind(&Scheduler::run, this),
-                                      m_name + "_" + std::to_string(i)));
+                                      m_name + "_" + std::to_string(i + 1)));
 
         m_threadIds.push_back(m_threads[i]->getId());
     }
@@ -72,9 +95,9 @@ void Scheduler::stop() {
     // 实例化调度器时的参数 use_caller 为 true, 并且指定线程数量为 1 时
     // 说明只有当前一条主线程在执行，简单等待执行结束即可
 
-    if (m_rootFiber && m_threadCount == 0 &&
-        (m_rootFiber->getState() == Fiber::TERM ||
-         m_rootFiber->getState() == Fiber::INIT)) {
+    if (m_workFiber && m_threadCount == 0 &&
+        (m_workFiber->getState() == Fiber::TERM ||
+         m_workFiber->getState() == Fiber::INIT)) {
         LYON_LOG_INFO(g_logger) << this->m_name << " stopped";
         m_stopping = true;
         if (stopping()) {
@@ -93,14 +116,14 @@ void Scheduler::stop() {
     for (size_t i = 0; i < m_threadCount; i++) {
         tickle();
     }
-    if (m_rootFiber) {
+    if (m_workFiber) {
         tickle();
     }
-    if (m_rootFiber) {
-        if (!stopping()) {
-            m_rootFiber->mainFiberIn();
-        }
-    }
+    // if (m_workFiber) {
+    //     if (!stopping()) {
+    //         // m_workFiber->mainFiberIn();
+    //     }
+    // }
 
     std::vector<Thread::ptr> thrs;
     {
@@ -169,11 +192,12 @@ void Scheduler::run() {
         //需要被调度的任务是协程且仍为终止
         if (job.fiber && (job.fiber->getState() != Fiber::TERM ||
                           job.fiber->getState() != Fiber::EXCEPT)) {
-            job.fiber->schedulerIn();
+            // job.fiber->schedulerIn();
+            job.fiber->mainFiberIn();
             m_activeThreadCount--;
 
             if (job.fiber->getState() == Fiber::READY) {
-                scheduleWithLock(job.fiber);
+                addJob(job.fiber);
             } else if (job.fiber->getState() == Fiber::TERM ||
                        job.fiber->getState() == Fiber::EXCEPT) {
                 job.fiber->m_state = Fiber::HOLD;
@@ -189,10 +213,11 @@ void Scheduler::run() {
                 cb_fiber.reset(new Fiber(job.cb));
             }
             job.reset();
-            cb_fiber->schedulerIn();
+            // cb_fiber->schedulerIn();
+            cb_fiber->mainFiberIn();
             m_activeThreadCount--;
             if (cb_fiber->getState() == Fiber::READY) {
-                scheduleWithLock(cb_fiber);
+                addJob(cb_fiber);
                 cb_fiber.reset();
             } else if (cb_fiber->getState() == Fiber::TERM ||
                        cb_fiber->getState() == Fiber::EXCEPT) {
@@ -219,7 +244,8 @@ void Scheduler::run() {
 
             LYON_LOG_INFO(g_logger)
                 << "idle fiber in " << idle_fiber->getState();
-            idle_fiber->schedulerIn();
+            // idle_fiber->schedulerIn();
+            idle_fiber->mainFiberIn();
             LYON_LOG_INFO(g_logger)
                 << "idle fiber out " << idle_fiber->getState();
 
