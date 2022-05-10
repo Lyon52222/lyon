@@ -49,8 +49,7 @@ public:
      * @param stacksize 协程栈大小
      * @param use_caller 是否在Mainfiber上调度
      */
-    Fiber(std::function<void()> cb, uint32_t stacksize = 0,
-          bool back_scheduler = false);
+    Fiber(std::function<void()> cb, uint32_t stacksize = 0);
     ~Fiber();
 
     uint64_t getId() { return m_id; }
@@ -79,21 +78,21 @@ public:
      * @brief 从调度器协程切换到当前协程
      *
      */
-    void schedulerIn();
+    // void schedulerIn();
 
 private:
     /**
      * @brief 将当前协程切换到调度器协程
      *
      */
-    void schedulerOut();
+    // void schedulerOut();
 
 public:
     /**
      * @brief 协程执行函数，完成后返回主协程
      *
      */
-    static void SchedulerFunc();
+    // static void SchedulerFunc();
 
     /**
      * @brief 协程执行函数，完成后返回调用协程
@@ -121,17 +120,17 @@ public:
      */
     static Fiber::ptr GetCurrentFiber();
 
-    /**
-     * @brief 将当前正在运行的协程切换到后台并且设置为ready状态
-     *
-     */
-    static void ReadyToScheduler();
+    // /**
+    //  * @brief 将当前正在运行的协程切换到后台并且设置为ready状态
+    //  *
+    //  */
+    // static void ReadyToScheduler();
 
-    /**
-     * @brief 将当前正在运行的协程切换到后台并且设置为hold状态
-     *
-     */
-    static void HoldToScheduler();
+    // /**
+    //  * @brief 将当前正在运行的协程切换到后台并且设置为hold状态
+    //  *
+    //  */
+    // static void HoldToScheduler();
 
     static void ReadyToMainFiber();
 
@@ -155,7 +154,6 @@ private:
     //线程未创建协程时 主协程id号为0
     uint64_t m_id = 0;
     uint32_t m_stacksize = 0;
-    bool m_use_caller = false;
     bool m_is_main = false;
     State m_state = INIT;
     ucontext_t m_context;

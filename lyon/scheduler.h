@@ -2,6 +2,7 @@
 #define __LYON_SCHEDULER_H__
 
 #include "fiber.h"
+#include "log.h"
 #include "mutex.h"
 #include "thread.h"
 #include <functional>
@@ -52,11 +53,12 @@ public:
      * @param f 调度任务
      * @param thread 任务在哪个线程上执行
      */
-    template <class FiberOrFunc> void addJob(FiberOrFunc f, int thread = -1) {
+    template <class FiberOrFunc>
+    void addJob(FiberOrFunc f, bool s_thread = false, pthread_t thread = 0) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
-            need_tickle = scheduleWithoutLock(f, thread);
+            need_tickle = scheduleWithoutLock(f, s_thread, thread);
         }
         if (need_tickle)
             tickle();
@@ -71,13 +73,14 @@ public:
      * @param thread 任务在哪个线程上执行
      */
     template <class InputIterator>
-    void addJobs(InputIterator begin, InputIterator end, int thread = -1) {
+    void addJobs(InputIterator begin, InputIterator end, bool s_thread = false,
+                 pthread_t thread = 0) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
             while (begin != end) {
-                need_tickle =
-                    scheduleWithoutLock(*begin, thread) || need_tickle;
+                need_tickle = scheduleWithoutLock(*begin, s_thread, thread) ||
+                              need_tickle;
                 begin++;
             }
         }
@@ -86,7 +89,7 @@ public:
     }
 
 public:
-    static Fiber *GetMainFiber();
+    // static Fiber *GetMainFiber();
     /**
      * @brief 获取当前线程的调度器
      *
@@ -118,9 +121,14 @@ private:
      * @return 是否需要通知唤醒线程
      */
     template <class FiberOrFunc>
-    bool scheduleWithoutLock(FiberOrFunc f, int thread) {
+    bool scheduleWithoutLock(FiberOrFunc f, bool s_thread = false,
+                             pthread_t thread = 0) {
+        // if (m_stopping) {
+        //     LYON_LOG_WARN(LYON_LOG_GET_LOGGER("system")) << "Scheduler
+        //     stoped!"; return false;
+        // }
         bool tickle = m_jobs.empty();
-        Job ft(f, thread);
+        Job ft(f, s_thread, thread);
         if (ft.fiber || ft.cb) {
             m_jobs.push_back(ft);
         }
@@ -133,32 +141,48 @@ private:
     struct Job {
         Fiber::ptr fiber = nullptr;
         std::function<void()> cb = nullptr;
-        int thread = -1;
-        Job(Fiber::ptr f, int thr) : fiber(f), thread(thr) {}
+        /**
+         * @thread 指定运行的线程，只有在specified_thread==true是才有效
+         */
+        pthread_t thread;
+        /**
+         * @specified_thread 是否指定在哪个线程中执行
+         */
+        bool specified_thread = false;
+        Job(Fiber::ptr f, bool s_thread = false, pthread_t thr = 0)
+            : fiber(f), thread(thr), specified_thread(s_thread) {}
 
-        Job(Fiber::ptr *f, int thr) : thread(thr) { fiber.swap(*f); }
+        Job(Fiber::ptr *f, bool s_thread = false, pthread_t thr = 0)
+            : thread(thr), specified_thread(s_thread) {
+            fiber.swap(*f);
+        }
 
-        Job(std::function<void()> f, int thr) : cb(f), thread(thr) {}
+        Job(std::function<void()> f, bool s_thread = false, pthread_t thr = 0)
+            : cb(f), thread(thr), specified_thread(s_thread) {}
 
-        Job(std::function<void()> *f, int thr) : thread(thr) { cb.swap(*f); }
+        Job(std::function<void()> *f, bool s_thread = false, pthread_t thr = 0)
+            : thread(thr), specified_thread(s_thread) {
+            cb.swap(*f);
+        }
 
-        Job() : thread(-1) {}
+        Job() : specified_thread(false) {}
 
         void reset() {
             fiber = nullptr;
             cb = nullptr;
-            thread = -1;
+            thread = 0;
+            specified_thread = false;
         }
     };
 
 protected:
-    std::vector<int> m_threadIds;
+    std::vector<pthread_t> m_threadIds;
     size_t m_threadCount = 0;
     std::atomic<size_t> m_activeThreadCount{0};
     std::atomic<size_t> m_idleThreadCount{0};
     bool m_stopping = true;
     bool m_autoStop = false;
-    int m_rootThread = 0;
+    // int m_rootThread = 0;
 
 private:
     MutexType m_mutex;

@@ -8,8 +8,9 @@ void func() {
     LYON_LOG_INFO(g_logger) << "func0 in fiber s_count = " << s_count;
     sleep(1);
     if (s_count-- > 0) {
+        //指定后面继续在当前线程中执行
         lyon::Scheduler::GetCurrentScheduler()->addJob(
-            &func, lyon::GetCurrentThreadId());
+            func, true, lyon::GetCurrentThreadId());
     }
 }
 
@@ -32,10 +33,9 @@ int main(int argc, char *argv[]) {
 
     LYON_LOG_INFO(g_logger) << "add job";
     scheduler.addJob(func);
-    scheduler.addJob(func1);
+    // scheduler.addJob(func1);
 
     scheduler.stop();
-
     LYON_LOG_INFO(g_logger) << "end";
     return 0;
 }
