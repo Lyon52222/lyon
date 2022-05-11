@@ -120,6 +120,8 @@ public:
      */
     static Fiber::ptr GetCurrentFiber();
 
+    static Fiber::ptr GetMainFiber();
+
     // /**
     //  * @brief 将当前正在运行的协程切换到后台并且设置为ready状态
     //  *

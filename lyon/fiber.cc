@@ -261,6 +261,12 @@ Fiber::ptr Fiber::GetCurrentFiber() {
     return t_current_fiber->shared_from_this();
 }
 
+Fiber::ptr Fiber::GetMainFiber() {
+    if (!t_main_fiber) {
+        t_main_fiber.reset(new Fiber);
+    }
+    return t_main_fiber;
+}
 uint64_t Fiber::TotalFibers() { return s_fiber_count; }
 uint64_t Fiber::GetFiberId() {
     if (t_current_fiber) {

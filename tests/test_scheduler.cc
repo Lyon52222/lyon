@@ -19,21 +19,27 @@ void func1() {
     LYON_LOG_INFO(g_logger) << "func1 in fiber s_count = " << s_count;
     sleep(1);
     if (s_count-- > 0) {
-        lyon::Scheduler::GetCurrentScheduler()->addJob(
-            &func1, lyon::GetCurrentThreadId());
+        // lyon::Scheduler::GetCurrentScheduler()->addJob(
+        //     func1, lyon::GetCurrentThreadId());
     }
 }
+
 int main(int argc, char *argv[]) {
 
     LYON_LOG_INFO(g_logger) << "scheduler init";
-    lyon::Scheduler scheduler(3, true, "test");
+    lyon::Scheduler scheduler(1, false, "test");
 
     LYON_LOG_INFO(g_logger) << "scheduler start";
     scheduler.start();
 
-    LYON_LOG_INFO(g_logger) << "add job";
+    LYON_LOG_INFO(g_logger) << "add func job";
     scheduler.addJob(func);
-    // scheduler.addJob(func1);
+
+    LYON_LOG_INFO(g_logger) << "add fiber job";
+    // BUG:这里还会有问题。如果这了创建fiber为任务的话。回为当前线程创建一个主要fiber并且永远也不会返回。
+    // 这样在析构的时候主fiber的状态还会是Exce
+    lyon::Fiber::ptr fiber(new lyon::Fiber(func1));
+    scheduler.addJob(fiber);
 
     scheduler.stop();
     LYON_LOG_INFO(g_logger) << "end";

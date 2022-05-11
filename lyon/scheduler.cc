@@ -175,7 +175,7 @@ void Scheduler::run() {
         //需要被调度的任务是协程且仍为终止
         if (job.fiber && (job.fiber->getState() != Fiber::TERM ||
                           job.fiber->getState() != Fiber::EXCEPT)) {
-            // job.fiber->schedulerIn();
+            job.fiber->SetMainFiber(Fiber::GetMainFiber());
             job.fiber->mainFiberIn();
             m_activeThreadCount--;
 
@@ -196,7 +196,6 @@ void Scheduler::run() {
                 cb_fiber.reset(new Fiber(job.cb));
             }
             job.reset();
-            // cb_fiber->schedulerIn();
             cb_fiber->mainFiberIn();
             m_activeThreadCount--;
             if (cb_fiber->getState() == Fiber::READY) {

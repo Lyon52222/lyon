@@ -48,24 +48,42 @@ public:
      * @param event 需要删除的事件
      * @return 是否删除成功
      */
-    int deleEvent(int fd, Event event);
+    bool deleEvent(int fd, Event event);
     bool cancleEvent(int fd, Event event);
+    bool cancleAll(int fd);
 
 public:
     static IOManager *GetCurrentIOManager();
 
 protected:
     /**
-     * @brief 重载的虚函数， 当调度器没有其他任务执行时，运行此函数。
-     * 在这里用于查询epoll
+     * @brief 重载的虚函数，当调度器没有其他任务执行时，运行此函数。
+     * 在这里用于查询epoll，并且执行其所对应的EventContext的cb或fiber
      *
      */
     void idle() override;
+    /**
+     * @brief 重载函数，用于向其它线程发送信号
+     *
+     */
     void tickle() override;
 
+    /**
+     * @brief 判断调度任务是否已经结束
+     *
+     * @return 调度是否结束
+     */
+    bool stopping() override;
+
 private:
+    /**
+     * struct FdContext - 对应每个文件描述符的描述类
+     */
     struct FdContext {
         typedef Mutex MutexType;
+        /**
+         * struct EventContext - 每个描述符对应事件的描述类
+         */
         struct EventContext {
             /**
              * @{name} 事件执行的调度器
@@ -81,20 +99,40 @@ private:
             std::function<void()> cb;
         };
 
+        /**
+         * @brief 获取事件所对应的EventContext
+         *
+         * @param e 事件e
+         */
         EventContext &getEventContext(Event e);
+
+        /**
+         * @brief 重置EventContext
+         *
+         * @param ctx 事件上下文
+         */
+        void resetEventContext(EventContext &ctx);
+
+        /**
+         * @brief 触发事件e所对应的事件描述符
+         *
+         * @param e 事件e
+         */
+        void triggerEvent(Event e);
 
         /**
          * @fd 事件关联的句柄
          */
         int fd = 0;
         /**
-         * @read 读事件上下文
+         * @read 文件描述符对应读事件的描述上下文
          */
         EventContext read;
         /**
-         * @write 写事件上下文
+         * @write 文件描述符对应写事件的描述上下文
          */
         EventContext write;
+        //该文件描述符所关注的事件
         Event events = NONE;
         MutexType mutex;
     };
