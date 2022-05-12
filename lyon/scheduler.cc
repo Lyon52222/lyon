@@ -28,10 +28,10 @@ Scheduler::Scheduler(size_t threads, bool join_fiber, const std::string &name)
         t_current_scheduler = this;
 
         //将当前线程作为工作线程
-        Fiber::ptr job_fiber = Fiber::GetCurrentFiber();
+        Fiber::ptr job_fiber = Fiber::GetMainFiber();
         //新建一个主线程运行run
         Fiber::ptr main_fiber =
-            Fiber::ptr(new Fiber(std::bind(&Scheduler::run, this), 0));
+            Fiber::ptr(new Fiber(std::bind(&Scheduler::run, this), false));
 
         //调整工作线程和主线程的位置
         Fiber::SetMainFiber(main_fiber);
@@ -181,8 +181,8 @@ void Scheduler::run() {
 
             if (job.fiber->getState() == Fiber::READY) {
                 addJob(job.fiber);
-            } else if (job.fiber->getState() == Fiber::TERM ||
-                       job.fiber->getState() == Fiber::EXCEPT) {
+            } else if (job.fiber->getState() != Fiber::TERM &&
+                       job.fiber->getState() != Fiber::EXCEPT) {
                 job.fiber->m_state = Fiber::HOLD;
             }
             job.reset();

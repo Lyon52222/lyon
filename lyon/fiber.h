@@ -46,10 +46,11 @@ public:
      * @brief 协程构造函数
      *
      * @param cb 协程执行函数
+     * @param create_main 是否自动创建主线程
      * @param stacksize 协程栈大小
-     * @param use_caller 是否在Mainfiber上调度
      */
-    Fiber(std::function<void()> cb, uint32_t stacksize = 0);
+    Fiber(std::function<void()> cb, bool create_main = true,
+          uint32_t stacksize = 0);
     ~Fiber();
 
     uint64_t getId() { return m_id; }

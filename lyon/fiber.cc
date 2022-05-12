@@ -54,7 +54,7 @@ Fiber::Fiber() {
                              << " fiber_count = " << s_fiber_count;
 }
 
-Fiber::Fiber(std::function<void()> cb, uint32_t stacksize)
+Fiber::Fiber(std::function<void()> cb, bool create_main, uint32_t stacksize)
     : m_id(++s_fiber_id), m_cb(cb) {
     m_state = INIT;
     m_stacksize = stacksize ? stacksize : g_fiber_stack_size->getVal();
@@ -65,7 +65,8 @@ Fiber::Fiber(std::function<void()> cb, uint32_t stacksize)
 
     //这一步是为了探测主协程是否存在，不存在就创建主协程
     //不过如果是以调度器协程为主协程就不需要创建了
-    Fiber::ptr cur = GetCurrentFiber();
+    if (create_main)
+        Fiber::ptr cur = GetMainFiber();
 
     m_context.uc_link = nullptr;
     // INFO: 通过这种方法也可以使得，协程结束后返回主协程，
