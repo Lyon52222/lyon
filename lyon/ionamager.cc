@@ -326,6 +326,8 @@ void IOManager::FdContext::triggerEvent(Event e) {
         GetCurrentScheduler()->addJob(&ctx.fiber);
     }
     events = static_cast<Event>(events & (~e));
+
+    resetEventContext(getEventContext(e));
 }
 
 } // namespace lyon

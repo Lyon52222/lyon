@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <sstream>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <thread>
 #include <unistd.h>
 
@@ -53,4 +54,15 @@ bool IsConfigNameAvilable(const std::string &name) {
                                   "RSTUVWXYZ_.0123456789") == std::string::npos;
 }
 
+uint64_t GetCurrentTimeMS() {
+    struct timeval time;
+    gettimeofday(&time, nullptr);
+    return time.tv_sec * 1000ul + time.tv_usec / 1000ul;
+}
+
+uint64_t GetCurrentTimeUS() {
+    struct timeval time;
+    gettimeofday(&time, nullptr);
+    return time.tv_sec * 1000 * 1000ul + time.tv_usec;
+}
 } // namespace lyon

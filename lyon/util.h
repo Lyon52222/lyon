@@ -1,5 +1,6 @@
 #ifndef __LYON_UTIL_H__
 #define __LYON_UTIL_H__
+#include <cstdint>
 #include <pthread.h>
 #include <stdint.h>
 #include <string>
@@ -49,6 +50,16 @@ std::string BackTraceToString(int size = 64, int skip = 2,
  * @return 是否有效
  */
 bool IsConfigNameAvilable(const std::string &name);
+
+/**
+ * @brief 获取当前事件的毫秒级时间
+ *
+ * @return 毫秒级表示的时间
+ */
+
+uint64_t GetCurrentTimeMS();
+
+uint64_t GetCurrentTimeUS();
 
 } // namespace lyon
 
