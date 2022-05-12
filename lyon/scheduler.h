@@ -51,6 +51,7 @@ public:
      *
      * @tparam FiberOrCb 任务类型
      * @param f 调度任务
+     * @param s_thread 是否在指定线程上执行
      * @param thread 任务在哪个线程上执行
      */
     template <class FiberOrFunc>
@@ -70,6 +71,7 @@ public:
      * @tparam InputIterator 迭代器类型
      * @param begin 开始迭代器
      * @param end 结束迭代器
+     * @param s_thread 是否在指定线程上执行
      * @param thread 任务在哪个线程上执行
      */
     template <class InputIterator>

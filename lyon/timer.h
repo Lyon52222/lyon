@@ -11,7 +11,7 @@ namespace lyon {
 
 class TimerManager;
 
-class Timer {
+class Timer : public std::enable_shared_from_this<Timer> {
     friend TimerManager;
 
 public:
@@ -19,7 +19,7 @@ public:
 
     bool cancle();
     bool refresh();
-    bool reset();
+    bool reset(uint64_t ms, std::function<void()> cb, bool cycle);
 
 private:
     Timer(uint64_t ms, std::function<void()> cb, bool cycle,
@@ -40,6 +40,7 @@ private:
 };
 
 class TimerManager {
+    friend Timer;
     typedef RWMutex RWMutexType;
 
 public:

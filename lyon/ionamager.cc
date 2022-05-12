@@ -3,8 +3,10 @@
 #include "macro.h"
 #include "scheduler.h"
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <fcntl.h>
+#include <functional>
 #include <stdexcept>
 #include <string.h>
 #include <sys/epoll.h>
@@ -29,7 +31,7 @@ IOManager::IOManager(size_t threads, bool join_fiber, const std::string &name)
     event.data.fd = m_tickleFds[0];
 
     //设置文件描述符为非阻塞IO
-    rt = fcntl(m_tickleFds[0], F_SETFL | O_NONBLOCK);
+    rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK);
     LYON_ASSERT(rt != -1);
 
     //用于添加，修改或删除epoll描述符上的事件
@@ -257,21 +259,41 @@ IOManager *IOManager::GetCurrentIOManager() {
 }
 
 void IOManager::idle() {
+    LYON_LOG_INFO(g_logger) << "IOManager idle";
     const int MAX_EVENTSIZE = 1024;
-    epoll_event *epevents = new epoll_event[MAX_EVENTSIZE]();
+    epoll_event *epevents = new epoll_event[MAX_EVENTSIZE];
     //创建shared_ptr的第二个参数是释放时调用的函数。默认的是delete ptr。
     //通过这种方式可以达到释放数组的操作。使用智能指针而不是在最后delete是为了预防函数运行过程中出错，从而没有释放空间
     std::shared_ptr<epoll_event> sepevents(
         epevents, [](epoll_event *ptr) { delete[] ptr; });
 
     int rt = 0;
-    while (!stopping()) {
-        int timeout = 4000;
-        //当出现终端错误时，重试
+    while (true) {
+        uint64_t next_timeout = 0;
+        if (stopping(next_timeout)) {
+            LYON_LOG_INFO(g_logger) << "IOManager idle stop";
+            break;
+        }
+        //当出现中断错误时，重试
         do {
+            //设置超时时间为下次定时时间的到时时间
+            static const uint64_t MAX_TIMEOUT = 4000;
+            if (next_timeout == ~0ull) {
+                next_timeout = MAX_TIMEOUT;
+            } else {
+                next_timeout =
+                    next_timeout < MAX_TIMEOUT ? next_timeout : MAX_TIMEOUT;
+            }
             errno = 0;
-            rt = epoll_wait(m_epfd, epevents, MAX_EVENTSIZE, timeout);
+            rt = epoll_wait(m_epfd, epevents, MAX_EVENTSIZE, next_timeout);
         } while (rt == -1 && errno == EINTR);
+
+        std::vector<std::function<void()>> cbs;
+        listExpiredCbs(cbs);
+        if (!cbs.empty()) {
+            addJobs(cbs.begin(), cbs.end());
+        }
+        cbs.clear();
 
         for (int i = 0; i < rt; i++) {
             epoll_event &epevent = epevents[i];
@@ -297,8 +319,17 @@ void IOManager::idle() {
 void IOManager::tickle() {}
 
 bool IOManager::stopping() {
-    return Scheduler::stopping() && (m_penddingEventCount == 0);
+    uint64_t next_timeout = 0;
+    return stopping(next_timeout);
 }
+
+bool IOManager::stopping(uint64_t &next_timeout) {
+    next_timeout = getNextTimer();
+    return next_timeout == ~0ull && Scheduler::stopping() &&
+           (m_penddingEventCount == 0);
+}
+
+void IOManager::onTimerInsertAtFront() { tickle(); }
 
 IOManager::FdContext::EventContext &
 IOManager::FdContext::getEventContext(Event e) {

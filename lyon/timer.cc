@@ -26,6 +26,37 @@ bool Timer::Comparator::operator()(const Timer::ptr &lhs,
                                       : lhs.get() < rhs.get();
 }
 
+bool Timer::cancle() {
+    if (m_cb) {
+        m_cb = nullptr;
+        TimerManager::RWMutexType::WRLock wlock(m_manager->m_mutex);
+        m_manager->m_timers.erase(shared_from_this());
+        return true;
+    }
+    return false;
+}
+
+bool Timer::refresh() {
+    if (m_cb) {
+        TimerManager::RWMutexType::WRLock wlock(m_manager->m_mutex);
+        m_manager->m_timers.erase(shared_from_this());
+        m_next = GetCurrentTimeMS() + m_ms;
+        m_manager->m_timers.insert(shared_from_this());
+        return true;
+    }
+    return false;
+}
+
+bool Timer::reset(uint64_t ms, std::function<void()> cb, bool cycle) {
+    TimerManager::RWMutexType::WRLock wlock(m_manager->m_mutex);
+    m_manager->m_timers.erase(shared_from_this());
+    m_next = GetCurrentTimeMS() + m_ms;
+    m_cb = cb;
+    m_cycle = cycle;
+    m_manager->m_timers.insert(shared_from_this());
+    return true;
+}
+
 Timer::ptr TimerManager::addTimer(uint64_t ms, std::function<void()> cb,
                                   bool cycle) {
     Timer::ptr timer(new Timer(ms, cb, cycle, this));
@@ -81,8 +112,11 @@ void TimerManager::listExpiredCbs(std::vector<std::function<void()>> &cbs) {
     }
     RWMutexType::WRLock wlock(m_mutex);
     Timer::ptr now_timer(new Timer(now_ms));
-    // TODO:这里还有点问题
+
     auto itr = m_timers.upper_bound(now_timer);
+    while (itr != m_timers.end() && (*itr)->m_next == now_timer->m_next) {
+        itr++;
+    }
 
     expires.insert(expires.begin(), m_timers.begin(), itr);
     m_timers.erase(m_timers.begin(), itr);

@@ -3,13 +3,16 @@
 
 #include "mutex.h"
 #include "scheduler.h"
+#include "time.h"
+#include "timer.h"
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <sys/epoll.h>
 namespace lyon {
 
-class IOManager : public Scheduler {
+class IOManager : public Scheduler, public TimerManager {
 public:
     typedef std::shared_ptr<IOManager> ptr;
     typedef RWMutex RWMutexType;
@@ -74,6 +77,10 @@ protected:
      * @return 调度是否结束
      */
     bool stopping() override;
+
+    bool stopping(uint64_t &next_timeout);
+
+    void onTimerInsertAtFront() override;
 
 private:
     /**
