@@ -6,7 +6,7 @@ namespace lyon {
 static thread_local Thread *t_thread = nullptr;
 static thread_local std::string t_thread_name = "MAIN";
 
-static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
 std::string &Thread::GetName() { return t_thread_name; }
 

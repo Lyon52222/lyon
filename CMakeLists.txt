@@ -22,6 +22,7 @@ set(
   lyon/scheduler.cc
   lyon/ionamager.cc
   lyon/timer.cc
+  lyon/hook.cc
   lyon/utils/file_system_util.cc
 )
 
@@ -43,6 +44,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_fiber "tests/test_fiber.cc" lyon "${LIBS}")
   lyon_add_executable(test_scheduler "tests/test_scheduler.cc" lyon "${LIBS}")
   lyon_add_executable(test_iomanager "tests/test_iomanager.cc" lyon "${LIBS}")
+  lyon_add_executable(test_hook "tests/test_hook.cc" lyon "${LIBS}")
 
 endif()
 

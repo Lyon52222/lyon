@@ -20,12 +20,12 @@ static thread_local Scheduler *t_current_scheduler = nullptr;
 Scheduler::Scheduler(size_t threads, bool join_fiber, const std::string &name)
     : m_name(name) {
     LYON_ASSERT(threads > 0);
+    LYON_ASSERT(GetCurrentScheduler() == nullptr);
+    t_current_scheduler = this;
 
     //是否将当前线程也加入到线程池中
     if (join_fiber) {
         threads--;
-        LYON_ASSERT(GetCurrentScheduler() == nullptr);
-        t_current_scheduler = this;
 
         //将当前线程作为工作线程
         Fiber::ptr job_fiber = Fiber::GetMainFiber();
@@ -93,12 +93,12 @@ void Scheduler::stop() {
     }
 
     // if (m_rootThread == -1) {
-    if (m_workFiber == nullptr) {
-        LYON_ASSERT(GetCurrentScheduler() != this);
-    } else {
-        //说明这是usecaller创建的线程
-        LYON_ASSERT(GetCurrentScheduler() == this);
-    }
+    // if (m_workFiber == nullptr) {
+    //     LYON_ASSERT(GetCurrentScheduler() != this);
+    // } else {
+    //     //说明这是usecaller创建的线程
+    //     LYON_ASSERT(GetCurrentScheduler() == this);
+    // }
 
     m_stopping = true;
     // for (size_t i = 0; i < m_threadCount; i++) {

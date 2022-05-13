@@ -35,7 +35,7 @@ void test_socket() {
 }
 
 int main(int argc, char *argv[]) {
-    lyon::IOManager iom(2, true, "iomanager");
+    lyon::IOManager iom(2, false, "iomanager");
     test_socket();
     return 0;
 }
