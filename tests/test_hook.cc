@@ -7,7 +7,8 @@
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
 void test_sleep() {
-    lyon::IOManager iom(1);
+    lyon::IOManager iom(1, true, "hook_test");
+    iom.start();
     iom.addJob([]() {
         sleep(2);
         LYON_LOG_INFO(g_logger) << "sleep 2";
@@ -18,9 +19,12 @@ void test_sleep() {
         LYON_LOG_INFO(g_logger) << "sleep 3";
     });
     LYON_LOG_INFO(g_logger) << "test_sleep";
+
+    iom.stop();
 }
 
 int main(int argc, char *argv[]) {
+    lyon::set_hook_enable(true);
     test_sleep();
     return 0;
 }

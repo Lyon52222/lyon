@@ -54,7 +54,8 @@ Fiber::Fiber() {
                              << " fiber_count = " << s_fiber_count;
 }
 
-Fiber::Fiber(std::function<void()> cb, bool create_main, uint32_t stacksize)
+Fiber::Fiber(std::function<void()> cb, bool back_scheduler, bool create_main,
+             uint32_t stacksize)
     : m_id(++s_fiber_id), m_cb(cb) {
     m_state = INIT;
     m_stacksize = stacksize ? stacksize : g_fiber_stack_size->getVal();
@@ -75,7 +76,11 @@ Fiber::Fiber(std::function<void()> cb, bool create_main, uint32_t stacksize)
     m_context.uc_stack.ss_sp = m_stack;
     m_context.uc_stack.ss_size = m_stacksize;
 
-    makecontext(&m_context, Fiber::MainFiberFunc, 0);
+    if (back_scheduler) {
+        makecontext(&m_context, Fiber::SchedulerFunc, 0);
+    } else {
+        makecontext(&m_context, Fiber::MainFiberFunc, 0);
+    }
     m_state = READY;
     s_fiber_count++;
     LYON_LOG_DEBUG(g_logger)
@@ -118,8 +123,7 @@ void Fiber::reset(std::function<void()> cb) {
     m_context.uc_stack.ss_sp = m_stack;
     m_context.uc_stack.ss_size = m_stacksize;
 
-    //使用MainFunc设置上下文，当m_context被载入时会运行MainFunc
-    makecontext(&m_context, Fiber::MainFiberFunc, 0);
+    makecontext(&m_context, Fiber::SchedulerFunc, 0);
 
     m_state = READY;
 }
@@ -141,36 +145,36 @@ void Fiber::mainFiberOut() {
     }
 }
 
-// void Fiber::schedulerIn() {
-//     SetCurrentFiber(this);
-//     LYON_ASSERT(m_state != EXEC);
-//     m_state = EXEC;
-//     if (swapcontext(&Scheduler::GetMainFiber()->m_context, &m_context)) {
-//         LYON_ASSERT2(false, "swapcontext");
-//     }
-// }
+void Fiber::schedulerIn() {
+    SetCurrentFiber(this);
+    LYON_ASSERT(m_state != EXEC);
+    m_state = EXEC;
+    if (swapcontext(&Scheduler::GetMainFiber()->m_context, &m_context)) {
+        LYON_ASSERT2(false, "swapcontext");
+    }
+}
 
-// void Fiber::schedulerOut() {
-//     SetCurrentFiber(Scheduler::GetMainFiber());
-//     // m_state = HOLD;
-//     if (swapcontext(&m_context, &Scheduler::GetMainFiber()->m_context)) {
-//         LYON_ASSERT2(false, "swapcontext");
-//     }
-// }
+void Fiber::schedulerOut() {
+    SetCurrentFiber(Scheduler::GetMainFiber());
+    // m_state = HOLD;
+    if (swapcontext(&m_context, &Scheduler::GetMainFiber()->m_context)) {
+        LYON_ASSERT2(false, "swapcontext");
+    }
+}
 
-// void Fiber::ReadyToScheduler() {
-//     Fiber::ptr cur = GetCurrentFiber();
-//     LYON_ASSERT(cur->m_state == EXEC);
-//     cur->m_state = READY;
-//     cur->schedulerOut();
-// }
+void Fiber::ReadyToScheduler() {
+    Fiber::ptr cur = GetCurrentFiber();
+    LYON_ASSERT(cur->m_state == EXEC);
+    cur->m_state = READY;
+    cur->schedulerOut();
+}
 
-// void Fiber::HoldToScheduler() {
-//     Fiber::ptr cur = GetCurrentFiber();
-//     LYON_ASSERT(cur->m_state == EXEC);
-//     cur->m_state = HOLD;
-//     cur->schedulerOut();
-// }
+void Fiber::HoldToScheduler() {
+    Fiber::ptr cur = GetCurrentFiber();
+    LYON_ASSERT(cur->m_state == EXEC);
+    cur->m_state = HOLD;
+    cur->schedulerOut();
+}
 
 void Fiber::ReadyToMainFiber() {
     Fiber::ptr cur = GetCurrentFiber();
@@ -186,35 +190,30 @@ void Fiber::HoldToMainFiber() {
     cur->mainFiberOut();
 }
 
-// void Fiber::SchedulerFunc() {
-//     Fiber::ptr cur = GetCurrentFiber();
-//     try {
-//         cur->m_cb();
-//         cur->m_cb = nullptr;
-//         cur->m_state = TERM;
-//     } catch (std::exception &e) {
-//         cur->m_state = EXCEPT;
-//         LYON_LOG_ERROR(g_logger) << "Fiber Except: " << e.what()
-//                                  << " fiber id = " << cur->getId() <<
-//                                  std::endl
-//                                  << BackTraceToString();
-//     } catch (...) {
-//         cur->m_state = EXCEPT;
-//         LYON_LOG_ERROR(g_logger) << "Fiber Except: "
-//                                  << " fiber id = " << cur->getId() <<
-//                                  std::endl
-//                                  << BackTraceToString();
-//     }
+void Fiber::SchedulerFunc() {
+    Fiber::ptr cur = GetCurrentFiber();
+    try {
+        cur->m_cb();
+        cur->m_cb = nullptr;
+        cur->m_state = TERM;
+    } catch (std::exception &e) {
+        cur->m_state = EXCEPT;
+        LYON_LOG_ERROR(g_logger) << "Fiber Except: " << e.what()
+                                 << " fiber id = " << cur->getId() << std::endl
+                                 << BackTraceToString();
+    } catch (...) {
+        cur->m_state = EXCEPT;
+        LYON_LOG_ERROR(g_logger) << "Fiber Except: "
+                                 << " fiber id = " << cur->getId() << std::endl
+                                 << BackTraceToString();
+    }
 
-//     auto raw_ptr = cur.get();
-//     cur.reset();
-//     //运行结束后切换为主协程
-//     //
-//     BUG:感觉这里不应该这样返回主协程，这样回将当前协程挂起，而不是结束,导致析构时报错
-//     raw_ptr->schedulerOut();
-//     LYON_ASSERT2(false, "Fiber never reached id = " +
-//                             std::to_string(raw_ptr->getId()));
-// }
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->schedulerOut();
+    LYON_ASSERT2(false, "Fiber never reached id = " +
+                            std::to_string(raw_ptr->getId()));
+}
 
 void Fiber::MainFiberFunc() {
     Fiber::ptr cur = GetCurrentFiber();
@@ -238,7 +237,6 @@ void Fiber::MainFiberFunc() {
     auto raw_ptr = cur.get();
     cur.reset();
     //运行结束后切换回线程的主协程
-    // INFO: 这里是手动切换回主协程,切换回去后该协程不应该在被调度了
     raw_ptr->mainFiberOut();
     LYON_ASSERT2(false, "Fiber never reached id = " +
                             std::to_string(raw_ptr->getId()));

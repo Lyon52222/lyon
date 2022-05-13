@@ -12,8 +12,8 @@ void fiber_fun1() {
 }
 
 int main(int argc, char *argv[]) {
-    lyon::Fiber::ptr fiber(new lyon::Fiber(fiber_fun1));
 
+    lyon::Fiber::ptr fiber(new lyon::Fiber(fiber_fun1, false));
     LYON_LOG_INFO(g_logger) << "Fiber count = " << lyon::Fiber::TotalFibers();
     fiber->mainFiberIn();
     LYON_LOG_INFO(g_logger)
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     LYON_LOG_INFO(g_logger)
         << "Main after swapout : " << lyon::Fiber::GetFiberId();
 
-    sleep(3);
+    sleep(2);
 
     LYON_LOG_INFO(g_logger) << "end";
     return 0;

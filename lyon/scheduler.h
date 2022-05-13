@@ -98,6 +98,8 @@ public:
      */
     static Scheduler *GetCurrentScheduler();
 
+    static Fiber *GetMainFiber();
+
 protected:
     virtual void tickle();
     /**
@@ -199,8 +201,9 @@ private:
     /**
      * @m_workFiber 表示当前调度器工作在哪个协程中
      */
-    Fiber::ptr m_workFiber = nullptr;
+    Fiber::ptr m_runFiber = nullptr;
     std::string m_name;
+    pthread_t m_rootThread = 0;
 };
 
 } // namespace lyon

@@ -312,7 +312,7 @@ void IOManager::idle() {
                 m_penddingEventCount--;
             }
         }
-        Fiber::HoldToMainFiber();
+        Fiber::HoldToScheduler();
     }
 }
 

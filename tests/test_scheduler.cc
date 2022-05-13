@@ -27,18 +27,17 @@ void func1() {
 int main(int argc, char *argv[]) {
 
     LYON_LOG_INFO(g_logger) << "scheduler init";
-    lyon::Scheduler scheduler(2, true, "test");
+    lyon::Scheduler scheduler(1, false, "test");
 
     LYON_LOG_INFO(g_logger) << "scheduler start";
     scheduler.start();
 
-    // LYON_LOG_INFO(g_logger) << "add func job";
-    // scheduler.addJob(func);
+    LYON_LOG_INFO(g_logger) << "add func job";
+    scheduler.addJob(func);
 
     LYON_LOG_INFO(g_logger) << "add fiber job";
-    // BUG:这里还会有问题。如果这了创建fiber为任务的话。回为当前线程创建一个主要fiber并且永远也不会返回。
     // 这样在析构的时候主fiber的状态还会是Exce
-    lyon::Fiber::ptr fiber(new lyon::Fiber(func1, false));
+    lyon::Fiber::ptr fiber(new lyon::Fiber(func1, true));
     scheduler.addJob(fiber);
 
     scheduler.stop();

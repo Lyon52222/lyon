@@ -25,7 +25,7 @@ void test_socket() {
             sock, lyon::IOManager::READ,
             []() { LYON_LOG_INFO(g_logger) << "read"; });
 
-        LYON_LOG_INFO(g_logger) << "add write event";
+        // LYON_LOG_INFO(g_logger) << "add write event";
         // lyon::IOManager::GetCurrentIOManager()->addEvent(
         //     sock, lyon::IOManager::WRITE,
         //     []() { LYON_LOG_INFO(g_logger) << "write"; });

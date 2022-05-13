@@ -46,11 +46,12 @@ public:
      * @brief 协程构造函数
      *
      * @param cb 协程执行函数
+     * @param back_scheduer 返回调度run所在线程
      * @param create_main 是否自动创建主线程
      * @param stacksize 协程栈大小
      */
-    Fiber(std::function<void()> cb, bool create_main = true,
-          uint32_t stacksize = 0);
+    Fiber(std::function<void()> cb, bool back_scheduler = true,
+          bool create_main = true, uint32_t stacksize = 0);
     ~Fiber();
 
     uint64_t getId() { return m_id; }
@@ -79,21 +80,21 @@ public:
      * @brief 从调度器协程切换到当前协程
      *
      */
-    // void schedulerIn();
+    void schedulerIn();
 
 private:
     /**
      * @brief 将当前协程切换到调度器协程
      *
      */
-    // void schedulerOut();
+    void schedulerOut();
 
 public:
     /**
      * @brief 协程执行函数，完成后返回主协程
      *
      */
-    // static void SchedulerFunc();
+    static void SchedulerFunc();
 
     /**
      * @brief 协程执行函数，完成后返回调用协程
@@ -127,13 +128,13 @@ public:
     //  * @brief 将当前正在运行的协程切换到后台并且设置为ready状态
     //  *
     //  */
-    // static void ReadyToScheduler();
+    static void ReadyToScheduler();
 
     // /**
     //  * @brief 将当前正在运行的协程切换到后台并且设置为hold状态
     //  *
     //  */
-    // static void HoldToScheduler();
+    static void HoldToScheduler();
 
     static void ReadyToMainFiber();
 
