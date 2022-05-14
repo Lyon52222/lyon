@@ -11,7 +11,7 @@
 #include <ucontext.h>
 namespace lyon {
 
-static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
 static std::atomic<uint64_t> s_fiber_id{1};
 static std::atomic<uint64_t> s_fiber_count{0};

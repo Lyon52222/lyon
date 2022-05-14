@@ -12,7 +12,7 @@
 
 namespace lyon {
 
-static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
 uint64_t GetCurrentThreadId() {
     uint64_t id;

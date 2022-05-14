@@ -1,6 +1,7 @@
 #ifndef __LYON_LYON_H__
 #define __LYON_LYON_H__
 #include "config.h"
+#include "fdmanager.h"
 #include "fiber.h"
 #include "hook.h"
 #include "iomanager.h"

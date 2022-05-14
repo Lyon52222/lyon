@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 namespace lyon {
-static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
 IOManager::IOManager(size_t threads, bool join_fiber, const std::string &name)
     : Scheduler(threads, join_fiber, name) {

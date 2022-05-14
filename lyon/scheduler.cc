@@ -8,7 +8,7 @@
 #include <string>
 namespace lyon {
 
-static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 static thread_local Scheduler *t_current_scheduler = nullptr;
 static thread_local Fiber *t_scheduler_fiber = nullptr;
 

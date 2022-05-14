@@ -23,6 +23,7 @@ set(
   lyon/iomanager.cc
   lyon/timer.cc
   lyon/hook.cc
+  lyon/fdmanager.cc
   lyon/utils/file_system_util.cc
 )
 

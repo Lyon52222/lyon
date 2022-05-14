@@ -8,12 +8,12 @@
 namespace lyon {
 
 // static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
-static Logger::ptr g_logger = LYON_LOG_GET_ROOT();
+static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
 static void
 ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
                    std::list<std::pair<std::string, YAML::Node>> &numbers) {
-    if (!Config::CheckName(prefix)) {
+    if (!lyon::Config::CheckName(prefix)) {
         return;
     }
     if (node.IsScalar()) {
