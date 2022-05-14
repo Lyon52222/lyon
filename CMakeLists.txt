@@ -20,7 +20,7 @@ set(
   lyon/mutex.cc
   lyon/fiber.cc
   lyon/scheduler.cc
-  lyon/ionamager.cc
+  lyon/iomanager.cc
   lyon/timer.cc
   lyon/hook.cc
   lyon/utils/file_system_util.cc

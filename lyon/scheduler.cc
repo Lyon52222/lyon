@@ -1,5 +1,6 @@
 #include "scheduler.h"
 #include "fiber.h"
+#include "hook.h"
 #include "log.h"
 #include "macro.h"
 #include "util.h"
@@ -120,6 +121,7 @@ void Scheduler::stop() {
 
 void Scheduler::run() {
     LYON_LOG_DEBUG(g_logger) << m_name << " start run";
+    set_hook_enable(true);
     setAsCurrentScheduler();
 
     if (GetCurrentThreadId() != m_rootThread) {

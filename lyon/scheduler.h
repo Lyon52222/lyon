@@ -81,7 +81,7 @@ public:
         {
             MutexType::Lock lock(m_mutex);
             while (begin != end) {
-                need_tickle = scheduleWithoutLock(*begin, s_thread, thread) ||
+                need_tickle = scheduleWithoutLock(&*begin, s_thread, thread) ||
                               need_tickle;
                 begin++;
             }
@@ -133,9 +133,11 @@ private:
         // }
         bool tickle = m_jobs.empty();
         Job ft(f, s_thread, thread);
+
         if (ft.fiber || ft.cb) {
             m_jobs.push_back(ft);
         }
+
         return tickle;
     }
 
@@ -197,6 +199,7 @@ private:
     /**
      * @m_fibers 需要被调度的工作
      */
+public:
     std::list<Job> m_jobs;
     /**
      * @m_workFiber 表示当前调度器工作在哪个协程中

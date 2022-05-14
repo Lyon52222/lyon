@@ -3,6 +3,7 @@
 #include "util.h"
 #include <cstdint>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -57,10 +58,23 @@ bool Timer::reset(uint64_t ms, std::function<void()> cb, bool cycle) {
     return true;
 }
 
+bool Timer::reset(uint64_t ms, bool from_now) {
+    TimerManager::RWMutexType::WRLock wlock(m_manager->m_mutex);
+    m_manager->m_timers.erase(shared_from_this());
+    if (from_now) {
+        m_next = GetCurrentTimeMS() + m_ms;
+    } else {
+        m_next = m_next - m_ms + ms;
+    }
+    m_ms = ms;
+    m_manager->addTimer(shared_from_this(), wlock);
+    return true;
+}
+
 Timer::ptr TimerManager::addTimer(uint64_t ms, std::function<void()> cb,
                                   bool cycle) {
     Timer::ptr timer(new Timer(ms, cb, cycle, this));
-    m_timers.insert(timer);
+    addTimer(timer);
     return timer;
 }
 
@@ -80,13 +94,21 @@ Timer::ptr TimerManager::addConditionTimer(uint64_t ms,
 void TimerManager::addTimer(Timer::ptr val) {
     RWMutexType::WRLock wlock(m_mutex);
     auto itr = m_timers.insert(val);
-    bool insertatfront = itr.first == m_timers.begin();
+    bool insertatfront = (itr.first == m_timers.begin());
     wlock.unlock();
     if (insertatfront) {
         onTimerInsertAtFront();
     }
 }
 
+void TimerManager::addTimer(Timer::ptr val, RWMutexType::WRLock &wlock) {
+    auto itr = m_timers.insert(val);
+    bool insertatfront = (itr.first == m_timers.begin());
+    wlock.unlock();
+    if (insertatfront) {
+        onTimerInsertAtFront();
+    }
+}
 uint64_t TimerManager::getNextTimer() {
     RWMutexType::RDLock rlock(m_mutex);
     if (m_timers.empty()) {
@@ -95,7 +117,7 @@ uint64_t TimerManager::getNextTimer() {
 
     const Timer::ptr &next = *m_timers.begin();
     uint64_t now_ms = GetCurrentTimeMS();
-    if (next->m_next > now_ms) {
+    if (next->m_next <= now_ms) {
         return 0;
     } else {
         return next->m_next - now_ms;
@@ -124,13 +146,13 @@ void TimerManager::listExpiredCbs(std::vector<std::function<void()>> &cbs) {
     cbs.reserve(expires.size());
 
     for (auto &timer : expires) {
+        cbs.push_back(timer->m_cb);
         if (timer->m_cycle) {
             timer->m_next = now_ms + timer->m_ms;
             m_timers.insert(timer);
         } else {
             timer->m_cb = nullptr;
         }
-        cbs.push_back(timer->m_cb);
     }
 }
 

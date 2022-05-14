@@ -292,8 +292,8 @@ void IOManager::idle() {
         listExpiredCbs(cbs);
         if (!cbs.empty()) {
             addJobs(cbs.begin(), cbs.end());
+            cbs.clear();
         }
-        cbs.clear();
 
         for (int i = 0; i < rt; i++) {
             epoll_event &epevent = epevents[i];

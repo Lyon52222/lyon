@@ -20,6 +20,7 @@ public:
     bool cancle();
     bool refresh();
     bool reset(uint64_t ms, std::function<void()> cb, bool cycle);
+    bool reset(uint64_t ms, bool from_now);
 
 private:
     Timer(uint64_t ms, std::function<void()> cb, bool cycle,
@@ -61,6 +62,7 @@ public:
 
 protected:
     void addTimer(Timer::ptr val);
+    void addTimer(Timer::ptr val, RWMutexType::WRLock &wlock);
     virtual void onTimerInsertAtFront() = 0;
 
 private:
