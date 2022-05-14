@@ -28,7 +28,6 @@
         assert(x);                                                             \
     }
 
-// BUG:输出w就会显示乱码
 #define LYON_ASSERT2(x, w)                                                     \
     if (LYON_UNLIKELY(!(x))) {                                                 \
         LYON_LOG_ERROR(LYON_LOG_GET_LOGGER("system"))                          \

@@ -2,6 +2,7 @@
 #define __LYON_FD_MANAGER_H__
 #include "iomanager.h"
 #include "mutex.h"
+#include "singleton.h"
 #include "thread.h"
 #include <cstdint>
 #include <memory>
@@ -48,6 +49,8 @@ private:
     RWMutexType m_mutex;
     std::vector<FdCtx::ptr> m_fds;
 };
+
+typedef Singleton<FdManager> FdMgr;
 
 } // namespace lyon
 #endif

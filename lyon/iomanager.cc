@@ -168,7 +168,7 @@ bool IOManager::deleEvent(int fd, Event event) {
     return true;
 }
 
-bool IOManager::cancleEvent(int fd, Event event) {
+bool IOManager::cancelEvent(int fd, Event event) {
     RWMutexType::RDLock rlock(m_mutex);
     FdContext *fd_ctx = nullptr;
     if (fd >= static_cast<int>(m_fdContexts.size())) {
@@ -208,7 +208,7 @@ bool IOManager::cancleEvent(int fd, Event event) {
     return true;
 }
 
-bool IOManager::cancleAll(int fd) {
+bool IOManager::cancelAll(int fd) {
     RWMutexType::RDLock rlock(m_mutex);
     FdContext *fd_ctx = nullptr;
     if (fd >= static_cast<int>(m_fdContexts.size())) {
@@ -288,6 +288,7 @@ void IOManager::idle() {
             rt = epoll_wait(m_epfd, epevents, MAX_EVENTSIZE, next_timeout);
         } while (rt == -1 && errno == EINTR);
 
+        //查询到时的定时器
         std::vector<std::function<void()>> cbs;
         listExpiredCbs(cbs);
         if (!cbs.empty()) {

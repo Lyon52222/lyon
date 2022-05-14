@@ -1,12 +1,18 @@
 #include "hook.h"
 #include "iomanager.h"
 #include "log.h"
+#include <asm-generic/errno-base.h>
+#include <cstdint>
 #include <dlfcn.h>
+#include <fdmanager.h>
+#include <memory>
+#include <unistd.h>
 
 namespace lyon {
 
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 static thread_local bool s_hook_enable = false;
+static uint64_t s_connect_timeout = -1;
 
 #define HOOK_FUN(XX)                                                           \
     XX(sleep)                                                                  \
@@ -47,6 +53,45 @@ bool is_hook_enable() { return s_hook_enable; }
 
 void set_hook_enable(bool flag) { s_hook_enable = flag; }
 
+struct timer_cond {
+    int cancelled = 0;
+};
+
+template <typename OrginFun, typename... Args>
+static ssize_t do_io(int fd, OrginFun fun, const char *hook_fun_name,
+                     uint32_t event, int timeout_so, ssize_t buflen,
+                     Args &&...args) {
+    if (!lyon::s_hook_enable) {
+        return fun(fd, std::forward<Args>(args)...);
+    }
+    FdCtx::ptr ctx = FdMgr::getInstance()->get(fd);
+    if (!ctx) {
+        return fun(fd, std::forward<Args>(args)...);
+    }
+    if (ctx->isClose()) {
+        errno = EBADF;
+        return -1;
+    }
+    if (!ctx->isSockt() || ctx->getUsrNonblock()) {
+        return fun(fd, std::forward<Args>(args)...);
+    }
+    uint64_t to = ctx->getTimeout(timeout_so);
+    std::shared_ptr<timer_cond> tcond(new timer_cond);
+
+    ssize_t n = fun(fd, std::forward<Args>(args)...);
+    //中断重试
+    while (n == -1 && errno == EINTR) {
+        n = fun(fd, std::forward<Args>(args)...);
+    }
+    //无数据阻塞
+    if (n == -1 && errno == EAGAIN) {
+        IOManager *iom = IOManager::GetCurrentIOManager();
+        Fiber::ptr fiber = Fiber::GetCurrentFiber();
+        std::weak_ptr<timer_cond> wtcond(tcond);
+        // TODO: last place
+    }
+}
+
 extern "C" {
 
 #define XX(name) name##_fun name##_f = nullptr;
@@ -83,9 +128,37 @@ int usleep(__useconds_t useconds) {
     return 0;
 }
 
-int socket(int domain, int type, int protocol) {}
+int socket(int domain, int type, int protocol) {
+    if (!lyon::s_hook_enable) {
+        return socket_f(domain, type, protocol);
+    }
+    int sfd = socket(domain, type, protocol);
+    if (sfd != -1) {
+        lyon::FdMgr::getInstance()->get(sfd, true);
+    }
+    return sfd;
+}
+
+int connect_with_timeout(int socket, const struct sockaddr *address,
+                         socklen_t address_len, uint64_t timeout) {
+    if (!lyon::s_hook_enable) {
+        return connect_f(socket, address, address_len);
+    }
+    lyon::FdCtx::ptr ctx = lyon::FdMgr::getInstance()->get(socket);
+    if (!ctx || ctx->isClose()) {
+        errno = EBADF;
+        return -1;
+    }
+    if (!ctx->isSockt() || ctx->getUsrNonblock()) {
+        return connect_f(socket, address, address_len);
+    }
+
+    // TODO: last place
+}
 
 int connect(int socket, const struct sockaddr *address, socklen_t address_len) {
+    return connect_with_timeout(socket, address, address_len,
+                                lyon::s_connect_timeout);
 }
 
 int accept(int socket, struct sockaddr *address, socklen_t *address_len) {}

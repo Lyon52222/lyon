@@ -34,7 +34,7 @@ Scheduler::Scheduler(size_t threads, bool join_fiber, const std::string &name)
         t_scheduler_fiber = m_runFiber.get();
         m_rootThread = GetCurrentThreadId();
 
-        Thread::SetName(m_name + "0");
+        lyon::Thread::SetName(m_name + "0");
         // m_threadIds.push_back(m_rootThread);
         m_threadIds.push_back(GetCurrentThreadId());
 
@@ -121,10 +121,10 @@ void Scheduler::stop() {
 
 void Scheduler::run() {
     LYON_LOG_DEBUG(g_logger) << m_name << " start run";
-    set_hook_enable(true);
+    lyon::set_hook_enable(true);
     setAsCurrentScheduler();
 
-    if (GetCurrentThreadId() != m_rootThread) {
+    if (lyon::GetCurrentThreadId() != m_rootThread) {
         t_scheduler_fiber = Fiber::GetCurrentFiber().get();
     }
 
@@ -239,7 +239,7 @@ void Scheduler::tickle() {
 void Scheduler::idle() {
     LYON_LOG_INFO(g_logger) << "idle Fiber id = " << GetCurrentFiberId();
     while (!stopping()) {
-        Fiber::HoldToScheduler();
+        lyon::Fiber::HoldToScheduler();
     }
 }
 

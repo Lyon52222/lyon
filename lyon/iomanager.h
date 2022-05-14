@@ -52,8 +52,8 @@ public:
      * @return 是否删除成功
      */
     bool deleEvent(int fd, Event event);
-    bool cancleEvent(int fd, Event event);
-    bool cancleAll(int fd);
+    bool cancelEvent(int fd, Event event);
+    bool cancelAll(int fd);
 
 public:
     static IOManager *GetCurrentIOManager();

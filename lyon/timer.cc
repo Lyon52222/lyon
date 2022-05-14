@@ -27,7 +27,7 @@ bool Timer::Comparator::operator()(const Timer::ptr &lhs,
                                       : lhs.get() < rhs.get();
 }
 
-bool Timer::cancle() {
+bool Timer::cancel() {
     if (m_cb) {
         m_cb = nullptr;
         TimerManager::RWMutexType::WRLock wlock(m_manager->m_mutex);
