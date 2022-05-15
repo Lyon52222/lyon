@@ -168,7 +168,7 @@ bool IOManager::deleEvent(int fd, Event event) {
     return true;
 }
 
-bool IOManager::cancelEvent(int fd, Event event) {
+bool IOManager::triggerEvent(int fd, Event event) {
     RWMutexType::RDLock rlock(m_mutex);
     FdContext *fd_ctx = nullptr;
     if (fd >= static_cast<int>(m_fdContexts.size())) {
@@ -208,7 +208,7 @@ bool IOManager::cancelEvent(int fd, Event event) {
     return true;
 }
 
-bool IOManager::cancelAll(int fd) {
+bool IOManager::triggerAll(int fd) {
     RWMutexType::RDLock rlock(m_mutex);
     FdContext *fd_ctx = nullptr;
     if (fd >= static_cast<int>(m_fdContexts.size())) {
