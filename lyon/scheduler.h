@@ -188,7 +188,7 @@ protected:
     std::atomic<size_t> m_idleThreadCount{0};
     bool m_stopping = true;
     bool m_autoStop = false;
-    // int m_rootThread = 0;
+    pthread_t m_rootThread = 0;
 
 private:
     MutexType m_mutex;
@@ -206,7 +206,6 @@ public:
      */
     Fiber::ptr m_runFiber = nullptr;
     std::string m_name;
-    pthread_t m_rootThread = 0;
 };
 
 } // namespace lyon

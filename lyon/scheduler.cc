@@ -39,7 +39,7 @@ Scheduler::Scheduler(size_t threads, bool join_fiber, const std::string &name)
         m_threadIds.push_back(GetCurrentThreadId());
 
     } else {
-        // m_rootThread = -1;
+        m_rootThread = static_cast<pthread_t>(-1);
         m_runFiber = nullptr;
     }
     m_threadCount = threads;
@@ -86,13 +86,12 @@ void Scheduler::stop() {
         }
     }
 
-    // if (m_rootThread == -1) {
-    // if (m_workFiber == nullptr) {
-    //     LYON_ASSERT(GetCurrentScheduler() != this);
-    // } else {
-    //     //说明这是usecaller创建的线程
-    //     LYON_ASSERT(GetCurrentScheduler() == this);
-    // }
+    if (m_rootThread == static_cast<pthread_t>(-1)) {
+        LYON_ASSERT(GetCurrentScheduler() != this);
+    } else {
+        //说明这是usecaller创建的线程
+        LYON_ASSERT(GetCurrentScheduler() == this);
+    }
 
     m_stopping = true;
     // for (size_t i = 0; i < m_threadCount; i++) {
@@ -142,7 +141,8 @@ void Scheduler::run() {
             MutexType::Lock lock(m_mutex);
             auto j_itr = m_jobs.begin();
             while (j_itr != m_jobs.end()) {
-                //-1表示为指定在哪个线程执行 ,当前线程并不是协程指定运行的线程
+                //-1表示为指定在哪个线程执行
+                //,当前线程并不是协程指定运行的线程
                 if (j_itr->specified_thread &&
                     j_itr->thread != lyon::GetCurrentThreadId()) {
                     j_itr++;

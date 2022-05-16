@@ -16,3 +16,7 @@ logs:
 
 fiber:
       stack_size: 4096
+
+tcp:
+  connect:
+    timeout:5000

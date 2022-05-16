@@ -1,4 +1,5 @@
 #include "hook.h"
+#include "config.h"
 #include "fdmanager.h"
 #include "iomanager.h"
 #include "log.h"
@@ -17,6 +18,10 @@ namespace lyon {
 
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 static thread_local bool s_hook_enable = false;
+
+static ConfigVar<int>::ptr g_tcp_connect_timeout =
+    Config::SetConfig<int>("tcp.connect.timeout", 5000, "tcp connect timeout");
+
 static uint64_t s_connect_timeout = -1;
 
 #define HOOK_FUN(XX)                                                           \
@@ -49,7 +54,15 @@ void hook_init() {
 }
 
 struct _HookIniter {
-    _HookIniter() { hook_init(); }
+    _HookIniter() {
+        g_tcp_connect_timeout->addOnChange([](const int &old_val,
+                                              const int &new_val) {
+            LYON_LOG_INFO(g_logger) << "Tcp connect timeout from : " << old_val
+                                    << " set to : " << new_val;
+            s_connect_timeout = new_val;
+        });
+        hook_init();
+    }
 };
 
 static _HookIniter s_hook_initer;
@@ -180,7 +193,7 @@ int socket(int domain, int type, int protocol) {
     if (!lyon::s_hook_enable) {
         return socket_f(domain, type, protocol);
     }
-    int sfd = socket(domain, type, protocol);
+    int sfd = socket_f(domain, type, protocol);
     if (sfd != -1) {
         lyon::FdMgr::GetInstance()->get(sfd, true);
     }
