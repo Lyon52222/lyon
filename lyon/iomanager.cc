@@ -2,6 +2,7 @@
 #include "log.h"
 #include "macro.h"
 #include "scheduler.h"
+#include <asm-generic/errno-base.h>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -14,6 +15,38 @@
 
 namespace lyon {
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+
+//格式化输出events对应的文本。 这种方法相比于getString很有用
+static std::ostream &operator<<(std::ostream &os, EPOLL_EVENTS events) {
+    if (!events)
+        return os << "NONE";
+    bool first = true;
+#define XX(E)                                                                  \
+    if (E & events) {                                                          \
+        if (!first) {                                                          \
+            os << '|';                                                         \
+        }                                                                      \
+        os << #E;                                                              \
+        first = false;                                                         \
+    }
+    XX(EPOLLIN);
+    XX(EPOLLPRI);
+    XX(EPOLLOUT);
+    XX(EPOLLRDNORM);
+    XX(EPOLLRDBAND);
+    XX(EPOLLWRNORM);
+    XX(EPOLLWRBAND);
+    XX(EPOLLMSG);
+    XX(EPOLLERR);
+    XX(EPOLLHUP);
+    XX(EPOLLRDHUP);
+    XX(EPOLLEXCLUSIVE);
+    XX(EPOLLWAKEUP);
+    XX(EPOLLONESHOT);
+    XX(EPOLLET);
+#undef XX
+    return os;
+} // namespace lyon
 
 IOManager::IOManager(size_t threads, bool join_fiber, const std::string &name)
     : Scheduler(threads, join_fiber, name) {
@@ -84,31 +117,37 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
 
     //如果需要添加的事件已经存在，就直接返回
     if (LYON_UNLIKELY(fd_ctx->events & event)) {
-        LYON_LOG_WARN(g_logger) << "IOManager: event exist - event = " << event
-                                << " fd_ctx.events = " << fd_ctx->events;
+        LYON_LOG_WARN(g_logger)
+            << "IOManager: event exist - event = " << event
+            << " fd_ctx.events = " << (EPOLL_EVENTS)fd_ctx->events;
         return -1;
     }
 
     int op = fd_ctx->events ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
-    Event new_event = static_cast<Event>(fd_ctx->events | event);
+    // Event new_event = static_cast<Event>(fd_ctx->events | event);
 
     epoll_event epevent;
-    epevent.events = EPOLLET | new_event;
+    epevent.events = EPOLLET | fd_ctx->events | event;
     //设置事件对应的附加 数据指针，后续可以重新得到。
     epevent.data.ptr = fd_ctx;
 
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if (rt) {
+        // if (errno == EEXIST) {
+        // } else {
         LYON_LOG_ERROR(g_logger)
             << "IOManager: "
             << "epoll_ctl( " << m_epfd << ", " << op << ", " << fd << ", "
-            << epevent.events << " ): " << rt << " ( " << errno << "-"
-            << strerror(errno) << " ) fd_ctx = " << fd_ctx->events;
+            << (EPOLL_EVENTS)epevent.events << " ): " << rt
+            << " ( errno: " << errno << "-" << strerror(errno)
+            << " ) fd_ctx.events = " << (EPOLL_EVENTS)fd_ctx->events;
         return -1;
+        // }
     }
     m_penddingEventCount++;
 
-    fd_ctx->events = new_event;
+    // fd_ctx->events = new_event;
+    fd_ctx->events = static_cast<Event>(fd_ctx->events | event);
 
     //获取对应事件的事件描述上下文
     auto &event_ctx = fd_ctx->getEventContext(event);
@@ -157,8 +196,9 @@ bool IOManager::deleEvent(int fd, Event event) {
         LYON_LOG_ERROR(g_logger)
             << "IOManager: "
             << "epoll_ctl( " << m_epfd << ", " << op << ", " << fd << ", "
-            << epevent.events << " ): " << rt << " ( " << errno << "-"
-            << strerror(errno) << " ) fd_ctx = " << fd_ctx->events;
+            << (EPOLL_EVENTS)epevent.events << " ): " << rt << " ( " << errno
+            << "-" << strerror(errno)
+            << " ) fd_ctx = " << (EPOLL_EVENTS)fd_ctx->events;
         return false;
     }
     m_penddingEventCount--;
@@ -181,8 +221,8 @@ bool IOManager::triggerEvent(int fd, Event event) {
 
     if (LYON_UNLIKELY(!(fd_ctx->events & event))) {
         LYON_LOG_WARN(g_logger)
-            << "IOManager: event not exist - event = " << event
-            << " fd_ctx.events = " << fd_ctx->events;
+            << "IOManager: event not exist - event = " << (EPOLL_EVENTS)event
+            << " fd_ctx.events = " << (EPOLL_EVENTS)fd_ctx->events;
         return false;
     }
 
@@ -198,8 +238,9 @@ bool IOManager::triggerEvent(int fd, Event event) {
         LYON_LOG_ERROR(g_logger)
             << "IOManager: "
             << "epoll_ctl( " << m_epfd << ", " << op << ", " << fd << ", "
-            << epevent.events << " ): " << rt << " ( " << errno << "-"
-            << strerror(errno) << " ) fd_ctx = " << fd_ctx->events;
+            << (EPOLL_EVENTS)epevent.events << " ): " << rt << " ( " << errno
+            << "-" << strerror(errno)
+            << " ) fd_ctx = " << (EPOLL_EVENTS)fd_ctx->events;
         return false;
     }
 
@@ -220,8 +261,9 @@ bool IOManager::triggerAll(int fd) {
     FdContext::MutexType::Lock lock(fd_ctx->mutex);
 
     if (LYON_UNLIKELY(!(fd_ctx->events))) {
-        LYON_LOG_WARN(g_logger) << "IOManager: event not exist "
-                                << " fd_ctx.events = " << fd_ctx->events;
+        LYON_LOG_WARN(g_logger)
+            << "IOManager: event not exist "
+            << " fd_ctx.events = " << (EPOLL_EVENTS)fd_ctx->events;
         return false;
     }
 
@@ -234,8 +276,9 @@ bool IOManager::triggerAll(int fd) {
         LYON_LOG_ERROR(g_logger)
             << "IOManager: "
             << "epoll_ctl( " << m_epfd << ", " << op << ", " << fd << ", "
-            << epevent.events << " ): " << rt << " ( " << errno << "-"
-            << strerror(errno) << " ) fd_ctx = " << fd_ctx->events;
+            << (EPOLL_EVENTS)epevent.events << " ): " << rt << " ( " << errno
+            << "-" << strerror(errno)
+            << " ) fd_ctx = " << (EPOLL_EVENTS)fd_ctx->events;
         return false;
     }
 
@@ -298,18 +341,51 @@ void IOManager::idle() {
 
         for (int i = 0; i < rt; i++) {
             epoll_event &epevent = epevents[i];
-            FdContext *fdc = static_cast<FdContext *>(epevent.data.ptr);
+            if (epevents->data.fd == m_tickleFds[0]) {
+                uint8_t dummy[256];
+                while (read(m_tickleFds[0], dummy, sizeof(dummy)) > 0)
+                    ;
+                continue;
+            }
+            FdContext *fd_ctx = static_cast<FdContext *>(epevent.data.ptr);
+            FdContext::MutexType::Lock lock(fd_ctx->mutex);
 
-            FdContext::MutexType::Lock lock(fdc->mutex);
-            if (epevent.events & fdc->events & READ) {
-                fdc->triggerEvent(READ);
-                fdc->events = static_cast<Event>(fdc->events & (~READ));
+            if (epevent.events & (EPOLLERR | EPOLLHUP)) {
+                epevent.events |= EPOLLIN | EPOLLOUT;
+            }
+            int real_events = NONE;
+            if (epevent.events & EPOLLIN) {
+                real_events |= READ;
+            }
+
+            if (epevent.events & EPOLLOUT) {
+                real_events |= WRITE;
+            }
+
+            if ((epevents->events & real_events) == NONE) {
+                continue;
+            }
+            int left_events = (fd_ctx->events & ~real_events);
+            int op = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
+            epevent.events = EPOLLET | left_events;
+            int rt2 = epoll_ctl(m_epfd, op, fd_ctx->fd, &epevent);
+            if (rt2) {
+                LYON_LOG_ERROR(g_logger)
+                    << "IOManager: "
+                    << "epoll_ctl( " << m_epfd << ", " << op << ", "
+                    << fd_ctx->fd << ", " << (EPOLL_EVENTS)epevent.events
+                    << " ): " << rt << " ( " << errno << "-" << strerror(errno)
+                    << " ) fd_ctx = " << (EPOLL_EVENTS)fd_ctx->events;
+                continue;
+            }
+
+            if (real_events & READ) {
+                fd_ctx->triggerEvent(READ);
                 m_penddingEventCount--;
             }
 
-            if (epevent.events & fdc->events & WRITE) {
-                fdc->triggerEvent(WRITE);
-                fdc->events = static_cast<Event>(fdc->events & (~WRITE));
+            if (real_events & WRITE) {
+                fd_ctx->triggerEvent(WRITE);
                 m_penddingEventCount--;
             }
         }
@@ -317,7 +393,13 @@ void IOManager::idle() {
     }
 }
 
-void IOManager::tickle() {}
+void IOManager::tickle() {
+    if (!hasIdleThreads()) {
+        return;
+    }
+    int rt = write(m_tickleFds[1], "T", 1);
+    LYON_ASSERT(rt == 1)
+}
 
 bool IOManager::stopping() {
     uint64_t next_timeout = 0;

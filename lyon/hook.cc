@@ -127,7 +127,7 @@ retry:
         }
         int rt = iom->addEvent(fd, static_cast<lyon::IOManager::Event>(event));
         if (rt) {
-            LYON_LOG_ERROR(g_logger) << hook_fun_name << "add event : (" << fd
+            LYON_LOG_ERROR(g_logger) << hook_fun_name << " add event : (" << fd
                                      << ", " << event << " ) fail";
             if (timer) {
                 timer->cancel();

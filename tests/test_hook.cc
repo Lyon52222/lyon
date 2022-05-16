@@ -36,15 +36,32 @@ void test_socket() {
     int rt = connect(sock, (const struct sockaddr *)&addr, sizeof(addr));
     if (!rt) {
         LYON_LOG_INFO(g_logger) << "connect success";
+    } else {
+        return;
     }
 
-    const char head[] = "GET /HTTP/1.1\r\n\r\n";
+    const char head[] = "GET / HTTP/1.0\r\n\r\n";
 
     LYON_LOG_INFO(g_logger) << "try send";
     rt = send(sock, head, sizeof(head), 0);
-    if (!rt) {
-        LYON_LOG_INFO(g_logger) << "send success";
+    if (rt == -1) {
+        LYON_LOG_INFO(g_logger) << "send fail errno = " << errno;
+        return;
+    } else {
+        LYON_LOG_INFO(g_logger) << "send success size = " << rt;
     }
+
+    std::string buff;
+    buff.resize(4096);
+
+    rt = recv(sock, &buff[0], buff.size(), 0);
+    if (rt == -1) {
+        return;
+    }
+
+    buff.resize(rt);
+
+    LYON_LOG_INFO(g_logger) << std::endl << buff;
 
     if (rt <= 0) {
         return;

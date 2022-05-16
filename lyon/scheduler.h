@@ -113,6 +113,8 @@ protected:
      */
     virtual bool stopping();
 
+    bool hasIdleThreads() { return m_idleThreadCount > 0; }
+
 private:
     void setAsCurrentScheduler();
 

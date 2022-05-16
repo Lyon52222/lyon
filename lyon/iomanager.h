@@ -145,7 +145,9 @@ private:
     };
 
 private:
+    // epoll文件描述符
     int m_epfd;
+    // 用于线程之间相互通知
     int m_tickleFds[2];
     std::atomic<size_t> m_penddingEventCount{0};
     std::vector<FdContext *> m_fdContexts;
