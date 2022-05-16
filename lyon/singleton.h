@@ -9,16 +9,16 @@ namespace lyon {
  * @tparam T 单例类
  */
 template <class T> class Singleton {
-  public:
-    static T *getInstance() {
+public:
+    static T *GetInstance() {
         static T instance;
         return &instance;
     }
 };
 
 template <class T> class SingletonPtr {
-  public:
-    static std::shared_ptr<T> getInstance() {
+public:
+    static std::shared_ptr<T> GetInstalce() {
         static std::shared_ptr<T> instance(new T);
         return instance;
     }

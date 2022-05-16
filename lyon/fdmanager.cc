@@ -71,7 +71,7 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create) {
     rlock.unlock();
     RWMutexType::WRLock wlock(m_mutex);
     FdCtx::ptr fdctx(new FdCtx(fd));
-    if (fd >= m_fds.size()) {
+    if (fd >= static_cast<int>(m_fds.size())) {
         m_fds.resize(fd * 1.5);
     }
     m_fds[fd] = fdctx;

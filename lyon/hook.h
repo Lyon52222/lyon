@@ -1,6 +1,7 @@
 #ifndef __LYON_HOOK_H__
 #define __LYON_HOOK_H__
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -77,7 +78,7 @@ extern close_fun close_f;
 typedef int (*fcntl_fun)(int fildes, int cmd, ...);
 extern fcntl_fun fcntl_f;
 
-typedef int (*ioctl_fun)(int fildes, int request, ... /* arg */);
+typedef int (*ioctl_fun)(int fildes, unsigned long int request, ... /* arg */);
 extern ioctl_fun ioctl_f;
 
 typedef int (*getsockopt_fun)(int socket, int level, int option_name,

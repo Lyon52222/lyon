@@ -33,9 +33,9 @@
 #define LYON_LOG_ERROR(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::ERROR)
 #define LYON_LOG_FATAL(logger) LYON_LOG_LEVEL(logger, lyon::LogLevel::FATAL)
 
-#define LYON_LOG_GET_ROOT() lyon::LoggerMgr::getInstance()->getRoot()
+#define LYON_LOG_GET_ROOT() lyon::LoggerMgr::GetInstance()->getRoot()
 #define LYON_LOG_GET_LOGGER(name)                                              \
-    lyon::LoggerMgr::getInstance()->getLogger(name)
+    lyon::LoggerMgr::GetInstance()->getLogger(name)
 
 namespace lyon {
 

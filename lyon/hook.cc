@@ -1,4 +1,5 @@
 #include "hook.h"
+#include "fdmanager.h"
 #include "iomanager.h"
 #include "log.h"
 #include <asm-generic/errno-base.h>
@@ -6,8 +7,9 @@
 #include <asm-generic/socket.h>
 #include <cstdint>
 #include <dlfcn.h>
-#include <fdmanager.h>
+#include <fcntl.h>
 #include <memory>
+#include <stdarg.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -60,13 +62,14 @@ struct timer_cond {
     int cancelled = 0;
 };
 
+//因为io都是相同的hook方式。
 template <typename OrginFun, typename... Args>
 static ssize_t do_io(int fd, OrginFun fun, const char *hook_fun_name,
                      uint32_t event, int timeout_so, Args &&...args) {
     if (!lyon::s_hook_enable) {
         return fun(fd, std::forward<Args>(args)...);
     }
-    FdCtx::ptr ctx = FdMgr::getInstance()->get(fd);
+    FdCtx::ptr ctx = FdMgr::GetInstance()->get(fd);
     if (!ctx) {
         return fun(fd, std::forward<Args>(args)...);
     }
@@ -82,11 +85,13 @@ static ssize_t do_io(int fd, OrginFun fun, const char *hook_fun_name,
 
 retry:
     ssize_t n = fun(fd, std::forward<Args>(args)...);
-    //中断重试
+    // A read from a slow device was interrupted before any data arrived by the
+    // delivery of a signal.
     while (n == -1 && errno == EINTR) {
         n = fun(fd, std::forward<Args>(args)...);
     }
-    //无数据阻塞
+    // The file was marked for non-blocking I/O, and no data were ready to be
+    // read.
     if (n == -1 && errno == EAGAIN) {
         IOManager *iom = IOManager::GetCurrentIOManager();
         Fiber::ptr fiber = Fiber::GetCurrentFiber();
@@ -95,7 +100,7 @@ retry:
         if (to != static_cast<uint64_t>(-1)) {
             timer = iom->addConditionTimer(
                 to,
-                [&iom, &fiber, &wtcond, &fd, &event]() {
+                [iom, fiber, wtcond, fd, event]() {
                     auto t = wtcond.lock();
                     if (!t || t->cancelled) {
                         return;
@@ -146,12 +151,12 @@ unsigned int sleep(unsigned int seconds) {
     lyon::Fiber::ptr fiber = lyon::Fiber::GetCurrentFiber();
 
     // 设置一个定时器，然后让出执行
-    // iom->addTimer(seconds * 1000,
-    //               std::bind((void(Scheduler::*)(Fiber::ptr, bool s_thread,
-    //                                             int
-    //                                             thread))IOManager::addJob,
-    //                         iom, fiber, false, 0));
-    iom->addTimer(seconds * 1000, [&iom, &fiber]() { iom->addJob(fiber); });
+    // bind类模版方法
+    iom->addTimer(seconds * 1000,
+                  std::bind((void(Scheduler::*)(Fiber::ptr, bool, pthread_t)) &
+                                IOManager::addJob,
+                            iom, fiber, false, 0));
+    // iom->addTimer(seconds * 1000, [iom, fiber]() { iom->addJob(fiber); });
 
     lyon::Fiber::HoldToScheduler();
     return 0;
@@ -163,7 +168,10 @@ int usleep(__useconds_t useconds) {
     }
     lyon::IOManager *iom = lyon::IOManager::GetCurrentIOManager();
     lyon::Fiber::ptr fiber = lyon::Fiber::GetCurrentFiber();
-    iom->addTimer(useconds / 1000, [&iom, &fiber]() { iom->addJob(fiber); });
+    iom->addTimer(useconds / 1000,
+                  std::bind((void(Scheduler::*)(Fiber::ptr, bool, pthread_t)) &
+                                IOManager::addJob,
+                            iom, fiber, false, 0));
     lyon::Fiber::HoldToScheduler();
     return 0;
 }
@@ -174,7 +182,7 @@ int socket(int domain, int type, int protocol) {
     }
     int sfd = socket(domain, type, protocol);
     if (sfd != -1) {
-        lyon::FdMgr::getInstance()->get(sfd, true);
+        lyon::FdMgr::GetInstance()->get(sfd, true);
     }
     return sfd;
 }
@@ -185,7 +193,7 @@ int connect_with_timeout(int socket, const struct sockaddr *address,
         return connect_f(socket, address, address_len);
     }
     //获取相应的fd描述
-    lyon::FdCtx::ptr ctx = lyon::FdMgr::getInstance()->get(socket);
+    lyon::FdCtx::ptr ctx = lyon::FdMgr::GetInstance()->get(socket);
     //如果为空（未创建）或已经关闭
     if (!ctx || ctx->isClose()) {
         errno = EBADF;
@@ -212,7 +220,7 @@ int connect_with_timeout(int socket, const struct sockaddr *address,
     if (timeout_ms != static_cast<uint64_t>(-1)) {
         timer = iom->addConditionTimer(
             timeout_ms,
-            [&iom, &socket, &wtcond]() {
+            [iom, socket, wtcond]() {
                 auto t = wtcond.lock();
                 if (!t || t->cancelled) {
                     return;
@@ -266,7 +274,7 @@ int accept(int socket, struct sockaddr *address, socklen_t *address_len) {
     int fd = do_io(socket, accept_f, "accept", IOManager::READ, SO_RCVTIMEO,
                    address, address_len);
     if (fd >= 0) {
-        FdMgr::getInstance()->get(fd, true);
+        FdMgr::GetInstance()->get(fd, true);
     }
     return fd;
 }
@@ -323,11 +331,94 @@ ssize_t sendmsg(int socket, const struct msghdr *message, int flags) {
                  message, flags);
 }
 
-int close(int fildes) { return close_f(fildes); }
+int close(int fildes) {
 
-int fcntl(int fildes, int cmd, ...) { return fcntl_f(fildes, cmd); }
+    if (!s_hook_enable)
+        return close_f(fildes);
+    FdCtx::ptr ctx = FdMgr::GetInstance()->get(fildes);
+    if (ctx) {
+        IOManager::GetCurrentIOManager()->triggerAll(fildes);
+        FdMgr::GetInstance()->del(fildes);
+    }
+    return close_f(fildes);
+}
 
-int ioctl(int fildes, int request, ... /* arg */) {
+int fcntl(int fildes, int cmd, ...) {
+    //因为这里用到了可变参数，参数无法直接传递。所以只能switch判断
+    //可变参数使用 va_list, va_start, va_arg, va_end操作
+    va_list va;
+    va_start(va, cmd);
+    switch (cmd) {
+    case F_SETFL: {
+        int arg = va_arg(va, int);
+        va_end(va);
+        FdCtx::ptr ctx = FdMgr::GetInstance()->get(fildes);
+        if (!ctx || ctx->isClose() || !ctx->isSockt()) {
+            return fcntl_f(fildes, cmd, arg);
+        }
+        ctx->setUsrNonblock(arg | O_NONBLOCK);
+        if (ctx->getSysNonblock()) {
+            arg |= O_NONBLOCK;
+        } else {
+            arg &= ~O_NONBLOCK;
+        }
+        return fcntl_f(fildes, cmd, arg);
+    } break;
+    case F_GETFL: {
+        va_end(va);
+        int arg = fcntl_f(fildes, cmd);
+        FdCtx::ptr ctx = FdMgr::GetInstance()->get(fildes);
+        if (!ctx || ctx->isClose() || !ctx->isSockt()) {
+            return arg;
+        }
+        if (ctx->getUsrNonblock()) {
+            arg |= O_NONBLOCK;
+        } else {
+            arg &= ~O_NONBLOCK;
+        }
+        return arg;
+    } break;
+    case F_DUPFD:
+    case F_DUPFD_CLOEXEC:
+    case F_SETFD:
+    case F_SETOWN: {
+        int arg = va_arg(va, int);
+        va_end(va);
+        return fcntl_f(fildes, cmd, arg);
+    } break;
+
+    case F_GETFD:
+    case F_GETOWN: {
+        va_end(va);
+        return fcntl_f(fildes, cmd);
+    } break;
+
+    case F_GETLK:
+    case F_SETLK:
+    case F_SETLKW: {
+        struct flock *arg = va_arg(va, struct flock *);
+        va_end(va);
+        return fcntl_f(fildes, cmd, arg);
+    } break;
+    default:
+        va_end(va);
+        return fcntl_f(fildes, cmd);
+    }
+}
+
+int ioctl(int fildes, unsigned long int request, ... /* arg */) {
+    va_list va;
+    va_start(va, request);
+    void *arg = va_arg(va, void *);
+    va_end(va);
+    if (request == FIONBIO) {
+        bool usr_nonblock = !!*static_cast<int *>(arg);
+        FdCtx::ptr ctx = FdMgr::GetInstance()->get(fildes);
+        if (!ctx || ctx->isClose() || !ctx->isSockt()) {
+            return ioctl_f(fildes, request);
+        }
+        ctx->setUsrNonblock(usr_nonblock);
+    }
     return ioctl_f(fildes, request);
 }
 
@@ -336,9 +427,19 @@ int getsockopt(int socket, int level, int option_name, void *option_value,
     return getsockopt_f(socket, level, option_name, option_value, option_len);
 }
 
+// hook住set timeout
 int setsockopt(int socket, int level, int option_name, const void *option_value,
                socklen_t option_len) {
-    return setsockopt(socket, level, option_name, option_value, option_len);
+    if (!s_hook_enable)
+        return setsockopt_f(socket, level, option_name, option_value,
+                            option_len);
+    if (level == SOL_SOCKET &&
+        (option_name == SO_RCVTIMEO || option_name == SO_SNDTIMEO)) {
+        FdCtx::ptr ctx = FdMgr::GetInstance()->get(socket);
+        const timeval *val = static_cast<const timeval *>(option_value);
+        ctx->setTimeout(option_name, val->tv_sec * 1000 + val->tv_usec / 1000);
+    }
+    return setsockopt_f(socket, level, option_name, option_value, option_len);
 }
 }
 } // namespace lyon

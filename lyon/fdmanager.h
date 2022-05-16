@@ -18,14 +18,12 @@ public:
     bool isSockt() const { return m_isSockt; }
     bool isClose() const { return m_isClose; }
     void setSysNonblock(bool val) { m_sysNonblock = val; }
-    bool getSysNonvlock() const { return m_sysNonblock; }
+    bool getSysNonblock() const { return m_sysNonblock; }
     void setUsrNonblock(bool val) { m_usrNonblock = val; }
     bool getUsrNonblock() const { return m_usrNonblock; }
 
     void setTimeout(int type, int64_t val);
     int64_t getTimeout(int type);
-
-    ~FdCtx();
 
 private:
     bool m_isInit : 1;
