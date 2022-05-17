@@ -1,6 +1,6 @@
 #ifndef __LYON_UTIL_FS_H__
 #define __LYON_UTIL_FS_H__
-#include <dirent.h>
+
 #include <fstream>
 #include <ios>
 #include <string>

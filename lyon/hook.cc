@@ -245,6 +245,8 @@ int connect_with_timeout(int socket, const struct sockaddr *address,
             },
             wtcond);
     }
+    //这个event可能会被两个方式触发，第一种是上面添加的超时定时器。第二种就是epoll监测到事件发生。
+    //这里没有添加cb函数，所以是默认以当前协程作为任务协程。事件触发时返回当前协程
     int rt = iom->addEvent(socket, IOManager::WRITE);
     if (!rt) {
         Fiber::HoldToScheduler();
