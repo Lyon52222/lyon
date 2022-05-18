@@ -48,8 +48,9 @@ class IPv4Address : public IPAddress {
 
 public:
     typedef std::shared_ptr<IPv4Address> ptr;
+    IPv4Address();
     IPv4Address(const sockaddr_in &addr);
-    IPv4Address(uint32_t address, uint16_t port);
+    IPv4Address(uint32_t address = INADDR_ANY, uint16_t port = 0);
 
     static IPv4Address::ptr Creat(const char *addr, uint16_t port = 0);
 
@@ -69,7 +70,9 @@ private:
 class IPv6Address : public IPAddress {
 public:
     typedef std::shared_ptr<IPv6Address> ptr;
+    IPv6Address();
     IPv6Address(const sockaddr_in6 &addr);
+    IPv6Address(const uint8_t addr[16], uint16_t port);
     static IPv6Address::ptr Creat(const char *addr, uint16_t port = 0);
 
     IPAddress::ptr broadCastAddress(uint32_t prefix_len) override;
@@ -88,14 +91,17 @@ private:
 class UnixAddress : public Address {
 public:
     std::shared_ptr<UnixAddress> ptr;
-    // UnixAddress(const sockaddr_un &addr);
 
+    UnixAddress();
+    UnixAddress(const std::string &path);
     const sockaddr *getAddr() const override;
     socklen_t getAddrLen() const override;
     std::ostream &insert(std::ostream &os) const override;
+    std::string getPath() const;
 
 private:
     sockaddr_un m_addr;
+    socklen_t m_len;
 };
 
 class UnKnownAddress : public Address {
