@@ -47,6 +47,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_scheduler "tests/test_scheduler.cc" lyon "${LIBS}")
   lyon_add_executable(test_iomanager "tests/test_iomanager.cc" lyon "${LIBS}")
   lyon_add_executable(test_hook "tests/test_hook.cc" lyon "${LIBS}")
+  lyon_add_executable(test_address "tests/test_address.cc" lyon "${LIBS}")
 
 endif()
 

@@ -14,7 +14,7 @@ class Address {
 public:
     typedef std::shared_ptr<Address> ptr;
 
-    static Address::ptr Creat(const sockaddr *addr, uint16_t port = 0);
+    static Address::ptr Create(const sockaddr *addr, uint16_t port = 0);
 
     int getFamily();
     std::string toString() const;
@@ -31,7 +31,7 @@ class IPAddress : public Address {
 public:
     typedef std::shared_ptr<IPAddress> ptr;
 
-    static IPAddress::ptr Creat(const char *addr, uint16_t port = 0);
+    static IPAddress::ptr Create(const char *addr, uint16_t port = 0);
 
     virtual IPAddress::ptr broadCastAddress(uint32_t prefix_len) = 0;
     virtual IPAddress::ptr networkAddress(uint32_t prefix_len) = 0;
@@ -48,11 +48,10 @@ class IPv4Address : public IPAddress {
 
 public:
     typedef std::shared_ptr<IPv4Address> ptr;
-    IPv4Address();
     IPv4Address(const sockaddr_in &addr);
     IPv4Address(uint32_t address = INADDR_ANY, uint16_t port = 0);
 
-    static IPv4Address::ptr Creat(const char *addr, uint16_t port = 0);
+    static IPv4Address::ptr Create(const char *addr, uint16_t port = 0);
 
     IPAddress::ptr broadCastAddress(uint32_t prefix_len) override;
     IPAddress::ptr networkAddress(uint32_t prefix_len) override;
@@ -72,8 +71,8 @@ public:
     typedef std::shared_ptr<IPv6Address> ptr;
     IPv6Address();
     IPv6Address(const sockaddr_in6 &addr);
-    IPv6Address(const uint8_t addr[16], uint16_t port);
-    static IPv6Address::ptr Creat(const char *addr, uint16_t port = 0);
+    IPv6Address(const uint8_t addr[16], uint16_t port = 0);
+    static IPv6Address::ptr Create(const char *addr, uint16_t port = 0);
 
     IPAddress::ptr broadCastAddress(uint32_t prefix_len) override;
     IPAddress::ptr networkAddress(uint32_t prefix_len) override;
@@ -107,11 +106,15 @@ private:
 class UnKnownAddress : public Address {
 public:
     typedef std::shared_ptr<UnixAddress> ptr;
+    UnKnownAddress(int family);
     UnKnownAddress(const sockaddr &addr);
 
     const sockaddr *getAddr() const override;
     socklen_t getAddrLen() const override;
     std::ostream &insert(std::ostream &os) const override;
+
+private:
+    sockaddr m_addr;
 };
 
 } // namespace lyon

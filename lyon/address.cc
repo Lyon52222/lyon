@@ -26,7 +26,7 @@ template <class T> static T CreateMask(uint32_t bits) {
     return (1 << (sizeof(T) * 8 - bits)) - 1;
 }
 
-Address::ptr Address::Creat(const sockaddr *addr, uint16_t) {
+Address::ptr Address::Create(const sockaddr *addr, uint16_t) {
     if (!addr) {
         return nullptr;
     }
@@ -69,11 +69,6 @@ bool Address::operator==(const Address &rhs) const {
 
 bool Address::operator!=(const Address &rhs) const { return !(*this == rhs); }
 
-IPv4Address::IPv4Address() {
-    memset(&m_addr, 0, sizeof(m_addr));
-    m_addr.sin_family = AF_INET;
-}
-
 IPv4Address::IPv4Address(const sockaddr_in &addr) { m_addr = addr; }
 
 IPv4Address::IPv4Address(uint32_t addr, uint16_t port) {
@@ -83,8 +78,8 @@ IPv4Address::IPv4Address(uint32_t addr, uint16_t port) {
     m_addr.sin_addr.s_addr = byteswapOnLittleEndian(addr);
 }
 
-IPv4Address::ptr IPv4Address::Creat(const char *addr, uint16_t port) {
-    IPv4Address::ptr rt;
+IPv4Address::ptr IPv4Address::Create(const char *addr, uint16_t port) {
+    IPv4Address::ptr rt(new IPv4Address());
     rt->m_addr.sin_port = byteswapOnLittleEndian(port);
     int n = inet_pton(AF_INET, addr, &rt->m_addr.sin_addr);
     if (n != 1) {
@@ -120,6 +115,7 @@ IPAddress::ptr IPv4Address::subnetMask(uint32_t prefix_len) {
         return nullptr;
     }
     sockaddr_in saddr;
+    saddr.sin_port = 0;
     saddr.sin_addr.s_addr =
         ~byteswapOnLittleEndian(CreateMask<uint32_t>(prefix_len));
     return IPv4Address::ptr(new IPv4Address(saddr));
@@ -159,8 +155,8 @@ IPv6Address::IPv6Address(const uint8_t addr[16], uint16_t port) {
     memcpy(&m_addr.sin6_addr.s6_addr, addr, 16);
 }
 
-IPv6Address::ptr IPv6Address::Creat(const char *addr, uint16_t port) {
-    IPv6Address::ptr rt;
+IPv6Address::ptr IPv6Address::Create(const char *addr, uint16_t port) {
+    IPv6Address::ptr rt(new IPv6Address());
     rt->m_addr.sin6_port = byteswapOnLittleEndian(port);
     int n = inet_pton(AF_INET6, addr, &rt->m_addr.sin6_addr);
     if (n != 1) {
@@ -202,6 +198,7 @@ IPAddress::ptr IPv6Address::subnetMask(uint32_t prefix_len) {
         return nullptr;
     }
     sockaddr_in6 saddr;
+    memset(&saddr, 0, sizeof(saddr));
     for (size_t i = 0; i < prefix_len / 8; i++) {
         saddr.sin6_addr.s6_addr[i] = 0xff;
     }
@@ -217,8 +214,21 @@ socklen_t IPv6Address::getAddrLen() const { return sizeof(m_addr); }
 std::ostream &IPv6Address::insert(std::ostream &os) const {
     os << '[';
     uint16_t *addr = (uint16_t *)m_addr.sin6_addr.s6_addr;
+    bool use_zero = false;
     for (int i = 0; i < 8; i++) {
+        if (addr[i] == 0 && !use_zero) {
+            continue;
+        }
+        if (i && addr[i - 1] == 0 && !use_zero) {
+            os << ':';
+            use_zero = true;
+        }
+        if (i)
+            os << ':';
         os << std::hex << (int)byteswapOnLittleEndian(addr[i]) << std::dec;
+    }
+    if (!use_zero && addr[7] == 0) {
+        os << "::";
     }
     os << "]:" << byteswapOnLittleEndian(m_addr.sin6_port);
     return os;
@@ -257,7 +267,7 @@ UnixAddress::UnixAddress(const std::string &path) {
 }
 const sockaddr *UnixAddress::getAddr() const { return (sockaddr *)&m_addr; }
 
-socklen_t UnixAddress::getAddrLen() const { return sizeof(m_addr); }
+socklen_t UnixAddress::getAddrLen() const { return m_len; }
 
 std::ostream &UnixAddress::insert(std::ostream &os) const {
     if (m_len > offsetof(sockaddr_un, sun_path) && m_addr.sun_path[0] == '\0') {
@@ -277,5 +287,19 @@ std::string UnixAddress::getPath() const {
     }
     ss << m_addr.sun_path;
     return ss.str();
+}
+
+UnKnownAddress::UnKnownAddress(int family) {
+    memset(&m_addr, 0, sizeof(m_addr));
+    m_addr.sa_family = family;
+}
+
+UnKnownAddress::UnKnownAddress(const sockaddr &addr) { m_addr = addr; }
+
+const sockaddr *UnKnownAddress::getAddr() const { return (sockaddr *)&m_addr; }
+socklen_t UnKnownAddress::getAddrLen() const { return sizeof(m_addr); }
+std::ostream &UnKnownAddress::insert(std::ostream &os) const {
+    os << "[UnKnownAddress] family = " << m_addr.sa_family;
+    return os;
 }
 } // namespace lyon
