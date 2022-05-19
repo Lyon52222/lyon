@@ -1,9 +1,10 @@
 #include "lyon/address.h"
 #include <lyon/log.h>
+#include <sys/socket.h>
 
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
-int main(int argc, char *argv[]) {
+void test() {
     lyon::IPv4Address::ptr ipv4 =
         lyon::IPv4Address::Create("192.168.2.1", 8080);
     LYON_LOG_INFO(g_logger) << ipv4->toString();
@@ -24,6 +25,20 @@ int main(int argc, char *argv[]) {
     LYON_LOG_INFO(g_logger) << ipv6_2->broadCastAddress(56)->toString();
     LYON_LOG_INFO(g_logger) << ipv6_2->networkAddress(56)->toString();
     LYON_LOG_INFO(g_logger) << ipv6_2->subnetMask(56)->toString();
+}
 
+void test_lookup() {
+    std::vector<lyon::Address::ptr> results;
+    int rt =
+        lyon::Address::LookUp(results, "localhost:8080", AF_INET, SOCK_STREAM);
+    if (rt) {
+        for (auto &re : results) {
+            std::cout << re->toString() << std::endl;
+        }
+    }
+}
+
+int main(int argc, char *argv[]) {
+    test_lookup();
     return 0;
 }

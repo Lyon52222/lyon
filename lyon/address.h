@@ -8,18 +8,78 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <vector>
 namespace lyon {
 
+class IPAddress;
+
+/**
+ * @brief 网络地址的抽象基类
+ */
 class Address {
 public:
     typedef std::shared_ptr<Address> ptr;
 
-    static Address::ptr Create(const sockaddr *addr, uint16_t port = 0);
+    /**
+     * @brief 通过sockaddr创建Address
+     *
+     * @param addr sockaddr
+     * @param port 端口号
+     */
+    static Address::ptr Create(const sockaddr *addr, socklen_t addrlen);
 
+    /**
+     * @brief 通过host地址返回满足条件的所有Address
+     *
+     * @param results 满足条件的所有Address
+     * @param host host地址
+     * 域名，服务器名等等。例如www.baidu.com[112.14.123.1:8080]
+     * @param AF_INET 地址协议族，AF_INET，AF_INET6,AF_UNIX
+     * @param type 数据类型，SOCK_DGRAM, SOCK_STREAM等
+     * @param protocol IP的上层协议族，IPPROTO_TCP, IPPROTO_UDP等
+     * @return 查询是否成功
+     */
+    static bool LookUp(std::vector<Address::ptr> &results,
+                       const std::string &host, int family = AF_INET,
+                       int type = 0, int protocol = 0);
+
+    static Address::ptr LookUpAny(const std::string &host, int family = AF_INET,
+                                  int type = 0, int protocol = 0);
+
+    static std::shared_ptr<IPAddress>
+    LookUpAnyIpAddress(const std::string &host, int family = AF_INET,
+                       int type = 0, int protocol = 0);
+
+    /**
+     * @brief 获取该地址的协议族
+     *
+     * @return 协议族
+     */
     int getFamily();
+
+    /**
+     * @brief 将地址转换为string
+     *
+     */
     std::string toString() const;
+
+    /**
+     * @brief 获取地址
+     *
+     */
     virtual const sockaddr *getAddr() const = 0;
+
+    /**
+     * @brief 获取地址长度
+     *
+     * @return 地址长度
+     */
     virtual socklen_t getAddrLen() const = 0;
+    /**
+     * @brief 将地址转化为字符串并插入流中
+     *
+     * @param os 输出流
+     */
     virtual std::ostream &insert(std::ostream &os) const = 0;
 
     bool operator<(const Address &rhs) const;

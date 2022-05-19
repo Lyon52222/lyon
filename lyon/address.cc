@@ -5,12 +5,15 @@
 #include <arpa/inet.h>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <sstream>
 #include <stdexcept>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <vector>
 namespace lyon {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
@@ -26,7 +29,7 @@ template <class T> static T CreateMask(uint32_t bits) {
     return (1 << (sizeof(T) * 8 - bits)) - 1;
 }
 
-Address::ptr Address::Create(const sockaddr *addr, uint16_t) {
+Address::ptr Address::Create(const sockaddr *addr, socklen_t addrlen) {
     if (!addr) {
         return nullptr;
     }
@@ -39,6 +42,86 @@ Address::ptr Address::Create(const sockaddr *addr, uint16_t) {
         result.reset(new UnKnownAddress(*addr));
     }
     return result;
+}
+
+bool Address::LookUp(std::vector<Address::ptr> &results,
+                     const std::string &host, int family, int type,
+                     int protocol) {
+    addrinfo hint, *res, *next;
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_family = family;
+    hint.ai_socktype = type;
+    hint.ai_protocol = protocol;
+
+    //先查看有没有附属内容：www.baidu.com[183.134.11.1:80]
+    std::string node;
+    const char *service = nullptr;
+    if (!host.empty() && host[0] == '[') {
+        const char *endipv6 =
+            (char *)memchr(host.c_str() + 1, ']', host.size() - 1);
+        if (endipv6) {
+            if (*(endipv6 + 1) == ':') {
+                service = endipv6 + 2;
+            }
+            node = host.substr(1, endipv6 - host.c_str() - 1);
+        }
+    }
+    //没有附属内容：193.134.14.1:80 / www.baidu.com:80
+    if (node.empty()) {
+        service = (char *)memchr(host.c_str(), ':', host.size());
+        if (service) {
+            if (!memchr(service + 1, ':',
+                        host.c_str() + host.size() - service - 1)) {
+                node = host.substr(0, service - host.c_str());
+                service++;
+            }
+        }
+    }
+
+    //没有端口号：www.baidu.com
+    if (node.empty()) {
+        node = host;
+    }
+    int rt = getaddrinfo(node.c_str(), service, &hint, &res);
+    if (rt) {
+        LYON_LOG_ERROR(g_logger)
+            << "Address LookUp host : " << host << " family : " << family
+            << " type : " << type << " protocol : " << protocol << " fail";
+        return false;
+    }
+    next = res;
+    while (next) {
+        results.push_back(Create(next->ai_addr, next->ai_addrlen));
+        next = next->ai_next;
+    }
+
+    freeaddrinfo(res);
+    return !results.empty();
+}
+
+Address::ptr Address::LookUpAny(const std::string &host, int family, int type,
+                                int protocol) {
+    std::vector<Address::ptr> results;
+    if (LookUp(results, host, family, type, protocol)) {
+        return results[0];
+    }
+    return nullptr;
+}
+
+std::shared_ptr<IPAddress> Address::LookUpAnyIpAddress(const std::string &host,
+                                                       int family, int type,
+                                                       int protocol) {
+    std::vector<Address::ptr> results;
+    if (LookUp(results, host, family, type, protocol)) {
+        for (auto &re : results) {
+            IPAddress::ptr ipa = std::dynamic_pointer_cast<IPAddress>(re);
+            if (ipa) {
+                return ipa;
+            }
+        }
+        return nullptr;
+    }
+    return nullptr;
 }
 
 int Address::getFamily() { return getAddr()->sa_family; }
@@ -68,6 +151,31 @@ bool Address::operator==(const Address &rhs) const {
 }
 
 bool Address::operator!=(const Address &rhs) const { return !(*this == rhs); }
+
+IPAddress::ptr IPAddress::Create(const char *addr, uint16_t port) {
+    addrinfo hint, *res;
+    hint.ai_family = AF_UNSPEC;
+    hint.ai_flags = AI_NUMERICHOST;
+    //获取地址信息
+    int rt = getaddrinfo(addr, nullptr, &hint, &res);
+    if (rt) {
+        LYON_LOG_ERROR(g_logger) << "IPAddress create : " << addr << "fail";
+        return nullptr;
+    }
+    try {
+        IPAddress::ptr result = std::dynamic_pointer_cast<IPAddress>(
+            Address::Create(res->ai_addr, res->ai_addrlen));
+        if (result) {
+            result->setPort(port);
+        }
+        freeaddrinfo(res);
+        return result;
+    } catch (...) {
+        freeaddrinfo(res);
+        return nullptr;
+    }
+    return nullptr;
+}
 
 IPv4Address::IPv4Address(const sockaddr_in &addr) { m_addr = addr; }
 
