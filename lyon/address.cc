@@ -5,6 +5,8 @@
 #include <arpa/inet.h>
 #include <cstddef>
 #include <cstdint>
+#include <ifaddrs.h>
+#include <map>
 #include <memory>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -13,6 +15,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <utility>
 #include <vector>
 namespace lyon {
 
@@ -27,6 +30,15 @@ static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
  */
 template <class T> static T CreateMask(uint32_t bits) {
     return (1 << (sizeof(T) * 8 - bits)) - 1;
+}
+
+template <class T> static uint32_t CountMaskLen(T mask) {
+    uint32_t len = 0;
+    while (mask) {
+        len++;
+        mask &= mask - 1;
+    }
+    return len;
 }
 
 Address::ptr Address::Create(const sockaddr *addr, socklen_t addrlen) {
@@ -124,6 +136,82 @@ std::shared_ptr<IPAddress> Address::LookUpAnyIpAddress(const std::string &host,
     return nullptr;
 }
 
+bool Address::GetInterfaceAddress(
+    std::multimap<std::string, std::pair<Address::ptr, uint32_t>> &if_address,
+    int family) {
+    ifaddrs *next, *results;
+    int rt = getifaddrs(&results);
+    if (rt) {
+        LYON_LOG_ERROR(g_logger) << "Address::GetInferfaceAddress fail";
+        freeifaddrs(results);
+        return false;
+    }
+    Address::ptr addr;
+    uint32_t prefix_len;
+    try {
+        for (next = results; next; next = next->ifa_next) {
+            addr.reset();
+            prefix_len = ~0u;
+            switch (next->ifa_addr->sa_family) {
+            case AF_INET: {
+                addr = Create(next->ifa_addr, sizeof(sockaddr_in));
+                // sockaddr 和 sockaddr_in之间是可以相互转换的
+                uint32_t netmask =
+                    ((sockaddr_in *)next->ifa_netmask)->sin_addr.s_addr;
+                prefix_len = CountMaskLen(netmask);
+            } break;
+            case AF_INET6: {
+                addr = Create(next->ifa_addr, sizeof(sockaddr_in6));
+                in6_addr &netmask =
+                    ((sockaddr_in6 *)next->ifa_netmask)->sin6_addr;
+                prefix_len = 0;
+                for (size_t i = 0; i < 16; i++) {
+                    prefix_len += CountMaskLen(netmask.s6_addr[i]);
+                }
+
+            } break;
+            default:
+                break;
+            }
+
+            if (addr) {
+                if_address.insert(std::make_pair(
+                    next->ifa_name, std::make_pair(addr, prefix_len)));
+            }
+        }
+    } catch (...) {
+        freeifaddrs(results);
+        return false;
+    }
+    freeifaddrs(results);
+    return !if_address.empty();
+}
+
+bool Address::GetInferfaceAddress(
+    std::string &if_name,
+    std::vector<std::pair<Address::ptr, uint32_t>> &if_address, int family) {
+    if (if_name.empty() || if_name == "*") {
+        if (family == AF_INET || family == AF_UNSPEC) {
+            if_address.push_back(
+                std::make_pair(Address::ptr(new IPv4Address()), 0u));
+        }
+        if (family == AF_INET6 || family == AF_UNSPEC) {
+            if_address.push_back(
+                std::make_pair(Address::ptr(new IPv6Address()), 0u));
+        }
+        return true;
+    }
+
+    std::multimap<std::string, std::pair<Address::ptr, uint32_t>> results;
+    if (GetInterfaceAddress(results, family)) {
+        auto itr = results.equal_range(if_name);
+        for (auto i = itr.first; i != itr.second; i++) {
+            if_address.push_back(i->second);
+        }
+    }
+
+    return !if_address.empty();
+}
 int Address::getFamily() { return getAddr()->sa_family; }
 
 std::string Address::toString() const {

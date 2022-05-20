@@ -25,6 +25,7 @@ set(
   lyon/hook.cc
   lyon/fdmanager.cc
   lyon/address.cc
+  lyon/socket.cc
   lyon/utils/file_system_util.cc
 )
 

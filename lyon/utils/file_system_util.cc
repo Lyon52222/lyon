@@ -4,11 +4,6 @@
 #include <sys/types.h>
 namespace lyon {
 
-/**
- * @brief 获取文件名的文件夹路径
- *
- * @param filename 文件名
- */
 std::string FSUtil::Dirname(const std::string &filename) {
     if (filename.empty()) {
         return ".";
@@ -23,11 +18,6 @@ std::string FSUtil::Dirname(const std::string &filename) {
     }
 }
 
-/**
- * @brief 获取文件名的单文件名
- *
- * @param filename 文件名
- */
 std::string FSUtil::Basename(const std::string &filename) {
     if (filename.empty()) {
         return filename;
@@ -40,13 +30,6 @@ std::string FSUtil::Basename(const std::string &filename) {
     }
 }
 
-/**
- * @brief 列出path路径下所有以subfix结尾的常规文件
- *
- * @param path 路径
- * @param subfix 需要的文件后缀
- * @param files 最终文件保存的位置
- */
 void FSUtil::ListAllFile(const std::string &path, const std::string &subfix,
                          std::vector<std::string> &files) {
     if (access(path.c_str(), 0) != 0) {
@@ -107,12 +90,6 @@ static bool __mkdir(const char *dirname) {
     return mkdir(dirname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
 
-/**
- * @brief 递归创建文件夹
- *
- * @param dirname 文件夹名
- * @return 文件夹创建是否成功
- */
 // FIX: 无法创建绝对路线下的文件，比如"/apps/logs/log.txt"
 bool FSUtil::MakeDir(const std::string &dirname) {
     if (__lstat(dirname.c_str()) == 0) {
@@ -138,28 +115,12 @@ bool FSUtil::MakeDir(const std::string &dirname) {
     return false;
 }
 
-/**
- * @brief 打开读文件流
- *
- * @param ifs 文件流
- * @param filename 需要读的文件地址
- * @param mode 打开文件的模式
- * @return 文件流打开是否成功
- */
 bool FSUtil::OpenForRead(std::ifstream &ifs, const std::string &filename,
                          std::ios_base::openmode mode) {
     ifs.open(filename.c_str(), mode);
     return ifs.is_open();
 }
 
-/**
- * @brief 打开写文件流
- *
- * @param ofs 文件流
- * @param filename 需要写的文件地址
- * @param mode 打开文件的模式
- * @return 文件流打开是否成功
- */
 bool FSUtil::OpenForWrite(std::ofstream &ofs, const std::string &filename,
                           std::ios_base::openmode mode) {
     ofs.open(filename.c_str(), mode);
@@ -171,4 +132,10 @@ bool FSUtil::OpenForWrite(std::ofstream &ofs, const std::string &filename,
     return ofs.is_open();
 }
 
+bool FSUtil::Unlink(const std::string &filename, bool exist) {
+    if (!exist && __lstat(filename.c_str())) {
+        return true;
+    }
+    return ::unlink(filename.c_str());
+}
 } // namespace lyon

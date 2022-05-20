@@ -38,7 +38,18 @@ void test_lookup() {
     }
 }
 
+void test_interface() {
+    std::multimap<std::string, std::pair<lyon::Address::ptr, uint32_t>> results;
+    if (lyon::Address::GetInterfaceAddress(results)) {
+        for (auto itr = results.begin(); itr != results.end(); itr++) {
+            std::cout << itr->first << " : " << itr->second.first->toString()
+                      << "/" << itr->second.second << std::endl;
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
-    test_lookup();
+    // test_lookup();
+    test_interface();
     return 0;
 }
