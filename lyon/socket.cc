@@ -80,11 +80,78 @@ uint64_t Socket::getSendTimeout() const {
     }
     return -1;
 }
+
 void Socket::setSendTimeout(uint64_t timeout) {
     struct timeval tv {
         int(timeout / 1000), int(timeout % 1000 * 1000)
     };
     setOption(SOL_SOCKET, SO_SNDTIMEO, tv);
+}
+
+Address::ptr Socket::getLocalAddress() {
+    if (m_localAddress) {
+        return m_localAddress;
+    }
+    Address::ptr localaddr;
+    switch (m_family) {
+    case AF_INET: {
+        localaddr.reset(new IPv4Address());
+    } break;
+    case AF_INET6: {
+        localaddr.reset(new IPv6Address());
+    } break;
+    case AF_UNIX: {
+        localaddr.reset(new UnixAddress());
+    } break;
+    default: {
+        localaddr.reset(new UnKnownAddress(m_family));
+    }
+    }
+    socklen_t addrlen = localaddr->getAddrLen();
+    if (getsockname(m_socket, localaddr->getAddr(), &addrlen)) {
+        LYON_LOG_ERROR(g_logger)
+            << "getsocketname error addr = " << localaddr->toString()
+            << " error = " << strerror(errno);
+    }
+
+    if (m_family == AF_UNIX) {
+        std::dynamic_pointer_cast<UnixAddress>(localaddr)->setAddrLen(addrlen);
+    }
+
+    m_localAddress = localaddr;
+    return m_localAddress;
+}
+
+Address::ptr Socket::getRemoteAddress() {
+    if (m_remoteAddress) {
+        return m_remoteAddress;
+    }
+    Address::ptr remoteaddr;
+    switch (m_family) {
+    case AF_INET: {
+        remoteaddr.reset(new IPv4Address());
+    } break;
+    case AF_INET6: {
+        remoteaddr.reset(new IPv6Address());
+    } break;
+    case AF_UNIX: {
+        remoteaddr.reset(new UnixAddress());
+    } break;
+    default: {
+        remoteaddr.reset(new UnKnownAddress(m_family));
+    }
+    }
+
+    socklen_t addrlen = remoteaddr->getAddrLen();
+    if (getsockname(m_socket, remoteaddr->getAddr(), &addrlen)) {
+        return Address::ptr(new UnKnownAddress(m_family));
+    }
+
+    if (m_family == AF_UNIX) {
+        std::dynamic_pointer_cast<UnixAddress>(remoteaddr)->setAddrLen(addrlen);
+    }
+    m_remoteAddress = remoteaddr;
+    return m_remoteAddress;
 }
 
 int Socket::setOption(int level, int opt_name, const void *opt_value,
@@ -258,6 +325,16 @@ ssize_t Socket::recv(void *buffer, size_t length, int flags) {
     return ::recv(m_socket, buffer, length, flags);
 }
 
+ssize_t Socket::recv(iovec *buffers, size_t length, int flags) {
+    if (!isConnect()) {
+        return -1;
+    }
+    msghdr msg;
+    msg.msg_iov = (iovec *)buffers;
+    msg.msg_iovlen = length;
+    return ::recvmsg(m_socket, &msg, flags);
+}
+
 ssize_t Socket::recvFrom(Address::ptr address, void *buffer, size_t length,
                          int flags) {
     if (!isConnect()) {
@@ -268,6 +345,19 @@ ssize_t Socket::recvFrom(Address::ptr address, void *buffer, size_t length,
                       &addrlen);
 }
 
+ssize_t Socket::recvFrom(Address::ptr address, iovec *buffers, size_t length,
+                         int flags) {
+    if (!isConnect()) {
+        return -1;
+    }
+    msghdr msg;
+    msg.msg_iov = (iovec *)buffers;
+    msg.msg_iovlen = length;
+    msg.msg_name = address->getAddr();
+    msg.msg_namelen = address->getAddrLen();
+    return ::recvmsg(m_socket, &msg, flags);
+}
+
 ssize_t Socket::send(const void *buffer, size_t length, int flags) {
     if (!isConnect()) {
         return -1;
@@ -275,7 +365,18 @@ ssize_t Socket::send(const void *buffer, size_t length, int flags) {
     return ::send(m_socket, buffer, length, flags);
 }
 
-ssize_t Socket::sendTo(Address::ptr address, void *buffer, size_t length,
+ssize_t Socket::send(const iovec *buffers, size_t length, int flags) {
+    if (!isConnect()) {
+        return -1;
+    }
+    msghdr msg;
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_iov = (iovec *)buffers;
+    msg.msg_iovlen = length;
+    return ::sendmsg(m_socket, &msg, flags);
+}
+
+ssize_t Socket::sendTo(Address::ptr address, const void *buffer, size_t length,
                        int flags) {
     if (!isConnect()) {
         return -1;
@@ -284,4 +385,17 @@ ssize_t Socket::sendTo(Address::ptr address, void *buffer, size_t length,
                     address->getAddrLen());
 }
 
+ssize_t Socket::sendTo(Address::ptr address, const iovec *buffers,
+                       size_t length, int flags) {
+    if (!isConnect()) {
+        return -1;
+    }
+    msghdr msg;
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_iov = (iovec *)buffers;
+    msg.msg_iovlen = length;
+    msg.msg_name = address->getAddr();
+    msg.msg_namelen = address->getAddrLen();
+    return ::sendmsg(m_socket, &msg, flags);
+}
 } // namespace lyon

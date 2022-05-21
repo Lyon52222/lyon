@@ -63,18 +63,24 @@ public:
 
     bool close();
 
-    ssize_t read(void *buf, size_t nbyte);
-
-    ssize_t write(void *buf, size_t nbyte);
-
     ssize_t recv(void *buffer, size_t length, int flags = 0);
+
+    ssize_t recv(iovec *buffers, size_t length, int flags = 0);
 
     ssize_t recvFrom(Address::ptr address, void *buffer, size_t length,
                      int flags = 0);
 
+    ssize_t recvFrom(Address::ptr address, iovec *buffers, size_t length,
+                     int flags = 0);
+
     ssize_t send(const void *buffer, size_t length, int flags = 0);
 
-    ssize_t sendTo(Address::ptr address, void *buffer, size_t length,
+    ssize_t send(const iovec *buffers, size_t length, int flags = 0);
+
+    ssize_t sendTo(Address::ptr address, const void *buffer, size_t length,
+                   int flags = 0);
+
+    ssize_t sendTo(Address::ptr address, const iovec *buffers, size_t length,
                    int flags = 0);
 
     Socket(int type, int family, int protocol = 0);

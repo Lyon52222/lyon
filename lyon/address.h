@@ -169,6 +169,7 @@ public:
     sockaddr *getAddr() override;
     const sockaddr *getAddr() const override;
     socklen_t getAddrLen() const override;
+    void setAddrLen(socklen_t addr_len) { m_len = addr_len; }
     std::ostream &insert(std::ostream &os) const override;
     std::string getPath() const;
 
