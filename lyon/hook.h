@@ -1,6 +1,7 @@
 #ifndef __LYON_HOOK_H__
 #define __LYON_HOOK_H__
 #include <fcntl.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -9,6 +10,8 @@
 namespace lyon {
 bool is_hook_enable();
 void set_hook_enable(bool flag);
+
+} // namespace lyon
 
 extern "C" {
 // sleep
@@ -88,7 +91,9 @@ extern getsockopt_fun getsockopt_f;
 typedef int (*setsockopt_fun)(int socket, int level, int option_name,
                               const void *option_value, socklen_t option_len);
 extern setsockopt_fun setsockopt_f;
+
+extern int connect_with_timeout(int socket, const struct sockaddr *address,
+                                socklen_t address_len, uint64_t timeout_ms);
 }
 
-} // namespace lyon
 #endif // !__LYON_HOOK_H__

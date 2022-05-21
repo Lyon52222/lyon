@@ -317,6 +317,8 @@ IPAddress::ptr IPv4Address::subnetMask(uint32_t prefix_len) {
     return IPv4Address::ptr(new IPv4Address(saddr));
 }
 
+sockaddr *IPv4Address::getAddr() { return (sockaddr *)&m_addr; }
+
 const sockaddr *IPv4Address::getAddr() const { return (sockaddr *)&m_addr; }
 
 socklen_t IPv4Address::getAddrLen() const { return sizeof(m_addr); }
@@ -403,6 +405,8 @@ IPAddress::ptr IPv6Address::subnetMask(uint32_t prefix_len) {
     return IPv6Address::ptr(new IPv6Address(saddr));
 }
 
+sockaddr *IPv6Address::getAddr() { return (sockaddr *)&m_addr; }
+
 const sockaddr *IPv6Address::getAddr() const { return (sockaddr *)&m_addr; }
 
 socklen_t IPv6Address::getAddrLen() const { return sizeof(m_addr); }
@@ -461,6 +465,9 @@ UnixAddress::UnixAddress(const std::string &path) {
     memcpy(m_addr.sun_path, path.c_str(), m_len);
     m_len += offsetof(sockaddr_un, sun_path);
 }
+
+sockaddr *UnixAddress::getAddr() { return (sockaddr *)&m_addr; }
+
 const sockaddr *UnixAddress::getAddr() const { return (sockaddr *)&m_addr; }
 
 socklen_t UnixAddress::getAddrLen() const { return m_len; }
@@ -492,8 +499,12 @@ UnKnownAddress::UnKnownAddress(int family) {
 
 UnKnownAddress::UnKnownAddress(const sockaddr &addr) { m_addr = addr; }
 
+sockaddr *UnKnownAddress::getAddr() { return (sockaddr *)&m_addr; }
+
 const sockaddr *UnKnownAddress::getAddr() const { return (sockaddr *)&m_addr; }
+
 socklen_t UnKnownAddress::getAddrLen() const { return sizeof(m_addr); }
+
 std::ostream &UnKnownAddress::insert(std::ostream &os) const {
     os << "[UnKnownAddress] family = " << m_addr.sa_family;
     return os;

@@ -79,6 +79,7 @@ public:
      */
     virtual const sockaddr *getAddr() const = 0;
 
+    virtual sockaddr *getAddr() = 0;
     /**
      * @brief 获取地址长度
      *
@@ -126,6 +127,7 @@ public:
     IPAddress::ptr broadCastAddress(uint32_t prefix_len) override;
     IPAddress::ptr networkAddress(uint32_t prefix_len) override;
     IPAddress::ptr subnetMask(uint32_t prefix_len) override;
+    sockaddr *getAddr() override;
     const sockaddr *getAddr() const override;
     socklen_t getAddrLen() const override;
     std::ostream &insert(std::ostream &os) const override;
@@ -147,6 +149,7 @@ public:
     IPAddress::ptr broadCastAddress(uint32_t prefix_len) override;
     IPAddress::ptr networkAddress(uint32_t prefix_len) override;
     IPAddress::ptr subnetMask(uint32_t prefix_len) override;
+    sockaddr *getAddr() override;
     const sockaddr *getAddr() const override;
     socklen_t getAddrLen() const override;
     std::ostream &insert(std::ostream &os) const override;
@@ -163,6 +166,7 @@ public:
 
     UnixAddress();
     UnixAddress(const std::string &path);
+    sockaddr *getAddr() override;
     const sockaddr *getAddr() const override;
     socklen_t getAddrLen() const override;
     std::ostream &insert(std::ostream &os) const override;
@@ -179,6 +183,7 @@ public:
     UnKnownAddress(int family);
     UnKnownAddress(const sockaddr &addr);
 
+    sockaddr *getAddr() override;
     const sockaddr *getAddr() const override;
     socklen_t getAddrLen() const override;
     std::ostream &insert(std::ostream &os) const override;

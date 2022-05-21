@@ -3,16 +3,8 @@
 #include "fdmanager.h"
 #include "iomanager.h"
 #include "log.h"
-#include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
-#include <asm-generic/socket.h>
-#include <cstdint>
 #include <dlfcn.h>
-#include <fcntl.h>
 #include <memory>
-#include <stdarg.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 namespace lyon {
 
