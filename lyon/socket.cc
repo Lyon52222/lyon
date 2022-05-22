@@ -1,12 +1,12 @@
 #include "socket.h"
+#include "fdmanager.h"
 #include "hook.h"
+#include "iomanager.h"
 #include "log.h"
+#include "macro.h"
 #include "utils/file_system_util.h"
-#include <address.h>
 #include <asm-generic/socket.h>
 #include <cstdint>
-#include <fdmanager.h>
-#include <macro.h>
 #include <memory>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
@@ -143,7 +143,7 @@ Address::ptr Socket::getRemoteAddress() {
     }
 
     socklen_t addrlen = remoteaddr->getAddrLen();
-    if (getsockname(m_socket, remoteaddr->getAddr(), &addrlen)) {
+    if (getpeername(m_socket, remoteaddr->getAddr(), &addrlen)) {
         return Address::ptr(new UnKnownAddress(m_family));
     }
 
@@ -184,7 +184,8 @@ bool Socket::init(int socket) {
         m_socket = socket;
         m_isConnect = true;
         initSocket();
-
+        getLocalAddress();
+        getRemoteAddress();
         return true;
     }
     return false;
@@ -398,4 +399,24 @@ ssize_t Socket::sendTo(Address::ptr address, const iovec *buffers,
     msg.msg_namelen = address->getAddrLen();
     return ::sendmsg(m_socket, &msg, flags);
 }
+
+bool Socket::triggerRead() {
+    return IOManager::GetCurrentIOManager()->triggerEvent(m_socket,
+                                                          IOManager::READ);
+}
+
+bool Socket::triggerWrite() {
+    return IOManager::GetCurrentIOManager()->triggerEvent(m_socket,
+                                                          IOManager::WRITE);
+}
+
+bool Socket::triggerAccept() {
+    return IOManager::GetCurrentIOManager()->triggerEvent(m_socket,
+                                                          IOManager::READ);
+}
+
+bool Socket::triggerAll() {
+    return IOManager::GetCurrentIOManager()->triggerAll(m_socket);
+}
+
 } // namespace lyon

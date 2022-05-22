@@ -5,6 +5,7 @@
 #include "log.h"
 #include <dlfcn.h>
 #include <memory>
+#include <stdarg.h>
 
 namespace lyon {
 
@@ -339,12 +340,14 @@ ssize_t sendmsg(int socket, const struct msghdr *message, int flags) {
 }
 
 int close(int fildes) {
-
     if (!s_hook_enable)
         return close_f(fildes);
     FdCtx::ptr ctx = FdMgr::GetInstance()->get(fildes);
     if (ctx) {
-        IOManager::GetCurrentIOManager()->triggerAll(fildes);
+        auto iom = IOManager::GetCurrentIOManager();
+        if (iom) {
+            iom->triggerAll(fildes);
+        }
         FdMgr::GetInstance()->del(fildes);
     }
     return close_f(fildes);

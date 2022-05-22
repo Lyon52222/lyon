@@ -1,6 +1,6 @@
 #ifndef __LYON_SOCKET_H__
 #define __LYON_SOCKET_H__
-#include <address.h>
+#include "address.h"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -90,10 +90,10 @@ public:
     int getType() const { return m_type; }
     int getFamily() const { return m_family; }
 
-    bool cancelRead();
-    bool cancelWrite();
-    bool cancelAccept();
-    bool cancelAll();
+    bool triggerRead();
+    bool triggerWrite();
+    bool triggerAccept();
+    bool triggerAll();
 
 private:
     void newSocket();

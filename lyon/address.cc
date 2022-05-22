@@ -68,6 +68,7 @@ bool Address::LookUp(std::vector<Address::ptr> &results,
     //先查看有没有附属内容：www.baidu.com[183.134.11.1:80]
     std::string node;
     const char *service = nullptr;
+
     if (!host.empty() && host[0] == '[') {
         const char *endipv6 =
             (char *)memchr(host.c_str() + 1, ']', host.size() - 1);
@@ -94,13 +95,14 @@ bool Address::LookUp(std::vector<Address::ptr> &results,
     if (node.empty()) {
         node = host;
     }
-    int rt = getaddrinfo(node.c_str(), service, &hint, &res);
-    if (rt) {
+
+    if (getaddrinfo(node.c_str(), service, &hint, &res)) {
         LYON_LOG_ERROR(g_logger)
             << "Address LookUp host : " << host << " family : " << family
             << " type : " << type << " protocol : " << protocol << " fail";
         return false;
     }
+
     next = res;
     while (next) {
         results.push_back(Create(next->ai_addr, next->ai_addrlen));
@@ -140,10 +142,8 @@ bool Address::GetInterfaceAddress(
     std::multimap<std::string, std::pair<Address::ptr, uint32_t>> &if_address,
     int family) {
     ifaddrs *next, *results;
-    int rt = getifaddrs(&results);
-    if (rt) {
+    if (getifaddrs(&results)) {
         LYON_LOG_ERROR(g_logger) << "Address::GetInferfaceAddress fail";
-        freeifaddrs(results);
         return false;
     }
     Address::ptr addr;
@@ -152,6 +152,9 @@ bool Address::GetInterfaceAddress(
         for (next = results; next; next = next->ifa_next) {
             addr.reset();
             prefix_len = ~0u;
+            if (family != AF_UNSPEC && family != next->ifa_addr->sa_family) {
+                continue;
+            }
             switch (next->ifa_addr->sa_family) {
             case AF_INET: {
                 addr = Create(next->ifa_addr, sizeof(sockaddr_in));
@@ -324,9 +327,11 @@ const sockaddr *IPv4Address::getAddr() const { return (sockaddr *)&m_addr; }
 socklen_t IPv4Address::getAddrLen() const { return sizeof(m_addr); }
 
 std::ostream &IPv4Address::insert(std::ostream &os) const {
-    uint32_t addr = byteswapOnLittleEndian(m_addr.sin_addr.s_addr);
-    os << ((addr >> 24) & 0xff) << '.' << ((addr >> 16) & 0xff) << '.'
-       << ((addr >> 8) & 0xff) << '.' << ((addr)&0xff);
+    // uint32_t addr = byteswapOnLittleEndian(m_addr.sin_addr.s_addr);
+    // os << ((addr >> 24) & 0xff) << '.' << ((addr >> 16) & 0xff) << '.'
+    //    << ((addr >> 8) & 0xff) << '.' << ((addr)&0xff);
+    os << inet_ntoa(m_addr.sin_addr);
+
     os << ':' << byteswapOnLittleEndian(m_addr.sin_port);
     return os;
 }

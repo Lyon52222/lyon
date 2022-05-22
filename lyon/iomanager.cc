@@ -260,10 +260,13 @@ bool IOManager::triggerAll(int fd) {
     }
     FdContext::MutexType::Lock lock(fd_ctx->mutex);
 
-    if (LYON_UNLIKELY(!(fd_ctx->events))) {
-        LYON_LOG_WARN(g_logger)
-            << "IOManager: event not exist "
-            << " fd_ctx.events = " << (EPOLL_EVENTS)fd_ctx->events;
+    // if (LYON_UNLIKELY(!(fd_ctx->events))) {
+    //     LYON_LOG_WARN(g_logger)
+    //         << "IOManager: event not exist "
+    //         << " fd_ctx.events = " << (EPOLL_EVENTS)fd_ctx->events;
+    //     return false;
+    // }
+    if (!fd_ctx->events) {
         return false;
     }
 

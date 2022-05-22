@@ -192,6 +192,7 @@ void Fiber::HoldToMainFiber() {
 
 void Fiber::SchedulerFunc() {
     Fiber::ptr cur = GetCurrentFiber();
+    LYON_ASSERT(cur)
     try {
         cur->m_cb();
         cur->m_cb = nullptr;

@@ -1,4 +1,6 @@
 #include "lyon/address.h"
+#include <functional>
+#include <lyon/iomanager.h>
 #include <lyon/log.h>
 #include <sys/socket.h>
 
@@ -38,6 +40,11 @@ void test_lookup() {
     }
 }
 
+void test_lookupany() {
+    lyon::Address::ptr addr = lyon::Address::LookUpAny("www.baidu.com");
+    LYON_LOG_INFO(g_logger) << addr->toString();
+}
+
 void test_interface() {
     std::multimap<std::string, std::pair<lyon::Address::ptr, uint32_t>> results;
     if (lyon::Address::GetInterfaceAddress(results)) {
@@ -49,7 +56,17 @@ void test_interface() {
 }
 
 int main(int argc, char *argv[]) {
+    lyon::IOManager iom;
+    // test();
     // test_lookup();
-    test_interface();
+    // test_interface();
+    // test_lookupany();
+
+    // iom.addJob(test);
+    iom.addJob(test_lookup);
+    // iom.addJob(test_interface);
+    // std::function<void()> cb = test_lookup;
+    // cb();
+    // cb = nullptr;
     return 0;
 }

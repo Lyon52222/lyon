@@ -96,6 +96,8 @@ public:
     bool operator<(const Address &rhs) const;
     bool operator==(const Address &rhs) const;
     bool operator!=(const Address &rhs) const;
+
+    virtual ~Address() {}
 };
 
 class IPAddress : public Address {
