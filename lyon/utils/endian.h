@@ -10,19 +10,19 @@ namespace lyon {
 
 template <class T>
 typename std::enable_if<sizeof(T) == sizeof(uint16_t), T>::type
-typeswap(T value) {
+byteswap(T value) {
     return static_cast<T>(bswap_16(value));
 }
 
 template <class T>
 typename std::enable_if<sizeof(T) == sizeof(uint32_t), T>::type
-typeswap(T value) {
+byteswap(T value) {
     return static_cast<T>(bswap_32(value));
 }
 
 template <class T>
 typename std::enable_if<sizeof(T) == sizeof(uint64_t), T>::type
-typeswap(T value) {
+byteswap(T value) {
     return static_cast<T>(bswap_64(value));
 }
 
@@ -33,7 +33,7 @@ typeswap(T value) {
 #endif
 
 #if (LYON_BYTE_ORDER == LYON_BIG_ENDIAN)
-template <class T> T byteswapOnBigEndian(T t) { return typeswap(t); }
+template <class T> T byteswapOnBigEndian(T t) { return byteswap(t); }
 template <class T> T byteswapOnLittleEndian(T t) { return t; }
 #else
 template <class T> T byteswapOnBigEndian(T t) { return t; }
