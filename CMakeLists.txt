@@ -26,6 +26,7 @@ set(
   lyon/fdmanager.cc
   lyon/address.cc
   lyon/socket.cc
+  lyon/bytearray.cc
   lyon/utils/file_system_util.cc
 )
 
@@ -50,6 +51,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_hook "tests/test_hook.cc" lyon "${LIBS}")
   lyon_add_executable(test_address "tests/test_address.cc" lyon "${LIBS}")
   lyon_add_executable(test_socket "tests/test_socket.cc" lyon "${LIBS}")
+  lyon_add_executable(test_bytearray "tests/test_bytearray.cc" lyon "${LIBS}")
 
 endif()
 

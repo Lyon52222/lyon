@@ -1,5 +1,5 @@
-#ifndef __LYON_UTIL_FS_H__
-#define __LYON_UTIL_FS_H__
+#ifndef __LYON_UTILS_FS_H__
+#define __LYON_UTILS_FS_H__
 
 #include <fstream>
 #include <ios>

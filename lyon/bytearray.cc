@@ -1,7 +1,10 @@
 #include "bytearray.h"
 #include "log.h"
 #include "utils/endian.h"
+#include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <memory>
 #include <string.h>
 
 namespace lyon {
@@ -70,13 +73,29 @@ size_t ByteArray::testCapacity(size_t size) {
     return getRemaindCapacity();
 }
 
+bool ByteArray::setPosition(size_t position) {
+    if (position > m_capacity) {
+        return false;
+    }
+    m_position = position;
+    if (m_position > m_size) {
+        m_size = m_position;
+    }
+    m_cur = m_head;
+    size_t n = m_position / m_capacity;
+    while (n--) {
+        m_cur = m_cur->next;
+    }
+    return true;
+}
+
 void ByteArray::write(const void *buf, size_t size) {
     if (size == 0) {
         return;
     }
     testCapacity(size);
     //当前数据块已使用容量
-    size_t npos = m_capacity % m_baseSize;
+    size_t npos = m_position % m_baseSize;
     //当前数据块剩余容量
     size_t ncap = m_cur->size - npos;
     // buf已读取容量
@@ -106,7 +125,32 @@ void ByteArray::write(const void *buf, size_t size) {
     }
 }
 
-void ByteArray::read(const void *buf, size_t size) {}
+void ByteArray::read(const void *buf, size_t size) {
+    if (size > getReadableSize()) {
+        return;
+    }
+    size_t npos = m_position % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    size_t bpos = 0;
+    while (size > 0) {
+        if (size <= ncap) {
+            memcpy((char *)buf + bpos, m_cur->ptr + npos, size);
+            if (size == ncap) {
+                m_cur = m_cur->next;
+            }
+            m_position += size;
+            size = 0;
+        } else {
+            memcpy((char *)buf + bpos, m_cur->ptr + npos, ncap);
+            m_position += ncap;
+            bpos += ncap;
+            size -= ncap;
+            m_cur = m_cur->next;
+            ncap = m_cur->size;
+            npos = 0;
+        }
+    }
+}
 
 void ByteArray::writeFint8(int8_t value) { write(&value, sizeof(value)); }
 
@@ -180,20 +224,70 @@ void ByteArray::writeUint64(uint64_t value) {
     write(tmp, i);
 }
 
+void ByteArray::writeFloat(float value) {
+    uint32_t t = 0;
+    memcpy(&t, &value, sizeof(float));
+    writeFuint32(t);
+}
+
+void ByteArray::writeDouble(double value) {
+    uint64_t t = 0;
+    memcpy(&t, &value, sizeof(double));
+    writeFint64(t);
+}
+
+void ByteArray::writeStringF16(const std::string &str) {
+    writeFint16(str.size());
+    write(str.c_str(), str.size());
+}
+
+void ByteArray::writeStringF32(const std::string &str) {
+    writeFint32(str.size());
+    write(str.c_str(), str.size());
+}
+
+void ByteArray::writeStringF64(const std::string &str) {
+    writeFint64(str.size());
+    write(str.c_str(), str.size());
+}
+
+void ByteArray::writeStringVarint(const std::string &str) {
+    writeUint64(str.size());
+    write(str.c_str(), str.size());
+}
+
+bool ByteArray::readFromFile(const std::string &file) {
+    std::ifstream ifs;
+    ifs.open(file, std::ios::binary);
+    if (!ifs) {
+        LYON_LOG_ERROR(g_logger)
+            << "ByteArray::readFromFile error file = " << file
+            << " error = " << strerror(errno);
+        return false;
+    }
+    std::shared_ptr<char> buff(new char[m_baseSize],
+                               [](char *ptr) { delete[] ptr; });
+    while (!ifs.eof()) {
+        ifs.read(buff.get(), m_baseSize);
+        write(buff.get(), ifs.gcount());
+    }
+    return true;
+}
+
 int8_t ByteArray::readFint8() {
-    int8_t val;
+    int8_t val = 0;
     read(&val, sizeof(int8_t));
     return val;
 }
 
 uint8_t ByteArray::readFuint8() {
-    uint8_t val;
+    uint8_t val = 0;
     read(&val, sizeof(uint8_t));
     return val;
 }
 
 #define XX(type)                                                               \
-    type val;                                                                  \
+    type val = 0;                                                              \
     read(&val, sizeof(type));                                                  \
     if (m_endian == LYON_BYTE_ORDER)                                           \
         return val;                                                            \
@@ -211,7 +305,7 @@ uint64_t ByteArray::readFuint64() { XX(uint64_t); }
 int32_t ByteArray::readInt32() { return Zigzag_decode_32(readUint32()); }
 
 uint32_t ByteArray::readUint32() {
-    uint32_t result;
+    uint32_t result = 0;
     for (int i = 0; i < 32; i += 7) {
         uint8_t t = readFuint8();
         if (t < 0x80) {
@@ -227,16 +321,86 @@ uint32_t ByteArray::readUint32() {
 int64_t ByteArray::readInt64() { return Zigzag_decode_64(readUint64()); }
 
 uint64_t ByteArray::readUint64() {
-    uint64_t result;
+    uint64_t result = 0;
     for (int i = 0; i < 64; i += 7) {
         uint8_t t = readFuint8();
         if (t < 0x80) {
             result |= ((uint64_t)t) << i;
             break;
         } else {
-            result |= ((uint64_t)t) << i;
+            result |= ((uint64_t)t & 0x7F) << i;
         }
     }
     return result;
 }
+
+float ByteArray::readFloat() {
+    float tf = 0;
+    uint32_t ti = readFuint32();
+    memcpy(&tf, &ti, sizeof(uint32_t));
+    return tf;
+}
+
+double ByteArray::readDouble() {
+    double td = 0;
+    uint64_t ti = readFuint64();
+    memcpy(&td, &ti, sizeof(uint64_t));
+    return td;
+}
+
+std::string ByteArray::readStringF16() {
+    std::string str;
+    uint16_t size = readFuint16();
+    str.resize(size);
+    read(&str[0], size);
+    return str;
+}
+
+std::string ByteArray::readStringF32() {
+    std::string str;
+    uint32_t size = readFuint32();
+    str.resize(size);
+    read(&str[0], size);
+    return str;
+}
+
+std::string ByteArray::readStringF64() {
+    std::string str;
+    uint64_t size = readFuint64();
+    str.resize(size);
+    read(&str[0], size);
+    return str;
+}
+
+std::string ByteArray::readStringVarint() {
+    std::string str;
+    uint64_t size = readUint64();
+    str.resize(size);
+    read(&str[0], size);
+    return str;
+}
+
+bool ByteArray::writeToFile(const std::string &file) const {
+    std::ofstream ofs;
+    ofs.open(file, std::ios::trunc | std::ios::binary);
+    if (!ofs) {
+        LYON_LOG_ERROR(g_logger)
+            << "ByteArray::writeToFile error file = " << file
+            << " error = " << strerror(errno);
+        return false;
+    }
+    size_t size = getReadableSize();
+    size_t pos = m_position;
+    Node *cur = m_cur;
+    while (size) {
+        size_t gap = pos % m_baseSize;
+        size_t len = (size > m_baseSize ? m_baseSize : size) - gap;
+        ofs.write(cur->ptr + gap, len);
+        cur = cur->next;
+        pos += len;
+        size -= len;
+    }
+    return true;
+}
+
 } // namespace lyon

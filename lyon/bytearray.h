@@ -26,6 +26,13 @@ public:
     void clear();
 
     /**
+     * @brief 获得当前可读取的数据大小
+     *
+     * @return 可读取的数据大小
+     */
+    size_t getReadableSize() const { return m_size - m_position; }
+
+    /**
      * @brief 获取剩余容量
      *
      * @return 剩余容量大小
@@ -48,6 +55,8 @@ public:
      */
     size_t testCapacity(size_t size);
 
+    bool setPosition(size_t position);
+
     void write(const void *buf, size_t size);
     void read(const void *buf, size_t size);
 
@@ -65,6 +74,15 @@ public:
     void writeInt64(int64_t value);
     void writeUint64(uint64_t value);
 
+    void writeFloat(float value);
+    void writeDouble(double value);
+    void writeStringF16(const std::string &str);
+    void writeStringF32(const std::string &str);
+    void writeStringF64(const std::string &str);
+    void writeStringVarint(const std::string &str);
+
+    bool readFromFile(const std::string &file);
+
     int8_t readFint8();
     uint8_t readFuint8();
     int16_t readFint16();
@@ -79,6 +97,15 @@ public:
     int64_t readInt64();
     uint64_t readUint64();
 
+    float readFloat();
+    double readDouble();
+    std::string readStringF16();
+    std::string readStringF32();
+    std::string readStringF64();
+    std::string readStringVarint();
+
+    bool writeToFile(const std::string &file) const;
+
 private:
     /**
      * @m_size 已经使用的空间大小
@@ -89,7 +116,7 @@ private:
      */
     size_t m_capacity;
     /**
-     * @m_position 当前操作的位置
+     * @m_position 当前操作的位置,这个位置是可以被重置的
      */
     size_t m_position;
     /**

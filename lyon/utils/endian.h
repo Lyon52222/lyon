@@ -1,5 +1,5 @@
-#ifndef __LYON_ENDIAN_H__
-#define __LYON_ENDIAN_H__
+#ifndef __LYON_UTILS_ENDIAN_H__
+#define __LYON_UTILS_ENDIAN_H__
 #include <type_traits>
 #define LYON_LITTLE_ENDIAN 1
 #define LYON_BIG_ENDIAN 2
@@ -37,7 +37,7 @@ template <class T> T byteswapOnBigEndian(T t) { return byteswap(t); }
 template <class T> T byteswapOnLittleEndian(T t) { return t; }
 #else
 template <class T> T byteswapOnBigEndian(T t) { return t; }
-template <class T> T byteswapOnLittleEndian(T t) { return typeswap(t); }
+template <class T> T byteswapOnLittleEndian(T t) { return byteswap(t); }
 #endif
 
 } // namespace lyon
