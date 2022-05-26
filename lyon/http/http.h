@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 namespace lyon {
 
 namespace http {
@@ -73,12 +74,13 @@ namespace http {
     XX(511, NETWORK_AUTHENTICATION_REQUIRED, Network Authentication Required)
 
 enum HttpStatus {
-#define XX(num, name, string) HTTP_STATUS_##name = num,
+#define XX(num, name, string) name = num,
     HTTP_STATUS_MAP(XX)
 #undef XX
+        HTTP_STATUS_INVALID = 0
 };
 
-static HttpStatus String2HttpStatus(const std::string &str);
+const char *HttpStatus2String(HttpStatus status);
 
 /* Request Methods */
 #define HTTP_METHOD_MAP(XX)                                                    \
@@ -126,27 +128,80 @@ static HttpStatus String2HttpStatus(const std::string &str);
     XX(33, SOURCE, SOURCE)
 
 enum HttpMethod {
-#define XX(num, name, string) HTTP_##name = num,
+#define XX(num, name, string) name = num,
     HTTP_METHOD_MAP(XX)
 #undef XX
+        HTTP_METHOD_INVALID = 100
 };
 
-struct CaseInsensitiveCmp {
-    bool operator()(const std::string &lhs, const std::string &rhs);
+const char *HttpMethod2String(HttpMethod method);
+
+struct CaseInsensitiveLess {
+    bool operator()(const std::string &lhs, const std::string &rhs) const;
 };
+
+template <class MapType, class T>
+T getAs(const MapType &m, const std::string &key, const T &def = T()) {
+    auto itr = m.find(key);
+    if (itr == m.end()) {
+        return def;
+    }
+    try {
+        return boost::lexical_cast<T>(itr.second);
+    } catch (...) {
+    }
+    return def;
+}
 
 class HttpRequest {
 public:
-    typedef std::map<std::string, std::string, CaseInsensitiveCmp> MyMap;
+    typedef std::shared_ptr<HttpRequest> ptr;
+    typedef std::map<std::string, std::string, CaseInsensitiveLess> MyMap;
 
-    const MyMap &getHeaders() const { return m_header; }
+    HttpRequest(uint8_t version = 0x11, bool connection = true);
+
+    /**
+     * @brief 获取完整的协议头
+     *
+     * @return 协议头
+     */
+    const MyMap &getHeaders() const { return m_headers; }
+    /**
+     * @brief 获取HTTP请求方法
+     *
+     * @return HTTP请求方法
+     */
     const HttpMethod getMethod() const { return m_method; }
+    /**
+     * @brief 获取请求路径
+     *
+     */
     const std::string &getPath() const { return m_path; }
+    /**
+     * @brief 获取HTTP协议版本
+     *
+     * @return HTTP协议版本。0x11表示HTTP1.1
+     */
     const uint8_t getVersion() const { return m_version; }
-    const bool getConnection() const { return m_connection; }
+    /**
+     * @brief 是否保持长连接
+     *
+     */
+    const bool isConnection() const { return m_connection; }
+    /**
+     * @brief 获取所有Cookies
+     *
+     */
     const MyMap &getCookies() const { return m_cookies; }
-    const std::string &getHost() const { return m_host; }
+    /**
+     * @brief 获取请求参数
+     *
+     */
     const MyMap &getParams() const { return m_params; }
+    /**
+     * @brief 获取请求体
+     *
+     */
     const std::string &getBody() const { return m_body; }
 
     const std::string &getHeader(const std::string &key,
@@ -162,7 +217,6 @@ public:
     void setPath(const std::string &v) { m_path = v; }
     void setVersion(uint8_t v) { m_version = v; }
     void setConnection(bool v) { m_connection = v; }
-    void setHost(const std::string &v) { m_host = v; }
     void setBody(const std::string &v) { m_body = v; }
 
     void setHeader(const std::string &key, const std::string &val);
@@ -173,20 +227,85 @@ public:
     bool delCookie(const std::string &key);
     bool delParam(const std::string &key);
 
+    std::ostream &dump(std::ostream &os) const;
+    std::string toString() const;
+
+public:
+    template <class T>
+    T getHeaderAs(const std::string &key, const T &def = T()) {
+        return getAs(m_headers, key, def);
+    }
+
+    template <class T>
+    T getCookisAs(const std::string &key, const T &def = T()) {
+        return getAs(m_cookies, key, def);
+    }
+
+    template <class T>
+    T getParamAs(const std::string &key, const T &def = T()) {
+        return getAs(m_params, key, def);
+    }
+
 private:
-    MyMap m_header;
+    MyMap m_headers;
     HttpMethod m_method;
     std::string m_path;
     uint8_t m_version;
     bool m_connection;
     MyMap m_cookies;
-    std::string m_host;
     MyMap m_params;
     std::string m_body;
+
+    bool m_websocket;
 };
 
-class HttpResponse {};
+std::ostream &operator<<(std::ostream &os, const HttpRequest &request);
 
+class HttpResponse {
+public:
+    typedef std::shared_ptr<HttpResponse> ptr;
+    typedef std::map<std::string, std::string, CaseInsensitiveLess> MyMap;
+
+    HttpResponse(uint8_t version = 0x11, bool connection = true);
+
+    const MyMap &getHeaders() const { return m_headers; }
+    const uint8_t getVersion() const { return m_version; }
+    const HttpStatus getStatus() const { return m_status; }
+    const bool isConnection() const { return m_connection; }
+    const std::vector<std::string> &getCookies() const { return m_cookies; }
+    const std::string &getBody() const { return m_body; }
+
+    const std::string &getHeader(const std::string &key,
+                                 const std::string &def = "");
+
+    void setVersion(uint8_t v) { m_version = v; }
+    void setHttpStatus(HttpStatus v) { m_status = v; }
+    void setConnection(bool v) { m_connection = v; }
+    void setBody(std::string &v) { m_body = v; }
+
+    void addCookie(const std::string &v);
+
+    std::ostream &dump(std::ostream &os) const;
+    std::string toString() const;
+
+public:
+    template <class T>
+    T getHeaderAs(const std::string &key, const T &def = T()) {
+        return getAs(m_headers, key, def);
+    }
+
+private:
+    MyMap m_headers;
+    uint8_t m_version;
+    HttpStatus m_status;
+    bool m_connection;
+    std::vector<std::string> m_cookies;
+    std::string m_body;
+
+    bool m_websocket;
+};
+
+std::ostream &operator<<(std::ostream &os, const HttpResponse &response);
 } // namespace http
 } // namespace lyon
 

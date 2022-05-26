@@ -28,8 +28,11 @@ set(
   lyon/socket.cc
   lyon/bytearray.cc
   lyon/utils/file_system_util.cc
+  lyon/http/http.cc
 )
 
+ragelmaker(lyon/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/http)
+ragelmaker(lyon/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/http)
 
 add_library(lyon SHARED ${LIB_SRC})
 target_link_libraries(lyon PRIVATE yaml-cpp)
@@ -52,6 +55,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_address "tests/test_address.cc" lyon "${LIBS}")
   lyon_add_executable(test_socket "tests/test_socket.cc" lyon "${LIBS}")
   lyon_add_executable(test_bytearray "tests/test_bytearray.cc" lyon "${LIBS}")
+  lyon_add_executable(test_http "tests/test_http.cc" lyon "${LIBS}")
 
 endif()
 
