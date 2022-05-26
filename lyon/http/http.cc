@@ -31,6 +31,15 @@ const char *HttpMethod2String(HttpMethod method) {
     }
 }
 
+HttpMethod String2HttpMethod(const char *str) {
+
+    return HttpMethod::HTTP_METHOD_INVALID;
+}
+HttpMethod String2HttpMethod(const std::string &str) {
+
+    return HttpMethod::HTTP_METHOD_INVALID;
+}
+
 bool CaseInsensitiveLess::operator()(const std::string &lhs,
                                      const std::string &rhs) const {
     return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;

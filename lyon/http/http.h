@@ -135,6 +135,8 @@ enum HttpMethod {
 };
 
 const char *HttpMethod2String(HttpMethod method);
+HttpMethod String2HttpMethod(const char *str);
+HttpMethod String2HttpMethod(const std::string &str);
 
 struct CaseInsensitiveLess {
     bool operator()(const std::string &lhs, const std::string &rhs) const;
