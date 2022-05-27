@@ -237,7 +237,7 @@ bool Socket::bind(Address::ptr address) {
     }
 
     if (::bind(m_socket, address->getAddr(), address->getAddrLen())) {
-        LYON_LOG_ERROR(g_logger) << "Socket::bind sock : " << m_socket
+        LYON_LOG_ERROR(g_logger) << "Socket::bind error sock : " << m_socket
                                  << " address : " << address->toString();
         return false;
     }

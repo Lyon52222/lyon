@@ -1,10 +1,10 @@
 #include "http_parser.h"
+#include "http.h"
+#include "http11_parser.h"
+#include "httpclient_parser.h"
 #include "lyon/config.h"
 #include "lyon/log.h"
 #include <cstdint>
-#include <http.h>
-#include <http11_parser.h>
-#include <httpclient_parser.h>
 namespace lyon {
 namespace http {
 
@@ -28,8 +28,58 @@ static ConfigVar<uint64_t>::ptr g_http_response_max_body_size =
                       (uint64_t)(64 * 1024 * 1024),
                       "http response max body size");
 
+static uint64_t s_http_request_buffer_size = 0;
+static uint64_t s_http_request_max_body_size = 0;
+static uint64_t s_http_response_buffer_size = 0;
+static uint64_t s_http_response_max_body_size = 0;
+
+//匿名内部类可以防止外部使用
+namespace {
+
+struct _HttpSizeIniter {
+    _HttpSizeIniter() {
+        s_http_request_buffer_size = g_http_request_buffer_size->getVal();
+        s_http_request_max_body_size = g_http_request_max_body_size->getVal();
+        s_http_response_buffer_size = g_http_response_buffer_size->getVal();
+        s_http_response_max_body_size = g_http_response_max_body_size->getVal();
+
+        g_http_request_buffer_size->addOnChange(
+            [](const uint64_t &ov, const uint64_t &nv) {
+                s_http_request_buffer_size = nv;
+            });
+
+        g_http_request_max_body_size->addOnChange(
+            [](const uint64_t &ov, const uint64_t &nv) {
+                s_http_request_max_body_size = nv;
+            });
+
+        g_http_response_buffer_size->addOnChange(
+            [](const uint64_t &ov, const uint64_t &nv) {
+                s_http_response_buffer_size = nv;
+            });
+
+        g_http_response_max_body_size->addOnChange(
+            [](const uint64_t &ov, const uint64_t &nv) {
+                s_http_response_max_body_size = nv;
+            });
+    }
+    static _HttpSizeIniter httpsizeiniter;
+};
+
+} // namespace
+
 void on_request_http_field(void *data, const char *field, size_t flen,
-                           const char *value, size_t vlen) {}
+                           const char *value, size_t vlen) {
+    if (flen == 0) {
+        LYON_LOG_ERROR(g_logger)
+            << "HttpRequestParser-on_request_http_filed error "
+               ": filed length = 0";
+        return;
+    }
+    HttpRequestParser *request_parser = static_cast<HttpRequestParser *>(data);
+    request_parser->getData()->setHeader(std::string(field, flen),
+                                         std::string(value, vlen));
+}
 
 void on_request_method(void *data, const char *at, size_t length) {
     HttpMethod method = String2HttpMethod(at);
@@ -43,10 +93,38 @@ void on_request_method(void *data, const char *at, size_t length) {
     request_parser->getData()->setMethod(method);
 }
 void on_request_uri(void *data, const char *at, size_t length) {}
-void on_request_fragment(void *data, const char *at, size_t length) {}
-void on_request_path(void *data, const char *at, size_t length) {}
-void on_request_query_string(void *data, const char *at, size_t length) {}
-void on_request_http_version(void *data, const char *at, size_t length) {}
+
+void on_request_fragment(void *data, const char *at, size_t length) {
+    HttpRequestParser *request_parser = static_cast<HttpRequestParser *>(data);
+    request_parser->getData()->setFragment(std::string(at, length));
+}
+
+void on_request_path(void *data, const char *at, size_t length) {
+    HttpRequestParser *request_parser = static_cast<HttpRequestParser *>(data);
+    request_parser->getData()->setPath(std::string(at, length));
+}
+void on_request_query_string(void *data, const char *at, size_t length) {
+    HttpRequestParser *request_parser = static_cast<HttpRequestParser *>(data);
+    request_parser->getData()->setQuery(std::string(at, length));
+}
+
+void on_request_http_version(void *data, const char *at, size_t length) {
+    uint8_t v = 0;
+    if (strncmp(at, "HTTP/1.0", length) == 0) {
+        v = 0x10;
+    } else if (strncmp(at, "HTTP/1.1", length) == 0) {
+        v = 0x11;
+    } else {
+        LYON_LOG_ERROR(g_logger)
+            << "HttpRequestParser-on_request_http_version error "
+               ": Unknown http version, version = "
+            << at;
+        return;
+    }
+    HttpRequestParser *request_parser = static_cast<HttpRequestParser *>(data);
+    request_parser->getData()->setVersion(v);
+}
+
 void on_request_header_done(void *data, const char *at, size_t length) {}
 
 HttpRequestParser::HttpRequestParser() {
@@ -74,12 +152,45 @@ int HttpRequestParser::hasError() { return http_parser_has_error(&m_parser); }
 int HttpRequestParser::isFInish() { return http_parser_is_finished(&m_parser); }
 
 void on_response_http_field(void *data, const char *field, size_t flen,
-                            const char *value, size_t vlen) {}
-void on_response_reason_phrase(void *data, const char *at, size_t length) {}
+                            const char *value, size_t vlen) {
+    if (flen == 0) {
+        LYON_LOG_ERROR(g_logger)
+            << "HttpResponseParser-on_response_http_filed error "
+               ": filed length = 0";
+        return;
+    }
+    HttpResponseParser *response_parser =
+        static_cast<HttpResponseParser *>(data);
+    response_parser->getData()->setHeader(std::string(field, flen),
+                                          std::string(value, vlen));
+}
+
+void on_response_reason_phrase(void *data, const char *at, size_t length) {
+    HttpResponseParser *response_parser =
+        static_cast<HttpResponseParser *>(data);
+    response_parser->getData()->setReason(std::string(at, length));
+}
 void on_response_status_code(void *data, const char *at, size_t length) {}
+
 void on_response_chunk_size(void *data, const char *at, size_t length) {}
 
-void on_response_http_version(void *data, const char *at, size_t length) {}
+void on_response_http_version(void *data, const char *at, size_t length) {
+    uint8_t v = 0;
+    if (strncmp(at, "HTTP/1.0", length) == 0) {
+        v = 0x10;
+    } else if (strncmp(at, "HTTP/1.1", length) == 0) {
+        v = 0x11;
+    } else {
+        LYON_LOG_ERROR(g_logger)
+            << "HttpRequestParser-on_request_http_version error "
+               ": Unknown http version, version = "
+            << at;
+        return;
+    }
+    HttpResponseParser *response_parser =
+        static_cast<HttpResponseParser *>(data);
+    response_parser->getData()->setVersion(v);
+}
 
 void on_response_header_done(void *data, const char *at, size_t length) {}
 

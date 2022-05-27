@@ -101,7 +101,7 @@ bool HttpRequest::delParam(const std::string &key) {
 }
 
 std::ostream &HttpRequest::dump(std::ostream &os) const {
-    os << HttpMethod2String(m_method) << " " << m_path << " HTTP"
+    os << HttpMethod2String(m_method) << " " << m_path << " HTTP/"
        << (m_version >> 4) << "." << (m_version & 0x0f) << "\r\n";
     if (!m_websocket) {
         os << "Connection: " << (m_connection ? "keep-alive" : "close")
@@ -141,6 +141,10 @@ const std::string &HttpResponse::getHeader(const std::string &key,
         return def;
     }
     return itr->second;
+}
+
+void HttpResponse::setHeader(const std::string &key, const std::string &val) {
+    m_headers[key] = val;
 }
 
 void HttpResponse::addCookie(const std::string &v) { m_cookies.push_back(v); }

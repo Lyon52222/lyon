@@ -18,5 +18,13 @@ fiber:
       stack_size: 4096
 
 tcp:
-  connect:
-    timeout:5000
+      connect:
+          timeout:5000
+
+http:
+      request:
+            buffer_size: 4096
+            max_body_size: 67108864
+      response:
+            buffer_size: 4096
+            max_body_size: 67108864

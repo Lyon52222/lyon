@@ -220,6 +220,8 @@ public:
     void setVersion(uint8_t v) { m_version = v; }
     void setConnection(bool v) { m_connection = v; }
     void setBody(const std::string &v) { m_body = v; }
+    void setQuery(const std::string &v) { m_query = v; }
+    void setFragment(const std::string &v) { m_fragment = v; }
 
     void setHeader(const std::string &key, const std::string &val);
     void setCookie(const std::string &key, const std::string &val);
@@ -249,14 +251,46 @@ public:
     }
 
 private:
+    /**
+     * @m_headers 请求头
+     */
     MyMap m_headers;
+    /**
+     * @m_method 请求方法
+     */
     HttpMethod m_method;
+    /**
+     * @m_path 请求路径
+     */
     std::string m_path;
+    /**
+     * @m_version Http版本
+     */
     uint8_t m_version;
+    /**
+     * @m_connection 是否保持长连接
+     */
     bool m_connection;
+    /**
+     * @m_cookies Cookies
+     */
     MyMap m_cookies;
+    /**
+     * @m_params 请求参数
+     */
     MyMap m_params;
+    /**
+     * @m_body 请求体
+     */
     std::string m_body;
+    /**
+     * @m_query 请求参数
+     */
+    std::string m_query;
+    /**
+     * @m_fragment 请求fragment
+     */
+    std::string m_fragment;
 
     bool m_websocket;
 };
@@ -283,8 +317,10 @@ public:
     void setVersion(uint8_t v) { m_version = v; }
     void setHttpStatus(HttpStatus v) { m_status = v; }
     void setConnection(bool v) { m_connection = v; }
-    void setBody(std::string &v) { m_body = v; }
+    void setBody(const std::string &v) { m_body = v; }
+    void setReason(const std::string &v) { m_reason = v; }
 
+    void setHeader(const std::string &key, const std::string &val);
     void addCookie(const std::string &v);
 
     std::ostream &dump(std::ostream &os) const;
@@ -303,6 +339,7 @@ private:
     bool m_connection;
     std::vector<std::string> m_cookies;
     std::string m_body;
+    std::string m_reason;
 
     bool m_websocket;
 };

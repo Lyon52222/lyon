@@ -29,6 +29,7 @@ set(
   lyon/bytearray.cc
   lyon/utils/file_system_util.cc
   lyon/http/http.cc
+  lyon/http/http_parser.cc
 )
 
 ragelmaker(lyon/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/http)
@@ -56,6 +57,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_socket "tests/test_socket.cc" lyon "${LIBS}")
   lyon_add_executable(test_bytearray "tests/test_bytearray.cc" lyon "${LIBS}")
   lyon_add_executable(test_http "tests/test_http.cc" lyon "${LIBS}")
+  lyon_add_executable(test_http_parser "tests/test_http_parser.cc" lyon "${LIBS}")
 
 endif()
 

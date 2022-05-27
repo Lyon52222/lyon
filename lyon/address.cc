@@ -105,6 +105,8 @@ bool Address::LookUp(std::vector<Address::ptr> &results,
 
     next = res;
     while (next) {
+        // Create返回的都是IPAddress或者UnKnownAddress
+        // 所以后续是可以使用dynamic_pointer_cast转换回去的。
         results.push_back(Create(next->ai_addr, next->ai_addrlen));
         next = next->ai_next;
     }
