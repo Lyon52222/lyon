@@ -20,11 +20,13 @@ fiber:
 tcp:
       connect:
           timeout:5000
+      recv:
+          timeout: 120000
 
 http:
       request:
-            buffer_size: 4096
-            max_body_size: 67108864
+          buffer_size: 4096
+          max_body_size: 67108864
       response:
-            buffer_size: 4096
-            max_body_size: 67108864
+          buffer_size: 4096
+          max_body_size: 67108864

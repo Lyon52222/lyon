@@ -15,7 +15,7 @@ static thread_local bool s_hook_enable = false;
 static ConfigVar<int>::ptr g_tcp_connect_timeout =
     Config::SetConfig<int>("tcp.connect.timeout", 5000, "tcp connect timeout");
 
-static uint64_t s_connect_timeout = -1;
+static uint64_t s_tcp_connect_timeout = -1;
 
 #define HOOK_FUN(XX)                                                           \
     XX(sleep)                                                                  \
@@ -46,20 +46,22 @@ void hook_init() {
 #undef XX
 }
 
+namespace {
 struct _HookIniter {
     _HookIniter() {
+        s_tcp_connect_timeout = g_tcp_connect_timeout->getVal();
         g_tcp_connect_timeout->addOnChange([](const int &old_val,
                                               const int &new_val) {
             LYON_LOG_INFO(g_logger) << "Tcp connect timeout from : " << old_val
                                     << " set to : " << new_val;
-            s_connect_timeout = new_val;
+            s_tcp_connect_timeout = new_val;
         });
         hook_init();
     }
 };
 
 static _HookIniter s_hook_initer;
-
+} // namespace
 bool is_hook_enable() { return s_hook_enable; }
 
 void set_hook_enable(bool flag) { s_hook_enable = flag; }
@@ -275,7 +277,7 @@ int connect_with_timeout(int socket, const struct sockaddr *address,
 
 int connect(int socket, const struct sockaddr *address, socklen_t address_len) {
     return connect_with_timeout(socket, address, address_len,
-                                lyon::s_connect_timeout);
+                                lyon::s_tcp_connect_timeout);
 }
 
 int accept(int socket, struct sockaddr *address, socklen_t *address_len) {
