@@ -26,12 +26,17 @@ set(
   lyon/fdmanager.cc
   lyon/address.cc
   lyon/socket.cc
+  lyon/ssl_socket.cc
+  lyon/tcp_server.cc
   lyon/bytearray.cc
   lyon/utils/file_system_util.cc
   lyon/http/http.cc
   lyon/http/http_parser.cc
 )
 
+# 使用ragel解析src_rl文件并且将解析文件保存到outputdir下。
+# 并将其添加到outputlist库中
+# function(ragelmaker src_rl outputlist outputdir)
 ragelmaker(lyon/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/http)
 ragelmaker(lyon/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/http)
 

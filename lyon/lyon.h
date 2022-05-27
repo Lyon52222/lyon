@@ -13,11 +13,12 @@
 #include "scheduler.h"
 #include "singleton.h"
 #include "socket.h"
+#include "ssl_socket.h"
+#include "tcp_server.h"
 #include "thread.h"
 #include "timer.h"
 #include "util.h"
 
-#include "utils/endian.h"
 #include "utils/utils.h"
 
 #endif // !__LYON_LYON_H__
