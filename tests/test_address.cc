@@ -1,5 +1,6 @@
 #include "lyon/address.h"
 #include <functional>
+#include <lyon/hook.h>
 #include <lyon/iomanager.h>
 #include <lyon/log.h>
 #include <sys/socket.h>
@@ -57,6 +58,7 @@ void test_interface() {
 
 int main(int argc, char *argv[]) {
     lyon::IOManager iom;
+    // lyon::set_hook_enable(true);
     // test();
     // test_lookup();
     // test_interface();

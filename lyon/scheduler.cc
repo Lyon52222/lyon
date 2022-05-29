@@ -101,6 +101,7 @@ void Scheduler::stop() {
         tickle();
     }
 
+    //如果当前线程是调度线程的运行协程，则切换到run协程。
     if (m_runFiber) {
         if (!stopping()) {
             m_runFiber->mainFiberIn();
@@ -120,7 +121,7 @@ void Scheduler::stop() {
 
 void Scheduler::run() {
     LYON_LOG_DEBUG(g_logger) << m_name << " start run";
-    lyon::set_hook_enable(true);
+    // lyon::set_hook_enable(true);
     setAsCurrentScheduler();
 
     if (lyon::GetCurrentThreadId() != m_rootThread) {

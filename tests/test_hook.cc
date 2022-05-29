@@ -66,6 +66,8 @@ void test_socket() {
     if (rt <= 0) {
         return;
     }
+
+    close(sock);
 }
 
 int main(int argc, char *argv[]) {

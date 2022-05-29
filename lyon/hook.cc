@@ -4,6 +4,7 @@
 #include "iomanager.h"
 #include "log.h"
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <memory>
 #include <stdarg.h>
 
@@ -217,7 +218,7 @@ int connect_with_timeout(int socket, const struct sockaddr *address,
         //连接成功
         return 0;
     } else if (n != -1 || errno != EINPROGRESS) {
-        return -1;
+        return n;
     }
     //因为socket是非阻塞的所以connect回直接返回-1并且设置errno为EINPROGRESS
     IOManager *iom = IOManager::GetCurrentIOManager();
@@ -352,7 +353,8 @@ int close(int fildes) {
         }
         FdMgr::GetInstance()->del(fildes);
     }
-    return close_f(fildes);
+    int rt = close_f(fildes);
+    return rt;
 }
 
 int fcntl(int fildes, int cmd, ...) {
@@ -368,7 +370,7 @@ int fcntl(int fildes, int cmd, ...) {
         if (!ctx || ctx->isClose() || !ctx->isSockt()) {
             return fcntl_f(fildes, cmd, arg);
         }
-        ctx->setUsrNonblock(arg | O_NONBLOCK);
+        ctx->setUsrNonblock(arg & O_NONBLOCK);
         if (ctx->getSysNonblock()) {
             arg |= O_NONBLOCK;
         } else {
@@ -393,14 +395,27 @@ int fcntl(int fildes, int cmd, ...) {
     case F_DUPFD:
     case F_DUPFD_CLOEXEC:
     case F_SETFD:
-    case F_SETOWN: {
+    case F_SETOWN:
+    case F_SETSIG:
+    case F_SETLEASE:
+    case F_NOTIFY:
+#ifdef F_SETPIPE_SZ
+    case F_SETPIPE_SZ:
+#endif
+    {
         int arg = va_arg(va, int);
         va_end(va);
         return fcntl_f(fildes, cmd, arg);
     } break;
 
     case F_GETFD:
-    case F_GETOWN: {
+    case F_GETOWN:
+    case F_GETSIG:
+    case F_GETLEASE:
+#ifdef F_GETPIPE_SZ
+    case F_GETPIPE_SZ:
+#endif
+    {
         va_end(va);
         return fcntl_f(fildes, cmd);
     } break;
@@ -412,6 +427,14 @@ int fcntl(int fildes, int cmd, ...) {
         va_end(va);
         return fcntl_f(fildes, cmd, arg);
     } break;
+
+    case F_GETOWN_EX:
+    case F_SETOWN_EX: {
+        struct f_owner_exlock *arg = va_arg(va, struct f_owner_exlock *);
+        va_end(va);
+        return fcntl_f(fildes, cmd, arg);
+    } break;
+
     default:
         va_end(va);
         return fcntl_f(fildes, cmd);

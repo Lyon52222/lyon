@@ -16,16 +16,50 @@ public:
     enum Type { TCP = SOCK_STREAM, UDP = SOCK_DGRAM };
     enum Family { IPv4 = AF_INET, IPv6 = AF_INET6, Unix = AF_UNIX };
 
+    /**
+     * @brief 根据Address的Family创建TCPSocket
+     *
+     * @param address 地址描述类
+     */
     static Socket::ptr CreateTCP(Address::ptr address);
+    /**
+     * @brief 根据Address的Family创建UDPSocket
+     *
+     * @param address 地址描述类
+     */
     static Socket::ptr CreateUDP(Address::ptr address);
 
+    /**
+     * @brief 创建IPv4TCPSocket
+     *
+     */
     static Socket::ptr CreateTCPSocket();
+    /**
+     * @brief 创建IPv6TCPSocket
+     *
+     */
     static Socket::ptr CreateTCPSocket6();
+    /**
+     * @brief 创建UnixTCPSocket
+     *
+     */
     static Socket::ptr CreateTCPUnixSocket();
 
+    /**
+     * @brief 创建IPv4UDPSocket
+     *
+     */
     static Socket::ptr CreateUDPSocket();
+    /**
+     * @brief 创建IPv6UDPSocket
+     *
+     */
     static Socket::ptr CreateUDPSocket6();
-    static Socket::ptr CreateTCPUnixSocket6();
+    /**
+     * @brief 创建UnixUDPSocket
+     *
+     */
+    static Socket::ptr CreateUDPUnixSocket6();
 
     uint64_t getRecvTimeout() const;
     void setRecvTimeout(uint64_t timeout);
@@ -57,8 +91,8 @@ public:
     virtual bool init(int socket);
 
     virtual bool bind(Address::ptr address);
-    virtual bool listen(int backlog);
-    virtual Socket::ptr accept(Address::ptr address);
+    virtual bool listen(int backlog = SOMAXCONN);
+    virtual Socket::ptr accept();
     virtual bool connect(Address::ptr address, uint64_t timeout_ms = -1);
 
     bool close();
@@ -84,7 +118,9 @@ public:
                    int flags = 0);
 
     Socket(int type, int family, int protocol = 0);
-    ~Socket();
+
+    virtual std::ostream &dump(std::ostream &os) const;
+    virtual ~Socket();
 
     int getSocket() const { return m_socket; }
     int getType() const { return m_type; }
@@ -108,5 +144,8 @@ private:
     Address::ptr m_localAddress;
     Address::ptr m_remoteAddress;
 };
+
+std::ostream &operator<<(std::ostream &os, const Socket &sock);
+
 } // namespace lyon
 #endif

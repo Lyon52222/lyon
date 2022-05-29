@@ -80,6 +80,7 @@ IOManager::~IOManager() {
     //停止调度
     stop();
     //关闭文件描述符
+
     close(m_epfd);
     close(m_tickleFds[0]);
     close(m_tickleFds[1]);

@@ -63,6 +63,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_bytearray "tests/test_bytearray.cc" lyon "${LIBS}")
   lyon_add_executable(test_http "tests/test_http.cc" lyon "${LIBS}")
   lyon_add_executable(test_http_parser "tests/test_http_parser.cc" lyon "${LIBS}")
+  lyon_add_executable(test_tcp_server "tests/test_tcp_server.cc" lyon "${LIBS}")
 
 endif()
 

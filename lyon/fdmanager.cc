@@ -76,13 +76,13 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create) {
     }
     m_fds[fd] = fdctx;
 
-    return nullptr;
+    return fdctx;
 }
 void FdManager::del(int fd) {
+    RWMutexType::WRLock wlock(m_mutex);
     if (fd < 0 || fd >= static_cast<int>(m_fds.size()) || (!m_fds[fd])) {
         return;
     }
-    RWMutexType::WRLock wlock(m_mutex);
     m_fds[fd].reset();
 }
 

@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <memory>
 #include <netinet/tcp.h>
+#include <sstream>
 #include <sys/socket.h>
 #include <sys/time.h>
 namespace lyon {
@@ -51,7 +52,7 @@ Socket::ptr Socket::CreateUDPSocket6() {
     Socket::ptr socket(new Socket(UDP, IPv6, 0));
     return socket;
 }
-Socket::ptr Socket::CreateTCPUnixSocket6() {
+Socket::ptr Socket::CreateUDPUnixSocket6() {
     Socket::ptr socket(new Socket(UDP, Unix, 0));
     return socket;
 }
@@ -257,12 +258,12 @@ bool Socket::listen(int backlog) {
     return true;
 }
 
-Socket::ptr Socket::accept(Address::ptr address) {
+Socket::ptr Socket::accept() {
     Socket::ptr socket(new Socket(m_type, m_family, m_protocol));
     int newsock = ::accept(m_socket, nullptr, nullptr);
     if (newsock == -1) {
-        LYON_LOG_ERROR(g_logger)
-            << "Socket::accept " << address->toString() << " fail";
+        LYON_LOG_ERROR(g_logger) << "Socket::accept "
+                                 << " fail";
         return nullptr;
     }
     if (socket->init(newsock)) {
@@ -419,4 +420,20 @@ bool Socket::triggerAll() {
     return IOManager::GetCurrentIOManager()->triggerAll(m_socket);
 }
 
+std::ostream &Socket::dump(std::ostream &os) const {
+    os << "[m_socket = " << m_socket << ", type = " << m_type
+       << ", protocol = " << m_protocol << " isConnect = " << m_isConnect;
+    if (m_localAddress) {
+        os << ", localAddress = " << m_localAddress;
+    }
+    if (m_remoteAddress) {
+        os << ", remoteAddress = " << m_remoteAddress;
+    }
+    os << "]";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Socket &sock) {
+    return sock.dump(os);
+}
 } // namespace lyon
