@@ -3,6 +3,8 @@
 #include <lyon/hook.h>
 #include <lyon/iomanager.h>
 #include <lyon/log.h>
+#include <memory>
+#include <netdb.h>
 #include <sys/socket.h>
 
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
@@ -41,9 +43,21 @@ void test_lookup() {
     }
 }
 
-void test_lookupany() {
-    lyon::Address::ptr addr = lyon::Address::LookUpAny("www.baidu.com");
-    LYON_LOG_INFO(g_logger) << addr->toString();
+void test_getaddrinfo() {
+    addrinfo hint, *res, *next;
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_family = AF_INET;
+    hint.ai_socktype = SOCK_STREAM;
+    // if (getaddrinfo("www.baidu.com", "80", &hint, &res)) {
+    //     return;
+    // }
+    next = res;
+    while (next) {
+        std::cout << "a" << std::endl;
+        next = next->ai_next;
+    }
+
+    freeaddrinfo(res);
 }
 
 void test_interface() {
@@ -62,10 +76,11 @@ int main(int argc, char *argv[]) {
     // test();
     // test_lookup();
     // test_interface();
-    // test_lookupany();
 
+    // test_getaddrinfo();
     // iom.addJob(test);
-    iom.addJob(test_lookup);
+    // iom.addJob(test_lookup);
+    iom.addJob(test_getaddrinfo);
     // iom.addJob(test_interface);
     // std::function<void()> cb = test_lookup;
     // cb();

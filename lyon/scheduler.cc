@@ -121,7 +121,7 @@ void Scheduler::stop() {
 
 void Scheduler::run() {
     LYON_LOG_DEBUG(g_logger) << m_name << " start run";
-    // lyon::set_hook_enable(true);
+    lyon::set_hook_enable(true);
     setAsCurrentScheduler();
 
     if (lyon::GetCurrentThreadId() != m_rootThread) {
