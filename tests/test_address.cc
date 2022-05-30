@@ -48,9 +48,9 @@ void test_getaddrinfo() {
     memset(&hint, 0, sizeof(hint));
     hint.ai_family = AF_INET;
     hint.ai_socktype = SOCK_STREAM;
-    // if (getaddrinfo("www.baidu.com", "80", &hint, &res)) {
-    //     return;
-    // }
+    if (getaddrinfo("www.baidu.com", "80", &hint, &res)) {
+        return;
+    }
     next = res;
     while (next) {
         std::cout << "a" << std::endl;
@@ -79,8 +79,8 @@ int main(int argc, char *argv[]) {
 
     // test_getaddrinfo();
     // iom.addJob(test);
-    // iom.addJob(test_lookup);
-    iom.addJob(test_getaddrinfo);
+    iom.addJob(test_lookup);
+    // iom.addJob(test_getaddrinfo);
     // iom.addJob(test_interface);
     // std::function<void()> cb = test_lookup;
     // cb();

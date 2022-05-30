@@ -28,7 +28,7 @@ static thread_local Fiber *t_current_fiber = nullptr;
 static thread_local Fiber::ptr t_main_fiber = nullptr;
 
 static ConfigVar<uint32_t>::ptr g_fiber_stack_size =
-    Config::SetConfig<uint32_t>("fiber.stack_size", 1024 * 4,
+    Config::SetConfig<uint32_t>("fiber.stack_size", 1024 * 128,
                                 "fiber stack size");
 
 class MallocStackAllocator {

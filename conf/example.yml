@@ -15,7 +15,7 @@ logs:
         - type: StdOutLogAppender
 
 fiber:
-      stack_size: 4096
+      stack_size: 40960
 
 tcp:
       connect:
