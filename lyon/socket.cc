@@ -18,7 +18,7 @@ static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
 Socket::Socket(int type, int family, int protocol)
     : m_socket(-1), m_type(Type(type)), m_family(Family(family)),
-      m_protocol(protocol), m_isConnect(false) {}
+      m_protocol(protocol), m_isConnected(false) {}
 
 Socket::~Socket() { close(); }
 
@@ -183,7 +183,7 @@ bool Socket::init(int socket) {
     FdCtx::ptr ctx = FdMgr::GetInstance()->get(socket);
     if (ctx && ctx->isSockt() && !ctx->isClose()) {
         m_socket = socket;
-        m_isConnect = true;
+        m_isConnected = true;
         initSocket();
         getLocalAddress();
         getRemoteAddress();
@@ -302,17 +302,17 @@ bool Socket::connect(Address::ptr address, uint64_t timeout_ms) {
             return false;
         }
     }
-    m_isConnect = true;
+    m_isConnected = true;
     getRemoteAddress();
     getLocalAddress();
     return true;
 }
 
 bool Socket::close() {
-    if (!m_isConnect && m_socket == -1) {
+    if (!m_isConnected && m_socket == -1) {
         return true;
     }
-    m_isConnect = false;
+    m_isConnected = false;
     if (m_socket != -1) {
         ::close(m_socket);
         m_socket = -1;
@@ -321,14 +321,14 @@ bool Socket::close() {
 }
 
 ssize_t Socket::recv(void *buffer, size_t length, int flags) {
-    if (!isConnect()) {
+    if (!isConnected()) {
         return -1;
     }
     return ::recv(m_socket, buffer, length, flags);
 }
 
 ssize_t Socket::recv(iovec *buffers, size_t length, int flags) {
-    if (!isConnect()) {
+    if (!isConnected()) {
         return -1;
     }
     msghdr msg;
@@ -339,7 +339,7 @@ ssize_t Socket::recv(iovec *buffers, size_t length, int flags) {
 
 ssize_t Socket::recvFrom(Address::ptr address, void *buffer, size_t length,
                          int flags) {
-    if (!isConnect()) {
+    if (!isConnected()) {
         return -1;
     }
     socklen_t addrlen = address->getAddrLen();
@@ -349,7 +349,7 @@ ssize_t Socket::recvFrom(Address::ptr address, void *buffer, size_t length,
 
 ssize_t Socket::recvFrom(Address::ptr address, iovec *buffers, size_t length,
                          int flags) {
-    if (!isConnect()) {
+    if (!isConnected()) {
         return -1;
     }
     msghdr msg;
@@ -361,14 +361,14 @@ ssize_t Socket::recvFrom(Address::ptr address, iovec *buffers, size_t length,
 }
 
 ssize_t Socket::send(const void *buffer, size_t length, int flags) {
-    if (!isConnect()) {
+    if (!isConnected()) {
         return -1;
     }
     return ::send(m_socket, buffer, length, flags);
 }
 
 ssize_t Socket::send(const iovec *buffers, size_t length, int flags) {
-    if (!isConnect()) {
+    if (!isConnected()) {
         return -1;
     }
     msghdr msg;
@@ -380,7 +380,7 @@ ssize_t Socket::send(const iovec *buffers, size_t length, int flags) {
 
 ssize_t Socket::sendTo(Address::ptr address, const void *buffer, size_t length,
                        int flags) {
-    if (!isConnect()) {
+    if (!isConnected()) {
         return -1;
     }
     return ::sendto(m_socket, buffer, length, flags, address->getAddr(),
@@ -389,7 +389,7 @@ ssize_t Socket::sendTo(Address::ptr address, const void *buffer, size_t length,
 
 ssize_t Socket::sendTo(Address::ptr address, const iovec *buffers,
                        size_t length, int flags) {
-    if (!isConnect()) {
+    if (!isConnected()) {
         return -1;
     }
     msghdr msg;
@@ -422,7 +422,7 @@ bool Socket::triggerAll() {
 
 std::ostream &Socket::dump(std::ostream &os) const {
     os << "[m_socket = " << m_socket << ", type = " << m_type
-       << ", protocol = " << m_protocol << " isConnect = " << m_isConnect;
+       << ", protocol = " << m_protocol << " isConnect = " << m_isConnected;
     if (m_localAddress) {
         os << ", localAddress = " << m_localAddress->toString();
     }

@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <sys/uio.h>
+#include <vector>
 
 namespace lyon {
 
@@ -23,6 +25,17 @@ public:
 
     ByteArray(size_t base_size = 4096);
     ~ByteArray();
+
+    /**
+     * @brief 重置状态到初始化状态(只有一个Node): 释放掉多余空间
+     *
+     */
+    void reset();
+
+    /**
+     * @brief 清空已经用空间：并不释放空间
+     *
+     */
     void clear();
 
     /**
@@ -55,10 +68,36 @@ public:
      */
     size_t testCapacity(size_t size);
 
+    size_t getPosition() const { return m_position; }
     bool setPosition(size_t position);
+
+    void getReadBuffer(std::vector<iovec> &buffers, size_t size);
+    void getReadBuffer(std::vector<iovec> &buffers, size_t size,
+                       size_t position);
+    /**
+     * @brief 获取待写入的内存空间
+     *
+     * @param buffers 内存空间数组
+     * @param size 需要的内存大小
+     */
+    void getWriteBuffer(std::vector<iovec> &buffers, size_t size);
+
+    /**
+     * @brief 将可读取区域的内容转化为字符串
+     *
+     */
+    std::string toString();
+
+    /**
+     * @brief 从position开始将缓存中的内容转化为字符串
+     *
+     * @param position 读取开始的位置
+     */
+    std::string toString(size_t position);
 
     void write(const void *buf, size_t size);
     void read(const void *buf, size_t size);
+    void read(const void *buf, size_t size, size_t position);
 
     void writeFint8(int8_t value);
     void writeFuint8(uint8_t value);

@@ -16,6 +16,7 @@ public:
     enum Type { TCP = SOCK_STREAM, UDP = SOCK_DGRAM };
     enum Family { IPv4 = AF_INET, IPv6 = AF_INET6, Unix = AF_UNIX };
 
+    Socket(int type, int family, int protocol = 0);
     /**
      * @brief 根据Address的Family创建TCPSocket
      *
@@ -86,7 +87,7 @@ public:
     }
 
     bool isValid() const { return m_socket != -1; };
-    bool isConnect() const { return m_isConnect; }
+    bool isConnected() const { return m_isConnected; }
 
     virtual bool init(int socket);
 
@@ -95,29 +96,27 @@ public:
     virtual Socket::ptr accept();
     virtual bool connect(Address::ptr address, uint64_t timeout_ms = -1);
 
-    bool close();
+    virtual bool close();
 
-    ssize_t recv(void *buffer, size_t length, int flags = 0);
+    virtual ssize_t recv(void *buffer, size_t length, int flags = 0);
 
-    ssize_t recv(iovec *buffers, size_t length, int flags = 0);
+    virtual ssize_t recv(iovec *buffers, size_t length, int flags = 0);
 
-    ssize_t recvFrom(Address::ptr address, void *buffer, size_t length,
-                     int flags = 0);
+    virtual ssize_t recvFrom(Address::ptr address, void *buffer, size_t length,
+                             int flags = 0);
 
-    ssize_t recvFrom(Address::ptr address, iovec *buffers, size_t length,
-                     int flags = 0);
+    virtual ssize_t recvFrom(Address::ptr address, iovec *buffers,
+                             size_t length, int flags = 0);
 
-    ssize_t send(const void *buffer, size_t length, int flags = 0);
+    virtual ssize_t send(const void *buffer, size_t length, int flags = 0);
 
-    ssize_t send(const iovec *buffers, size_t length, int flags = 0);
+    virtual ssize_t send(const iovec *buffers, size_t length, int flags = 0);
 
-    ssize_t sendTo(Address::ptr address, const void *buffer, size_t length,
-                   int flags = 0);
+    virtual ssize_t sendTo(Address::ptr address, const void *buffer,
+                           size_t length, int flags = 0);
 
-    ssize_t sendTo(Address::ptr address, const iovec *buffers, size_t length,
-                   int flags = 0);
-
-    Socket(int type, int family, int protocol = 0);
+    virtual ssize_t sendTo(Address::ptr address, const iovec *buffers,
+                           size_t length, int flags = 0);
 
     virtual std::ostream &dump(std::ostream &os) const;
     virtual ~Socket();
@@ -135,12 +134,15 @@ private:
     void newSocket();
     void initSocket();
 
-private:
+protected:
     int m_socket;
     Type m_type;
     Family m_family;
     int m_protocol;
-    bool m_isConnect;
+    /**
+     * @m_isConnect 是否已经建立连接
+     */
+    bool m_isConnected;
     Address::ptr m_localAddress;
     Address::ptr m_remoteAddress;
 };

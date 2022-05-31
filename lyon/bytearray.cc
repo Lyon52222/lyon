@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <fstream>
 #include <memory>
+#include <stdexcept>
 #include <string.h>
 
 namespace lyon {
@@ -32,7 +33,7 @@ ByteArray::~ByteArray() {
     }
 }
 
-void ByteArray::clear() {
+void ByteArray::reset() {
     Node *t = m_head->next;
     while (t) {
         m_cur = t;
@@ -42,6 +43,11 @@ void ByteArray::clear() {
     m_position = m_size = 0;
     m_capacity = m_baseSize;
     m_tail = m_cur = m_head;
+}
+
+void ByteArray::clear() {
+    m_position = m_size = 0;
+    m_cur = m_head;
 }
 
 size_t ByteArray::addCapacity(size_t size) {
@@ -89,6 +95,108 @@ bool ByteArray::setPosition(size_t position) {
     return true;
 }
 
+void ByteArray::getReadBuffer(std::vector<iovec> &buffers, size_t size) {
+    if (size > getReadableSize()) {
+        throw std::out_of_range("ByteArray::getReadBuffer out of range");
+    }
+    size_t npos = m_position % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    while (size > 0) {
+        iovec buffer;
+        if (size <= ncap) {
+            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_len = size;
+            //这里只是将自己的内存空间借出去，具体用了多少需要调用setPosition来设置。
+            // m_position += size;
+            size = 0;
+        } else {
+            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_len = ncap;
+            // m_position += ncap;
+            size -= ncap;
+            m_cur = m_cur->next;
+            ncap = m_cur->size;
+            npos = 0;
+        }
+        buffers.push_back(buffer);
+    }
+}
+
+void ByteArray::getWriteBuffer(std::vector<iovec> &buffers, size_t size) {
+    if (size == 0) {
+        return;
+    }
+    testCapacity(size);
+    size_t npos = m_position % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    while (size > 0) {
+        iovec buffer;
+        if (size <= ncap) {
+            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_len = size;
+            // m_position += size;
+            size = 0;
+        } else {
+            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_len = ncap;
+            // m_position += ncap;
+            size -= ncap;
+            m_cur = m_cur->next;
+            ncap = m_cur->size;
+            npos = 0;
+        }
+        buffers.push_back(buffer);
+    }
+}
+
+void ByteArray::getReadBuffer(std::vector<iovec> &buffers, size_t size,
+                              size_t position) {
+
+    if (size > (m_size - position)) {
+        throw std::out_of_range("ByteArray::getReadBuffer out of range");
+    }
+    size_t npos = position % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    while (size > 0) {
+        iovec buffer;
+        if (size <= ncap) {
+            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_len = size;
+            size = 0;
+        } else {
+            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_len = ncap;
+            size -= ncap;
+            m_cur = m_cur->next;
+            ncap = m_cur->size;
+            npos = 0;
+        }
+        buffers.push_back(buffer);
+    }
+}
+
+std::string ByteArray::toString() {
+    size_t len = getReadableSize();
+    std::string str;
+    if (len <= 0) {
+        return str;
+    }
+    str.resize(len);
+    read(&str[0], len);
+    return str;
+}
+
+std::string ByteArray::toString(size_t position) {
+    size_t len = m_size - position;
+    std::string str;
+    if (len <= 0) {
+        return str;
+    }
+    str.resize(len);
+    read(&str[0], len, position);
+    return str;
+}
+
 void ByteArray::write(const void *buf, size_t size) {
     if (size == 0) {
         return;
@@ -127,7 +235,7 @@ void ByteArray::write(const void *buf, size_t size) {
 
 void ByteArray::read(const void *buf, size_t size) {
     if (size > getReadableSize()) {
-        return;
+        throw std::out_of_range("ByteArray::read out of range");
     }
     size_t npos = m_position % m_baseSize;
     size_t ncap = m_cur->size - npos;
@@ -143,6 +251,31 @@ void ByteArray::read(const void *buf, size_t size) {
         } else {
             memcpy((char *)buf + bpos, m_cur->ptr + npos, ncap);
             m_position += ncap;
+            bpos += ncap;
+            size -= ncap;
+            m_cur = m_cur->next;
+            ncap = m_cur->size;
+            npos = 0;
+        }
+    }
+}
+
+void ByteArray::read(const void *buf, size_t size, size_t position) {
+    if (position < 0 || size > (m_size - position)) {
+        throw std::out_of_range("ByteArray::read(position) out of range");
+    }
+    size_t npos = position % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    size_t bpos = 0;
+    while (size > 0) {
+        if (size <= ncap) {
+            memcpy((char *)buf + bpos, m_cur->ptr + npos, size);
+            if (size == ncap) {
+                m_cur = m_cur->next;
+            }
+            size = 0;
+        } else {
+            memcpy((char *)buf + bpos, m_cur->ptr + npos, ncap);
             bpos += ncap;
             size -= ncap;
             m_cur = m_cur->next;

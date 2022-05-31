@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.23.1)
 project(lyon)
 
-option(BUILD_TEST "ON for complile test" ON)
+option(BUILD_TEST "ON for compile test" ON)
+option(BUILD_EXAMPLES "ON for compile examples" ON)
 
 include(cmake/utils.cmake)
 
@@ -10,6 +11,9 @@ set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -O3 -g -std=c++11 -Wall")
 
 find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIR})
+
+find_package(OpenSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIR})
 
 set(
   LIB_SRC
@@ -41,7 +45,10 @@ ragelmaker(lyon/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/h
 ragelmaker(lyon/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/http)
 
 add_library(lyon SHARED ${LIB_SRC})
-target_link_libraries(lyon PRIVATE yaml-cpp)
+target_link_libraries(
+  lyon PRIVATE yaml-cpp
+  ${OPENSSL_LIBRARIES}
+)
 
 set(
   LIBS
@@ -65,6 +72,10 @@ if(BUILD_TEST)
   lyon_add_executable(test_http_parser "tests/test_http_parser.cc" lyon "${LIBS}")
   lyon_add_executable(test_tcp_server "tests/test_tcp_server.cc" lyon "${LIBS}")
 
+endif()
+
+if(BUILD_EXAMPLES)
+  lyon_add_executable(example_echo_server "examples/example_echo_server.cc" lyon "${LIBS}")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
