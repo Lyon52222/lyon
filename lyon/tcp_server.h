@@ -19,7 +19,7 @@ public:
 
     ~TcpServer();
 
-    bool bindAndListen(const Address::ptr addr, bool ssl);
+    bool bindAndListen(const Address::ptr addr, bool ssl = 0);
 
     /**
      * @brief 尝试对addrs中的地址创建socket并绑定并开始监听
@@ -29,7 +29,7 @@ public:
      * @return 是否绑定成功
      */
     bool bindAndListen(const std::vector<Address::ptr> &addrs,
-                       std::vector<Address::ptr> &failed_addrs, bool ssl);
+                       std::vector<Address::ptr> &failed_addrs, bool ssl = 0);
 
     bool start();
     void stop();

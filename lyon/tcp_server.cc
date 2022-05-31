@@ -75,7 +75,7 @@ bool TcpServer::bindAndListen(const std::vector<Address::ptr> &addrs,
 
     for (auto &sock : m_sockets) {
         LYON_LOG_INFO(g_logger)
-            << "TcpServer:" << m_name << "start listen on" << (*sock);
+            << "TcpServer: " << m_name << " start listen on" << (*sock);
     }
 
     return true;

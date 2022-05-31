@@ -226,7 +226,6 @@ void Scheduler::run() {
             }
 
             m_idleThreadCount++;
-            // idle_fiber->mainFiberIn();
             idle_fiber->schedulerIn();
             m_idleThreadCount--;
         }

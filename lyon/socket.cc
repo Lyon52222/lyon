@@ -424,10 +424,10 @@ std::ostream &Socket::dump(std::ostream &os) const {
     os << "[m_socket = " << m_socket << ", type = " << m_type
        << ", protocol = " << m_protocol << " isConnect = " << m_isConnect;
     if (m_localAddress) {
-        os << ", localAddress = " << m_localAddress;
+        os << ", localAddress = " << m_localAddress->toString();
     }
     if (m_remoteAddress) {
-        os << ", remoteAddress = " << m_remoteAddress;
+        os << ", remoteAddress = " << m_remoteAddress->toString();
     }
     os << "]";
     return os;

@@ -152,6 +152,10 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
 
     //获取对应事件的事件描述上下文
     auto &event_ctx = fd_ctx->getEventContext(event);
+
+    LYON_LOG_INFO(g_logger)
+        << "addevent fd = " << fd << " event = " << (EPOLL_EVENTS)event;
+
     LYON_ASSERT(!event_ctx.cb && !event_ctx.fiber && !event_ctx.scheduler);
 
     event_ctx.scheduler = GetCurrentScheduler();
@@ -168,6 +172,8 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
 }
 
 bool IOManager::deleEvent(int fd, Event event) {
+    LYON_LOG_INFO(g_logger)
+        << "deleevent fd = " << fd << " event = " << (EPOLL_EVENTS)event;
     RWMutexType::RDLock rlock(m_mutex);
     FdContext *fd_ctx = nullptr;
     if (fd >= static_cast<int>(m_fdContexts.size())) {
@@ -210,6 +216,8 @@ bool IOManager::deleEvent(int fd, Event event) {
 }
 
 bool IOManager::triggerEvent(int fd, Event event) {
+    LYON_LOG_INFO(g_logger)
+        << "triggerevent fd = " << fd << " event = " << (EPOLL_EVENTS)event;
     RWMutexType::RDLock rlock(m_mutex);
     FdContext *fd_ctx = nullptr;
     if (fd >= static_cast<int>(m_fdContexts.size())) {
@@ -314,13 +322,13 @@ void IOManager::idle() {
     std::shared_ptr<epoll_event> sepevents(
         epevents, [](epoll_event *ptr) { delete[] ptr; });
 
-    int rt = 0;
     while (true) {
         uint64_t next_timeout = 0;
         if (stopping(next_timeout)) {
             LYON_LOG_INFO(g_logger) << "IOManager idle stop";
             break;
         }
+        int rt = 0;
         //当出现中断错误时，重试
         do {
             //设置超时时间为下次定时时间的到时时间
@@ -355,7 +363,7 @@ void IOManager::idle() {
             FdContext::MutexType::Lock lock(fd_ctx->mutex);
 
             if (epevent.events & (EPOLLERR | EPOLLHUP)) {
-                epevent.events |= EPOLLIN | EPOLLOUT;
+                epevent.events |= (EPOLLIN | EPOLLOUT) & fd_ctx->events;
             }
             int real_events = NONE;
             if (epevent.events & EPOLLIN) {
@@ -431,21 +439,21 @@ IOManager::FdContext::getEventContext(Event e) {
     throw std::invalid_argument("getEventContext: invalid event type");
 }
 void IOManager::FdContext::resetEventContext(EventContext &ctx) {
-    ctx.fiber = nullptr;
+    ctx.scheduler = nullptr;
     ctx.fiber.reset();
     ctx.cb = nullptr;
 }
 void IOManager::FdContext::triggerEvent(Event e) {
     LYON_ASSERT(events & e);
     EventContext &ctx = getEventContext(e);
+    events = static_cast<Event>(events & (~e));
+
     if (ctx.cb) {
         GetCurrentScheduler()->addJob(&ctx.cb);
     } else {
         GetCurrentScheduler()->addJob(&ctx.fiber);
     }
-    events = static_cast<Event>(events & (~e));
-
-    resetEventContext(getEventContext(e));
+    resetEventContext(ctx);
 }
 
 } // namespace lyon

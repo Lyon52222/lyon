@@ -32,6 +32,11 @@ void test() {
     LYON_LOG_INFO(g_logger) << ipv6_2->subnetMask(56)->toString();
 }
 
+void test_unixaddr() {
+    lyon::UnixAddress::ptr addr(new lyon::UnixAddress("/tmp/unix_addr"));
+    LYON_LOG_INFO(g_logger) << addr->toString();
+}
+
 void test_lookup() {
     std::vector<lyon::Address::ptr> results;
     int rt =
@@ -43,21 +48,10 @@ void test_lookup() {
     }
 }
 
-void test_getaddrinfo() {
-    addrinfo hint, *res, *next;
-    memset(&hint, 0, sizeof(hint));
-    hint.ai_family = AF_INET;
-    hint.ai_socktype = SOCK_STREAM;
-    if (getaddrinfo("www.baidu.com", "80", &hint, &res)) {
-        return;
-    }
-    next = res;
-    while (next) {
-        std::cout << "a" << std::endl;
-        next = next->ai_next;
-    }
-
-    freeaddrinfo(res);
+void test_lookupany() {
+    lyon::Address::ptr addr =
+        lyon::Address::LookUpAny("www.baidu.com:80", AF_INET, SOCK_STREAM);
+    std::cout << addr->toString() << std::endl;
 }
 
 void test_interface() {
@@ -74,12 +68,15 @@ int main(int argc, char *argv[]) {
     lyon::IOManager iom;
     // lyon::set_hook_enable(true);
     // test();
+    test_unixaddr();
     // test_lookup();
     // test_interface();
+    // test_lookupany();
 
     // test_getaddrinfo();
     // iom.addJob(test);
-    iom.addJob(test_lookup);
+    // iom.addJob(test_lookup);
+    // iom.addJob(test_lookupany);
     // iom.addJob(test_getaddrinfo);
     // iom.addJob(test_interface);
     // std::function<void()> cb = test_lookup;
