@@ -29,7 +29,7 @@ private:
     Timer(uint64_t next);
 
     struct Comparator {
-        bool operator()(const Timer::ptr &lhs, const Timer::ptr &rhs);
+        bool operator()(const Timer::ptr &lhs, const Timer::ptr &rhs) const;
     };
 
 private:

@@ -18,7 +18,7 @@ Timer::Timer(uint64_t ms, std::function<void()> cb, bool cycle,
 Timer::Timer(uint64_t next) : m_next(next) {}
 
 bool Timer::Comparator::operator()(const Timer::ptr &lhs,
-                                   const Timer::ptr &rhs) {
+                                   const Timer::ptr &rhs) const {
     if (!lhs)
         return true;
     if (!rhs)
