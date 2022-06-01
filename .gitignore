@@ -4,3 +4,4 @@ lib
 bin
 
 .clangd
+.clang-format
