@@ -1,6 +1,7 @@
-#include "http.h"
+#include "http_protocol.h"
 #include <cstdint>
 #include <sstream>
+#include <string.h>
 namespace lyon {
 namespace http {
 
@@ -22,7 +23,7 @@ const char *HttpMethod2String(HttpMethod method) {
     switch (method) {
 #define XX(num, name, string)                                                  \
     case HttpMethod::name:                                                     \
-        return #string;
+        return #string;                                                        \
         break;
         HTTP_METHOD_MAP(XX)
 #undef XX
@@ -32,11 +33,22 @@ const char *HttpMethod2String(HttpMethod method) {
 }
 
 HttpMethod String2HttpMethod(const char *str) {
-
+#define XX(num, name, string)                                                  \
+    if (strncmp(str, #string, strlen(#string)) == 0) {                         \
+        return HttpMethod::name;                                               \
+    }
+    HTTP_METHOD_MAP(XX)
+#undef XX
     return HttpMethod::HTTP_METHOD_INVALID;
 }
-HttpMethod String2HttpMethod(const std::string &str) {
 
+HttpMethod String2HttpMethod(const std::string &str) {
+#define XX(num, name, string)                                                  \
+    if (strncmp(str.c_str(), #string, strlen(#string)) == 0) {                 \
+        return HttpMethod::name;                                               \
+    }
+    HTTP_METHOD_MAP(XX)
+#undef XX
     return HttpMethod::HTTP_METHOD_INVALID;
 }
 

@@ -1,5 +1,4 @@
 #include "http_parser.h"
-#include "http.h"
 #include "http11_parser.h"
 #include "httpclient_parser.h"
 #include "lyon/config.h"
@@ -35,7 +34,6 @@ static uint64_t s_http_response_max_body_size = 0;
 
 //匿名内部类可以防止外部使用
 namespace {
-
 struct _HttpSizeIniter {
     _HttpSizeIniter() {
         s_http_request_buffer_size = g_http_request_buffer_size->getVal();
@@ -63,10 +61,27 @@ struct _HttpSizeIniter {
                 s_http_response_max_body_size = nv;
             });
     }
-    static _HttpSizeIniter httpsizeiniter;
 };
 
+static _HttpSizeIniter _s_http_size_initer;
+
 } // namespace
+
+uint64_t HttpRequestParser::GetBufferSize() {
+    return s_http_request_buffer_size;
+}
+
+uint64_t HttpRequestParser::GetMaxBodySize() {
+    return s_http_request_max_body_size;
+}
+
+uint64_t HttpResponseParser::GetBufferSize() {
+    return s_http_response_buffer_size;
+}
+
+uint64_t HttpResponseParser::GetMaxBodySize() {
+    return s_http_response_max_body_size;
+}
 
 void on_request_http_field(void *data, const char *field, size_t flen,
                            const char *value, size_t vlen) {
@@ -84,10 +99,9 @@ void on_request_http_field(void *data, const char *field, size_t flen,
 void on_request_method(void *data, const char *at, size_t length) {
     HttpMethod method = String2HttpMethod(at);
     if (method == HttpMethod::HTTP_METHOD_INVALID) {
-        LYON_LOG_ERROR(g_logger) << "HttpRequestParser-on_request_method error "
-                                    ": Invalid method, method = "
-                                 << at;
-        return;
+        LYON_LOG_INFO(g_logger) << "HttpRequestParser-on_request_method error "
+                                   ": Invalid method, method = "
+                                << at;
     }
     HttpRequestParser *request_parser = static_cast<HttpRequestParser *>(data);
     request_parser->getData()->setMethod(method);
@@ -143,14 +157,17 @@ HttpRequestParser::HttpRequestParser() {
 
 int HttpRequestParser::finish() { return http_parser_finish(&m_parser); }
 
-size_t HttpRequestParser::excute(const char *data, size_t len) {
-    return http_parser_execute(&m_parser, data, len, 0);
+size_t HttpRequestParser::excute(const char *data, size_t len, size_t offset) {
+    return http_parser_execute(&m_parser, data, len, offset);
 }
 
 int HttpRequestParser::hasError() { return http_parser_has_error(&m_parser); }
 
-int HttpRequestParser::isFInish() { return http_parser_is_finished(&m_parser); }
+int HttpRequestParser::isFinish() { return http_parser_is_finished(&m_parser); }
 
+uint64_t HttpRequestParser::getContentLength() const {
+    return m_data->getHeaderAs<uint64_t>("Content-Length", 0);
+}
 void on_response_http_field(void *data, const char *field, size_t flen,
                             const char *value, size_t vlen) {
     if (flen == 0) {
@@ -211,8 +228,8 @@ HttpResponseParser::HttpResponseParser() {
 
 int HttpResponseParser::finish() { return httpclient_parser_finish(&m_parser); }
 
-int HttpResponseParser::excute(const char *data, size_t len) {
-    return httpclient_parser_execute(&m_parser, data, len, 0);
+int HttpResponseParser::excute(const char *data, size_t len, size_t offset) {
+    return httpclient_parser_execute(&m_parser, data, len, offset);
 }
 
 int HttpResponseParser::hasError() {
@@ -223,5 +240,8 @@ int HttpResponseParser::isFinish() {
     return httpclient_parser_is_finished(&m_parser);
 }
 
+uint64_t HttpResponseParser::getContentLength() const {
+    return getData()->getHeaderAs<uint64_t>("content-length", 0);
+}
 } // namespace http
 } // namespace lyon

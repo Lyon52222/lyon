@@ -26,7 +26,7 @@ struct _TcpServerIniter {
     }
 };
 
-static _TcpServerIniter tcp_server_initer;
+static _TcpServerIniter _tcp_server_initer;
 
 } // namespace
 

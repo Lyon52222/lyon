@@ -15,11 +15,15 @@ public:
 
     virtual int read(ByteArray::ptr bytearray, size_t size) override;
 
-    virtual int write(void *buffer, size_t size) override;
+    virtual int write(const void *buffer, size_t size) override;
 
     virtual int write(ByteArray::ptr bytearray, size_t size) override;
 
     bool isConnected() const { return m_socket && m_socket->isConnected(); };
+
+    void close();
+
+    ~SocketStream();
 
 private:
     Socket::ptr m_socket;

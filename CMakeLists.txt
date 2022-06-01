@@ -7,7 +7,7 @@ option(BUILD_EXAMPLES "ON for compile examples" ON)
 include(cmake/utils.cmake)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -O3 -g -std=c++20 -Wall")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -O3 -g -std=c++11 -Wall")
 
 find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIR})
@@ -33,9 +33,13 @@ set(
   lyon/ssl_socket.cc
   lyon/tcp_server.cc
   lyon/bytearray.cc
+  lyon/stream.cc
+  lyon/streams/socket_stream.cc
   lyon/utils/file_system_util.cc
-  lyon/http/http.cc
+  lyon/http/http_protocol.cc
   lyon/http/http_parser.cc
+  lyon/http/http_session.cc
+  lyon/http/http_server.cc
 )
 
 # 使用ragel解析src_rl文件并且将解析文件保存到outputdir下。
@@ -71,6 +75,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_http "tests/test_http.cc" lyon "${LIBS}")
   lyon_add_executable(test_http_parser "tests/test_http_parser.cc" lyon "${LIBS}")
   lyon_add_executable(test_tcp_server "tests/test_tcp_server.cc" lyon "${LIBS}")
+  lyon_add_executable(test_http_server "tests/test_http_server.cc" lyon "${LIBS}")
 
 endif()
 

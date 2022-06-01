@@ -27,9 +27,21 @@ public:
      * @param lenght 数据长度
      * @return 写入的子节数
      */
-    virtual int write(void *buffer, size_t size) = 0;
+    virtual int write(const void *buffer, size_t size) = 0;
 
     virtual int write(ByteArray::ptr bytearray, size_t size) = 0;
+
+    //因为，read
+    // write可能无法保证能够一次写完或读取所有内容。所以，创建FixSize来保证
+
+    int readFixSize(void *buffer, size_t size);
+    int readFixSize(ByteArray::ptr bytearray, size_t size);
+
+    int writeFixSize(const void *buffer, size_t size);
+    int writeFixSize(ByteArray::ptr bytearray, size_t size);
+
+    void close();
+    virtual ~Stream() = default;
 };
 
 } // namespace lyon

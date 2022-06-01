@@ -17,9 +17,9 @@ public:
               IOManager *ioworker = IOManager::GetCurrentIOManager(),
               IOManager *acceptWorker = IOManager::GetCurrentIOManager());
 
-    ~TcpServer();
+    virtual ~TcpServer();
 
-    bool bindAndListen(const Address::ptr addr, bool ssl = 0);
+    virtual bool bindAndListen(const Address::ptr addr, bool ssl = 0);
 
     /**
      * @brief 尝试对addrs中的地址创建socket并绑定并开始监听
@@ -28,11 +28,12 @@ public:
      * @param failed_addrs 绑定失败的地址
      * @return 是否绑定成功
      */
-    bool bindAndListen(const std::vector<Address::ptr> &addrs,
-                       std::vector<Address::ptr> &failed_addrs, bool ssl = 0);
+    virtual bool bindAndListen(const std::vector<Address::ptr> &addrs,
+                               std::vector<Address::ptr> &failed_addrs,
+                               bool ssl = 0);
 
-    bool start();
-    void stop();
+    virtual bool start();
+    virtual void stop();
 
     virtual void handleClient(Socket::ptr sock);
 

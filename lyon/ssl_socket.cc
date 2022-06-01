@@ -22,7 +22,7 @@ struct _SSLIniter {
 #endif
     }
 };
-static _SSLIniter ssliniter;
+static _SSLIniter _s_ssl_initer;
 } // namespace
 
 SSLSocket::SSLSocket(int type, int family, int protocol)

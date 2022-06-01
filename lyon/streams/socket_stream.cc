@@ -20,7 +20,7 @@ int SocketStream::read(ByteArray::ptr bytearray, size_t size) {
     return rt;
 }
 
-int SocketStream::write(void *buffer, size_t size) {
+int SocketStream::write(const void *buffer, size_t size) {
     if (isConnected()) {
         return m_socket->send(buffer, size);
     }
@@ -38,6 +38,16 @@ int SocketStream::write(ByteArray::ptr bytearray, size_t size) {
         bytearray->setPosition(bytearray->getPosition() + rt);
     }
     return rt;
+}
+
+void SocketStream::close() {
+    if (m_socket)
+        m_socket->close();
+}
+
+SocketStream::~SocketStream() {
+    if (m_socket)
+        m_socket->close();
 }
 
 } // namespace lyon

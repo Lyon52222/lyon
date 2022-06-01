@@ -61,7 +61,7 @@ struct _HookIniter {
     }
 };
 
-static _HookIniter s_hook_initer;
+static _HookIniter _s_hook_initer;
 } // namespace
 bool is_hook_enable() { return s_hook_enable; }
 
