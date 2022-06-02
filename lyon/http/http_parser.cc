@@ -1,6 +1,4 @@
 #include "http_parser.h"
-#include "http11_parser.h"
-#include "httpclient_parser.h"
 #include "lyon/config.h"
 #include "lyon/log.h"
 #include <cstdint>
@@ -143,7 +141,7 @@ void on_request_header_done(void *data, const char *at, size_t length) {}
 
 HttpRequestParser::HttpRequestParser() {
     m_data.reset(new HttpRequest());
-    http_parser_init(&m_parser);
+    http_request_parser_init(&m_parser);
     m_parser.http_field = on_request_http_field;
     m_parser.request_method = on_request_method;
     m_parser.request_uri = on_request_uri;
@@ -155,15 +153,21 @@ HttpRequestParser::HttpRequestParser() {
     m_parser.data = this;
 }
 
-int HttpRequestParser::finish() { return http_parser_finish(&m_parser); }
-
-size_t HttpRequestParser::excute(const char *data, size_t len, size_t offset) {
-    return http_parser_execute(&m_parser, data, len, offset);
+int HttpRequestParser::finish() {
+    return http_request_parser_finish(&m_parser);
 }
 
-int HttpRequestParser::hasError() { return http_parser_has_error(&m_parser); }
+size_t HttpRequestParser::excute(const char *data, size_t len, size_t offset) {
+    return http_request_parser_execute(&m_parser, data, len, offset);
+}
 
-int HttpRequestParser::isFinish() { return http_parser_is_finished(&m_parser); }
+int HttpRequestParser::hasError() {
+    return http_request_parser_has_error(&m_parser);
+}
+
+int HttpRequestParser::isFinish() {
+    return http_request_parser_is_finished(&m_parser);
+}
 
 uint64_t HttpRequestParser::getContentLength() const {
     return m_data->getHeaderAs<uint64_t>("Content-Length", 0);
@@ -215,7 +219,7 @@ void on_request_last_chunk(void *data, const char *at, size_t length) {}
 
 HttpResponseParser::HttpResponseParser() {
     m_data.reset(new HttpResponse());
-    httpclient_parser_init(&m_parser);
+    http_response_parser_init(&m_parser);
     m_parser.http_field = on_response_http_field;
     m_parser.reason_phrase = on_response_reason_phrase;
     m_parser.status_code = on_response_status_code;
@@ -226,18 +230,20 @@ HttpResponseParser::HttpResponseParser() {
     m_parser.data = this;
 }
 
-int HttpResponseParser::finish() { return httpclient_parser_finish(&m_parser); }
+int HttpResponseParser::finish() {
+    return http_response_parser_finish(&m_parser);
+}
 
 int HttpResponseParser::excute(const char *data, size_t len, size_t offset) {
-    return httpclient_parser_execute(&m_parser, data, len, offset);
+    return http_response_parser_execute(&m_parser, data, len, offset);
 }
 
 int HttpResponseParser::hasError() {
-    return httpclient_parser_has_error(&m_parser);
+    return http_response_parser_has_error(&m_parser);
 }
 
 int HttpResponseParser::isFinish() {
-    return httpclient_parser_is_finished(&m_parser);
+    return http_response_parser_is_finished(&m_parser);
 }
 
 uint64_t HttpResponseParser::getContentLength() const {

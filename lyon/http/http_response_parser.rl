@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "httpclient_parser.h"
+#include "http_response_parser.h"
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -50,7 +50,7 @@
 
 /** machine **/
 %%{
-    machine httpclient_parser;
+    machine http_response_parser;
 
     action mark {MARK(mark, fpc); }
 
@@ -160,7 +160,7 @@ main := (Response | Chunked_Header) @done;
 /** Data **/
 %% write data;
 
-int httpclient_parser_init(httpclient_parser *parser)  {
+int http_response_parser_init(http_response_parser *parser)  {
     int cs = 0;
 
     %% write init;
@@ -181,7 +181,7 @@ int httpclient_parser_init(httpclient_parser *parser)  {
 
 
 /** exec **/
-size_t httpclient_parser_execute(httpclient_parser *parser, const char *buffer, size_t len, size_t off)  
+size_t http_response_parser_execute(http_response_parser *parser, const char *buffer, size_t len, size_t off)  
 {
     const char *p, *pe;
     int cs = parser->cs;
@@ -218,25 +218,25 @@ error:
     return -1;
 }
 
-int httpclient_parser_finish(httpclient_parser *parser)
+int http_response_parser_finish(http_response_parser *parser)
 {
     int cs = parser->cs;
 
     parser->cs = cs;
 
-    if (httpclient_parser_has_error(parser) ) {
+    if (http_response_parser_has_error(parser) ) {
         return -1;
-    } else if (httpclient_parser_is_finished(parser) ) {
+    } else if (http_response_parser_is_finished(parser) ) {
         return 1;
     } else {
         return 0;
     }
 }
 
-int httpclient_parser_has_error(httpclient_parser *parser) {
-    return parser->cs == httpclient_parser_error;
+int http_response_parser_has_error(http_response_parser *parser) {
+    return parser->cs == http_response_parser_error;
 }
 
-int httpclient_parser_is_finished(httpclient_parser *parser) {
-    return parser->cs == httpclient_parser_first_final;
+int http_response_parser_is_finished(http_response_parser *parser) {
+    return parser->cs == http_response_parser_first_final;
 }

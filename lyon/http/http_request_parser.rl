@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http11_parser.h"
+#include "http_request_parser.h"
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -51,7 +51,7 @@
 
 %%{
   
-  machine http_parser;
+  machine http_request_parser;
 
   action mark {MARK(mark, fpc); }
 
@@ -260,7 +260,7 @@ main := (Request | SocketRequest) @done;
 /** Data **/
 %% write data;
 
-int http_parser_init(http_parser *parser) {
+int http_request_parser_init(http_request_parser *parser) {
   int cs = 0;
   %% write init;
   parser->cs = cs;
@@ -278,7 +278,7 @@ int http_parser_init(http_parser *parser) {
 
 
 /** exec **/
-size_t http_parser_execute(http_parser *parser, const char *buffer, size_t len, size_t off)  
+size_t http_request_parser_execute(http_request_parser *parser, const char *buffer, size_t len, size_t off)  
 {
   if(len == 0) return 0;
 
@@ -296,7 +296,7 @@ size_t http_parser_execute(http_parser *parser, const char *buffer, size_t len, 
 
   assert(p <= pe && "Buffer overflow after parsing.");
 
-  if (!http_parser_has_error(parser)) {
+  if (!http_request_parser_has_error(parser)) {
       parser->cs = cs;
   }
 
@@ -311,21 +311,21 @@ size_t http_parser_execute(http_parser *parser, const char *buffer, size_t len, 
   return(parser->nread);
 }
 
-int http_parser_finish(http_parser *parser)
+int http_request_parser_finish(http_request_parser *parser)
 {
-  if (http_parser_has_error(parser) ) {
+  if (http_request_parser_has_error(parser) ) {
     return -1;
-  } else if (http_parser_is_finished(parser) ) {
+  } else if (http_request_parser_is_finished(parser) ) {
     return 1;
   } else {
     return 0;
   }
 }
 
-int http_parser_has_error(http_parser *parser) {
-  return parser->cs == http_parser_error;
+int http_request_parser_has_error(http_request_parser *parser) {
+  return parser->cs == http_request_parser_error;
 }
 
-int http_parser_is_finished(http_parser *parser) {
-  return parser->cs >= http_parser_first_final;
+int http_request_parser_is_finished(http_request_parser *parser) {
+  return parser->cs >= http_request_parser_first_final;
 }

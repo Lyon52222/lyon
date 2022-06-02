@@ -1,5 +1,5 @@
-#ifndef _http11_common_h
-#define _http11_common_h
+#ifndef _http_common_h
+#define _http_common_h
 
 #include <sys/types.h>
 

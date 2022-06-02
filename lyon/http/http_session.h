@@ -2,7 +2,6 @@
 #define __LYON_HTTP_HTTP_SESSION_H__
 
 #include "http_protocol.h"
-#include "lyon/http/http_parser.h"
 #include "lyon/socket.h"
 #include "lyon/streams/socket_stream.h"
 #include <memory>

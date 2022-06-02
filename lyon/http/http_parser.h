@@ -1,10 +1,10 @@
 #ifndef __LYON_HTTP_HTTP_PARSER_H__
 #define __LYON_HTTP_HTTP_PARSER_H__
 
-#include "http11_common.h"
-#include "http11_parser.h"
+#include "http_common.h"
 #include "http_protocol.h"
-#include "httpclient_parser.h"
+#include "http_request_parser.h"
+#include "http_response_parser.h"
 #include <cstdint>
 #include <memory>
 namespace lyon {
@@ -27,7 +27,7 @@ public:
 
 private:
     HttpRequest::ptr m_data;
-    http_parser m_parser;
+    http_request_parser m_parser;
 };
 
 class HttpResponseParser {
@@ -47,7 +47,7 @@ public:
 
 private:
     HttpResponse::ptr m_data;
-    httpclient_parser m_parser;
+    http_response_parser m_parser;
 };
 
 } // namespace http

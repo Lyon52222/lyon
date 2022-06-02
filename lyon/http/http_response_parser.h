@@ -32,12 +32,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef httpclient_parser_h
-#define httpclient_parser_h
+#ifndef http_response_parser_h
+#define http_response_parser_h
 
-#include "http11_common.h"
+#include "http_common.h"
 
-typedef struct httpclient_parser {
+typedef struct http_response_parser {
     int cs;
     size_t body_start;
     int content_len;
@@ -60,15 +60,15 @@ typedef struct httpclient_parser {
     element_cb header_done;
     element_cb last_chunk;
 
-} httpclient_parser;
+} http_response_parser;
 
-int httpclient_parser_init(httpclient_parser *parser);
-int httpclient_parser_finish(httpclient_parser *parser);
-size_t httpclient_parser_execute(httpclient_parser *parser, const char *data,
-                                 size_t len, size_t off);
-int httpclient_parser_has_error(httpclient_parser *parser);
-int httpclient_parser_is_finished(httpclient_parser *parser);
+int http_response_parser_init(http_response_parser *parser);
+int http_response_parser_finish(http_response_parser *parser);
+size_t http_response_parser_execute(http_response_parser *parser,
+                                    const char *data, size_t len, size_t off);
+int http_response_parser_has_error(http_response_parser *parser);
+int http_response_parser_is_finished(http_response_parser *parser);
 
-#define httpclient_parser_nread(parser) (parser)->nread
+#define http_response_parser_nread(parser) (parser)->nread
 
 #endif
