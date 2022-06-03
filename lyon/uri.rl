@@ -120,7 +120,7 @@ port >markh %save_port)? ) >markh;
 
     URI = scheme ":" hier_part("?" query) ? ("#" fragment) ? ;
     URI_reference = URI | relative_ref;
-main := URI_reference;
+    main := URI_reference;
     write data;
 }%%
 
@@ -183,5 +183,14 @@ std::string Uri::toString() const {
     std::stringstream ss;
     dump(ss);
     return ss.str();
+}
+
+
+Address::ptr Uri::createIPAddress() const{
+    auto addr = Address::LookUpAnyIpAddress(getHost());
+    if (addr) {
+        addr->setPort(getPort());
+    }
+    return addr;
 }
 } // namespace lyon

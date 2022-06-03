@@ -119,7 +119,10 @@ public:
                            size_t length, int flags = 0);
 
     virtual std::ostream &dump(std::ostream &os) const;
+
     virtual ~Socket();
+
+    std::string toString() const;
 
     int getSocket() const { return m_socket; }
     int getType() const { return m_type; }

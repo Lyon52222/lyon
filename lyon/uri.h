@@ -1,6 +1,7 @@
 #ifndef __LYON_URI_H__
 #define __LYON_URI_H__
 
+#include "address.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -39,6 +40,8 @@ public:
 
     std::ostream &dump(std::ostream &os) const;
     std::string toString() const;
+
+    Address::ptr createIPAddress() const;
 
 private:
     std::string m_scheme;
