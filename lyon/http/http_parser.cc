@@ -193,7 +193,9 @@ void on_response_reason_phrase(void *data, const char *at, size_t length) {
 }
 void on_response_status_code(void *data, const char *at, size_t length) {}
 
-void on_response_chunk_size(void *data, const char *at, size_t length) {}
+void on_response_chunk_size(void *data, const char *at, size_t length) {
+    LYON_LOG_DEBUG(g_logger) << "Chunk Size" << std::string(at, length);
+}
 
 void on_response_http_version(void *data, const char *at, size_t length) {
     uint8_t v = 0;
@@ -251,5 +253,9 @@ uint64_t HttpResponseParser::getContentLength() const {
 }
 
 int HttpResponseParser::isChunked() const { return m_parser.chunked; }
+
+int HttpResponseParser::getChunkSize() const { return m_parser.content_len; }
+
+int HttpResponseParser::isChunksDone() const { return m_parser.chunks_done; }
 } // namespace http
 } // namespace lyon

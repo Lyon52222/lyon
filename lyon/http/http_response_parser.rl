@@ -183,6 +183,11 @@ int http_response_parser_init(http_response_parser *parser)  {
 /** exec **/
 size_t http_response_parser_execute(http_response_parser *parser, const char *buffer, size_t len, size_t off)  
 {
+    parser->nread = 0;
+    parser->mark = 0;
+    parser->field_len = 0;
+    parser->field_start = 0;
+
     const char *p, *pe;
     int cs = parser->cs;
 

@@ -113,43 +113,43 @@ public:
     virtual int32_t handle(HttpRequest::ptr request, HttpResponse::ptr response,
                            HttpSession::ptr session) override;
 
-    void addAccurateServlet(const std::string &url,
+    void addAccurateServlet(const std::string &uri,
                             FunctionalServlet::callback cb);
 
-    void addAccurateServlet(const std::string &url, Servlet::ptr servlet);
+    void addAccurateServlet(const std::string &uri, Servlet::ptr servlet);
 
-    void addAccurateServlet(const std::string &url,
+    void addAccurateServlet(const std::string &uri,
                             IServletCreator::ptr servlet_creator);
 
-    bool deleAccurateServlet(const std::string &url);
+    bool deleAccurateServlet(const std::string &uri);
 
-    void addFuzzyServlet(const std::string &url, Servlet::ptr servlet);
+    void addFuzzyServlet(const std::string &uri, Servlet::ptr servlet);
 
-    void addFuzzyServlet(const std::string &url,
+    void addFuzzyServlet(const std::string &uri,
                          IServletCreator::ptr servlet_creator);
 
-    bool deleFuzzyServlet(const std::string &url);
+    bool deleFuzzyServlet(const std::string &uri);
 
     /**
      * @brief 获取精确匹配的Servlet
      *
-     * @param url 需要精确匹配的url
+     * @param uri 需要精确匹配的uri
      */
-    Servlet::ptr getAccurateServlet(const std::string &url);
+    Servlet::ptr getAccurateServlet(const std::string &uri);
 
     /**
      * @brief 获取模糊匹配的Servlet
      *
-     * @param url 需要模糊匹配的url
+     * @param uri 需要模糊匹配的uri
      */
-    Servlet::ptr getFuzzyServlet(const std::string &url);
+    Servlet::ptr getFuzzyServlet(const std::string &uri);
 
     /**
      * @brief 获取Servlet 优先精确匹配，其次模糊匹配
      *
-     * @param url 需要匹配的url
+     * @param uri 需要匹配的uri
      */
-    Servlet::ptr getServlet(const std::string &url);
+    Servlet::ptr getServlet(const std::string &uri);
 
     void setDefaultServlet(Servlet::ptr servlet) { m_defaultServlet = servlet; }
 

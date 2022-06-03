@@ -49,6 +49,8 @@ public:
     uint64_t getContentLength() const;
 
     int isChunked() const;
+    int getChunkSize() const;
+    int isChunksDone() const;
 
     static uint64_t GetBufferSize();
     static uint64_t GetMaxBodySize();

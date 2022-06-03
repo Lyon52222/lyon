@@ -48,6 +48,7 @@ set(
 # function(ragelmaker src_rl outputlist outputdir)
 ragelmaker(lyon/http/http_request_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/http)
 ragelmaker(lyon/http/http_response_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon/http)
+ragelmaker(lyon/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/lyon)
 
 add_library(lyon SHARED ${LIB_SRC})
 target_link_libraries(
@@ -71,6 +72,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_iomanager "tests/test_iomanager.cc" lyon "${LIBS}")
   lyon_add_executable(test_hook "tests/test_hook.cc" lyon "${LIBS}")
   lyon_add_executable(test_address "tests/test_address.cc" lyon "${LIBS}")
+  lyon_add_executable(test_uri "tests/test_uri.cc" lyon "${LIBS}")
   lyon_add_executable(test_socket "tests/test_socket.cc" lyon "${LIBS}")
   lyon_add_executable(test_bytearray "tests/test_bytearray.cc" lyon "${LIBS}")
   lyon_add_executable(test_http "tests/test_http.cc" lyon "${LIBS}")
