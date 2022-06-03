@@ -5,6 +5,10 @@
 
 namespace lyon {
 
+/**
+ * @brief Socket流的封装类
+ * 封装了从socket中读取和写入数据的操作
+ */
 class SocketStream : public Stream {
 public:
     typedef std::shared_ptr<SocketStream> ptr;

@@ -215,7 +215,7 @@ void on_response_http_version(void *data, const char *at, size_t length) {
 
 void on_response_header_done(void *data, const char *at, size_t length) {}
 
-void on_request_last_chunk(void *data, const char *at, size_t length) {}
+void on_response_last_chunk(void *data, const char *at, size_t length) {}
 
 HttpResponseParser::HttpResponseParser() {
     m_data.reset(new HttpResponse());
@@ -226,7 +226,7 @@ HttpResponseParser::HttpResponseParser() {
     m_parser.chunk_size = on_response_chunk_size;
     m_parser.http_version = on_response_http_version;
     m_parser.header_done = on_response_header_done;
-    m_parser.last_chunk = on_request_last_chunk;
+    m_parser.last_chunk = on_response_last_chunk;
     m_parser.data = this;
 }
 
@@ -249,5 +249,7 @@ int HttpResponseParser::isFinish() {
 uint64_t HttpResponseParser::getContentLength() const {
     return getData()->getHeaderAs<uint64_t>("content-length", 0);
 }
+
+int HttpResponseParser::isChunked() const { return m_parser.chunked; }
 } // namespace http
 } // namespace lyon

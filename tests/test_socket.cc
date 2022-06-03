@@ -7,7 +7,6 @@
 
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
-// BUG: 在iomanager的任务函数中使用，或递归使用了 getsockopt 等时会发生段错误
 void test_socket() {
     // LYON_LOG_INFO(g_logger) << "test";
 

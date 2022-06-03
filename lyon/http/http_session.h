@@ -8,6 +8,11 @@
 namespace lyon {
 namespace http {
 
+/**
+ * @brief 在SocketStream上进一步封装的Http会话类
+ * 负责使用HttpParser将接收到的数据解析为其对应的解析类
+ * 和将解析类转化为流数据输出
+ */
 class HttpSession : public SocketStream {
 public:
     typedef std::shared_ptr<HttpSession> ptr;

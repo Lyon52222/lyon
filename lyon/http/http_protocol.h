@@ -155,6 +155,9 @@ T getAs(const MapType &m, const std::string &key, const T &def = T()) {
     return def;
 }
 
+/**
+ * @brief 请求协议对应的解析类
+ */
 class HttpRequest {
 public:
     typedef std::shared_ptr<HttpRequest> ptr;
@@ -297,6 +300,9 @@ private:
 
 std::ostream &operator<<(std::ostream &os, const HttpRequest &request);
 
+/**
+ * @brief 响应协议对应的解析类
+ */
 class HttpResponse {
 public:
     typedef std::shared_ptr<HttpResponse> ptr;

@@ -23,7 +23,7 @@ void HttpServer::handleClient(Socket::ptr sock) {
         HttpResponse::ptr response(new HttpResponse(
             request->getVersion(), (!m_connection || !session->isConnected())));
 
-        // TODO: 处理request
+        m_servlet->handle(request, response, session);
 
         session->sendResponse(response);
 

@@ -40,6 +40,7 @@ set(
   lyon/http/http_parser.cc
   lyon/http/http_session.cc
   lyon/http/http_server.cc
+  lyon/http/http_servlet.cc
 )
 
 # 使用ragel解析src_rl文件并且将解析文件保存到outputdir下。

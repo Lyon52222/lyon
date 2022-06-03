@@ -8,6 +8,9 @@
 #include <memory>
 
 namespace lyon {
+/**
+ * @brief 负责Socket的统一管理（绑定并开始监听，并且处理Accept等等。
+ */
 class TcpServer : public std::enable_shared_from_this<TcpServer>,
                   public boost::noncopyable {
 public:

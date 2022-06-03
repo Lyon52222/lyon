@@ -10,6 +10,9 @@
 namespace lyon {
 namespace http {
 
+/**
+ * @brief 请求协议的解析类，负责将请求报文解析成其对应的解析类
+ */
 class HttpRequestParser {
 public:
     typedef std::shared_ptr<HttpRequestParser> ptr;
@@ -30,6 +33,9 @@ private:
     http_request_parser m_parser;
 };
 
+/**
+ * @brief 响应协议的解析类，负责将响应报文解析成其对应的解析类
+ */
 class HttpResponseParser {
 public:
     typedef std::shared_ptr<HttpResponseParser> ptr;
@@ -41,6 +47,8 @@ public:
     int isFinish();
     HttpResponse::ptr getData() const { return m_data; }
     uint64_t getContentLength() const;
+
+    int isChunked() const;
 
     static uint64_t GetBufferSize();
     static uint64_t GetMaxBodySize();

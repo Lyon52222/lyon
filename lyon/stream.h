@@ -5,6 +5,9 @@
 #include <memory>
 namespace lyon {
 
+/**
+ * @brief 数据流的虚基类，封装了读写操作
+ */
 class Stream {
 public:
     typedef std::shared_ptr<Stream> ptr;
