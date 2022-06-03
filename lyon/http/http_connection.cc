@@ -1,8 +1,8 @@
 #include "http_connection.h"
+#include "http_parser.h"
+#include "http_protocol.h"
+#include "lyon/log.h"
 #include <cstdint>
-#include <http_parser.h>
-#include <http_protocol.h>
-#include <lyon/log.h>
 #include <memory>
 #include <sstream>
 namespace lyon {
@@ -158,15 +158,23 @@ HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr request,
             "create socket error" + addr->toString());
     }
 
+    //连接到server
+    if (!sock->connect(addr)) {
+        return std::make_shared<HttpResult>(HttpResult::Error::CONNECT_FAIL,
+                                            nullptr,
+                                            "connect fail" + sock->toString());
+    }
+    //设置sock接收超时时间
+    sock->setRecvTimeout(timeout_ms);
+
     //通过socket连接封装connection
     HttpConnection::ptr conn = std::make_shared<HttpConnection>(sock);
+
     if (!conn) {
         return std::make_shared<HttpResult>(HttpResult::Error::CONNECT_FAIL,
                                             nullptr,
                                             "connect fail" + sock->toString());
     }
-
-    sock->setRecvTimeout(timeout_ms);
 
     //向connection发送请求
     int rt = conn->sendRequest(request);
@@ -238,10 +246,12 @@ HttpConnectionPool::Create(const std::string &host, const std::string &vhost,
                                                 maxLiveTime, maxRequest);
 }
 
-HttpConnection::ptr HttpConnectionPool::getConnection() {}
+HttpConnection::ptr HttpConnectionPool::getConnection() { return nullptr; }
 
 HttpResult::ptr HttpConnectionPool::doRequest(HttpRequest::ptr request,
-                                              uint64_t timeout_ms) {}
+                                              uint64_t timeout_ms) {
+    return nullptr;
+}
 
 } // namespace http
 } // namespace lyon

@@ -1,5 +1,6 @@
 #include "lyon/socket.h"
 #include "lyon/ssl_socket.h"
+#include <asm-generic/socket.h>
 #include <lyon/address.h>
 #include <lyon/iomanager.h>
 #include <lyon/log.h>
@@ -19,6 +20,8 @@ void test_socket() {
     lyon::Socket::ptr sock = lyon::Socket::CreateTCPSocket();
 
     sock->connect(bd);
+
+    sock->setRecvTimeout(3000);
 
     const char buffer[] = "GET / HTTP/1.0\r\n\r\n";
 
@@ -58,9 +61,9 @@ void test_sslsocket() {
 }
 
 int main(int argc, char *argv[]) {
-    lyon::IOManager iom;
+    // lyon::IOManager iom;
     // iom.addJob(test_socket);
-    test_sslsocket();
-    // test_socket();
+    // test_sslsocket();
+    test_socket();
     return 0;
 }

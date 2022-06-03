@@ -41,6 +41,7 @@ set(
   lyon/http/http_session.cc
   lyon/http/http_server.cc
   lyon/http/http_servlet.cc
+  lyon/http/http_connection.cc
 )
 
 # 使用ragel解析src_rl文件并且将解析文件保存到outputdir下。
@@ -79,6 +80,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_http_parser "tests/test_http_parser.cc" lyon "${LIBS}")
   lyon_add_executable(test_tcp_server "tests/test_tcp_server.cc" lyon "${LIBS}")
   lyon_add_executable(test_http_server "tests/test_http_server.cc" lyon "${LIBS}")
+  lyon_add_executable(test_http_connection "tests/test_http_connection.cc" lyon "${LIBS}")
 
 endif()
 
