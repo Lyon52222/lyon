@@ -62,11 +62,12 @@ HttpRequest::ptr HttpSession::recvRequest() {
             readed = content_length;
         }
         content_length -= readed;
-        if (readFixSize(&body[readed], content_length) <= 0) {
-            close();
-            return nullptr;
+        if (content_length > 0) {
+            if (readFixSize(&body[readed], content_length) <= 0) {
+                close();
+                return nullptr;
+            }
         }
-
         request_parser->getData()->setBody(body);
     }
     return request_parser->getData();

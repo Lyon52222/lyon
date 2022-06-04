@@ -42,7 +42,7 @@ public:
     HttpResponseParser();
 
     int finish();
-    int excute(const char *data, size_t len, size_t offset);
+    int excute(const char *data, size_t len, size_t offset, bool chunk = false);
     int hasError();
     int isFinish();
     HttpResponse::ptr getData() const { return m_data; }

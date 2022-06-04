@@ -236,7 +236,11 @@ int HttpResponseParser::finish() {
     return http_response_parser_finish(&m_parser);
 }
 
-int HttpResponseParser::excute(const char *data, size_t len, size_t offset) {
+int HttpResponseParser::excute(const char *data, size_t len, size_t offset,
+                               bool chunk) {
+    if (chunk) {
+        http_response_parser_init(&m_parser);
+    }
     return http_response_parser_execute(&m_parser, data, len, offset);
 }
 

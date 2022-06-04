@@ -36,8 +36,8 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         // offset); offset += excuted;
 
         readed += offset;
-        // buf[readed] = '\0';
-        size_t excuted = response_parser->excute(buf, readed + offset, 0);
+        buf[readed] = '\0';
+        size_t excuted = response_parser->excute(buf, readed, 0);
         // 丢弃已解析数据
         memmove(buf, buf + excuted, readed - excuted);
         offset = readed - excuted;
@@ -69,13 +69,17 @@ HttpResponse::ptr HttpConnection::recvResponse() {
                 readed = content_length;
             }
             content_length -= readed;
-            if (readFixSize(&body[readed], content_length) <= 0) {
-                close();
-                return nullptr;
+            if (content_length > 0) {
+                if (readFixSize(&body[readed], content_length) <= 0) {
+                    close();
+                    return nullptr;
+                }
             }
         }
 
     } else {
+
+        std::cout << "chunk" << std::endl;
         // body是分块传输的
         // chunk的结构是 [chunk size]\r\n[chunk data]\r\n[chunk size]\r\n[chunk
         // data]
@@ -88,7 +92,10 @@ HttpResponse::ptr HttpConnection::recvResponse() {
                     return nullptr;
                 }
                 readed += offset;
-                size_t executed = response_parser->excute(buf, readed, 0);
+                std::cout << "chunk" << std::string(buf, readed) << std::endl;
+
+                buf[readed] = '\0';
+                size_t executed = response_parser->excute(buf, readed, 0, true);
                 offset = readed - executed;
                 if (response_parser->hasError()) {
                     close();
@@ -130,6 +137,8 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         } while (!response_parser->isChunksDone());
     }
     if (!body.empty()) {
+        body.shrink_to_fit();
+        LYON_LOG_DEBUG(g_logger) << body.size() << std::endl << body;
         response_parser->getData()->setBody(body);
     }
 
@@ -143,6 +152,7 @@ int HttpConnection::sendRequest(HttpRequest::ptr request) {
 
 HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr request,
                                           Uri::ptr uri, uint64_t timeout_ms) {
+
     //通过uri创建地址
     Address::ptr addr = uri->createIPAddress();
     if (!addr) {

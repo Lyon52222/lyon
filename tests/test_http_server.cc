@@ -20,7 +20,17 @@ void test_http_server() {
         return 0;
     };
 
+    // lyon::http::FunctionalServlet::callback chunk_servlet =
+    //     [](lyon::http::HttpRequest::ptr request,
+    //        lyon::http::HttpResponse::ptr response,
+    //        lyon::http::HttpSession::ptr session) -> int32_t {
+    //     response->setHeader("Transfer-Encoding", "chunked");
+    //     response->setBody("3\r\n123\r\n5\r\nabcde");
+    //     return 0;
+    // };
+
     servlet->addAccurateServlet("/echo", echo_servlet);
+    // servlet->addAccurateServlet("/chunk", chunk_servlet);
 
     server->setServletDispatch(servlet);
 
