@@ -3,6 +3,9 @@
 #include "http_protocol.h"
 #include "lyon/log.h"
 #include <cstdint>
+#include <lyon/address.h>
+#include <lyon/socket.h>
+#include <lyon/util.h>
 #include <memory>
 #include <sstream>
 namespace lyon {
@@ -79,7 +82,6 @@ HttpResponse::ptr HttpConnection::recvResponse() {
 
     } else {
 
-        std::cout << "chunk" << std::endl;
         // body是分块传输的
         // chunk的结构是 [chunk size]\r\n[chunk data]\r\n[chunk size]\r\n[chunk
         // data]
@@ -92,7 +94,6 @@ HttpResponse::ptr HttpConnection::recvResponse() {
                     return nullptr;
                 }
                 readed += offset;
-                std::cout << "chunk" << std::string(buf, readed) << std::endl;
 
                 buf[readed] = '\0';
                 size_t executed = response_parser->excute(buf, readed, 0, true);
@@ -256,11 +257,110 @@ HttpConnectionPool::Create(const std::string &host, const std::string &vhost,
                                                 maxLiveTime, maxRequest);
 }
 
-HttpConnection::ptr HttpConnectionPool::getConnection() { return nullptr; }
+HttpConnection::ptr HttpConnectionPool::getConnection() {
+    std::vector<HttpConnection *> invalid_connections;
+    HttpConnection *rt = nullptr;
+
+    MutexType::Lock lock(m_mutex);
+
+    while (!m_connections.empty()) {
+        auto conn = m_connections.front();
+        m_connections.pop_front();
+
+        if (!conn->isConnected()) {
+            invalid_connections.push_back(conn);
+            continue;
+        }
+
+        if (conn->getCreateTime() + m_maxLiveTime >= GetCurrentTimeMS()) {
+            invalid_connections.push_back(conn);
+            continue;
+        }
+        rt = conn;
+        break;
+    }
+
+    lock.unlock();
+    for (auto &conn : invalid_connections) {
+        delete conn;
+    }
+    m_total -= invalid_connections.size();
+    if (!rt) {
+        IPAddress::ptr addr = Address::LookUpAnyIpAddress(m_host);
+        if (!addr) {
+            return nullptr;
+        }
+
+        addr->setPort(m_port);
+
+        Socket::ptr sock = Socket::CreateTCP(addr);
+        if (!sock) {
+            return nullptr;
+        }
+
+        if (!sock->connect(addr)) {
+            return nullptr;
+        }
+
+        rt = new HttpConnection(sock);
+
+        ++m_total;
+    }
+
+    return HttpConnection::ptr(rt, std::bind(HttpConnectionPool::ReleasePtr,
+                                             std::placeholders::_1, this));
+}
 
 HttpResult::ptr HttpConnectionPool::doRequest(HttpRequest::ptr request,
                                               uint64_t timeout_ms) {
-    return nullptr;
+    auto conn = getConnection();
+    if (!conn) {
+        return std::make_shared<HttpResult>(
+            HttpResult::Error::POOL_GET_CONN_FAIL, nullptr,
+            "Pool get connection fail");
+    }
+
+    Socket::ptr sock = conn->getSocket();
+    if (!sock) {
+        return std::make_shared<HttpResult>(
+            HttpResult::Error::POOL_INVALID_SOCK, nullptr, "Pool invalid sock");
+    }
+
+    sock->setRecvTimeout(timeout_ms);
+
+    int rt = conn->sendRequest(request);
+    if (rt == 0) {
+        return std::make_shared<HttpResult>(
+            HttpResult::Error::SEND_CLOSE_BY_PEER, nullptr,
+            "send close by peer" + sock->toString());
+    } else if (rt < 0) {
+        return std::make_shared<HttpResult>(
+            HttpResult::Error::SEND_SOCKET_ERROR, nullptr,
+            "send socket error" + sock->toString());
+    }
+
+    HttpResponse::ptr response = conn->recvResponse();
+    if (!response) {
+        return std::make_shared<HttpResult>(HttpResult::Error::TIMEOUT, nullptr,
+                                            "recv timeout" + sock->toString());
+    }
+
+    return std::make_shared<HttpResult>(HttpResult::Error::OK, response, "OK");
+}
+
+void HttpConnectionPool::ReleasePtr(HttpConnection *ptr,
+                                    HttpConnectionPool *pool) {
+    ptr->incRequest();
+    if (!ptr->isConnected() ||
+        (ptr->getCreateTime() + pool->m_maxLiveTime >= GetCurrentTimeMS()) ||
+        ptr->getRequest() > pool->m_maxRequest ||
+        pool->m_total > pool->m_maxSize) {
+        delete ptr;
+        --pool->m_total;
+        return;
+    }
+    MutexType::Lock lock(pool->m_mutex);
+    pool->m_connections.push_back(ptr);
 }
 
 } // namespace http

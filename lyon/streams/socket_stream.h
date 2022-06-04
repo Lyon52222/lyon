@@ -25,6 +25,8 @@ public:
 
     bool isConnected() const { return m_socket && m_socket->isConnected(); };
 
+    Socket::ptr getSocket() const { return m_socket; }
+
     void close();
 
     ~SocketStream();

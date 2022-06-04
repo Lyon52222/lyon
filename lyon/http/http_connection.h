@@ -1,11 +1,13 @@
 #ifndef __LYON_HTTP_HTTP_CONNECTION_H__
 #define __LYON_HTTP_HTTP_CONNECTION_H__
 #include "http_protocol.h"
+#include "lyon/mutex.h"
 #include "lyon/streams/socket_stream.h"
 #include "lyon/uri.h"
 #include <atomic>
 #include <cstdint>
 #include <list>
+#include <lyon/util.h>
 #include <memory>
 namespace lyon {
 namespace http {
@@ -22,6 +24,9 @@ struct HttpResult {
         SEND_SOCKET_ERROR,
         TIMEOUT,
         CREATE_SOCKET_ERROR,
+
+        POOL_GET_CONN_FAIL,
+        POOL_INVALID_SOCK
     };
 
     HttpResult(Error _result, HttpResponse::ptr _response,
@@ -40,7 +45,9 @@ struct HttpResult {
 class HttpConnection : public SocketStream {
 public:
     typedef std::shared_ptr<HttpConnection> ptr;
-    HttpConnection(Socket::ptr sock) : SocketStream(sock) {}
+    HttpConnection(Socket::ptr sock) : SocketStream(sock) {
+        m_createTime = GetCurrentTimeMS();
+    }
 
     HttpResponse::ptr recvResponse();
     int sendRequest(HttpRequest::ptr request);
@@ -52,11 +59,21 @@ public:
     DoRequest(HttpMethod method, Uri::ptr uri,
               const std::map<std::string, std::string> &headers,
               const std::string &body, uint64_t timeout_ms);
+
+    uint64_t getCreateTime() const { return m_createTime; }
+    uint32_t incRequest() { return ++m_request; }
+    uint32_t decRequest() { return --m_request; }
+    uint32_t getRequest() const { return m_request; }
+
+private:
+    uint32_t m_request;
+    uint64_t m_createTime;
 };
 
 class HttpConnectionPool {
 public:
     typedef std::shared_ptr<HttpConnectionPool> ptr;
+    typedef Mutex MutexType;
 
     HttpConnectionPool(const std::string &host, const std::string &vhost,
                        uint16_t port, uint32_t maxSize, uint32_t maxLiveTime,
@@ -102,7 +119,10 @@ private:
     uint32_t m_maxRequest;
 
     std::list<HttpConnection *> m_connections;
+
     std::atomic<uint32_t> m_total = {0};
+
+    MutexType m_mutex;
 };
 
 } // namespace http
