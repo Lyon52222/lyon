@@ -63,7 +63,7 @@ void test_sslsocket() {
 int main(int argc, char *argv[]) {
     // lyon::IOManager iom;
     // iom.addJob(test_socket);
-    // test_sslsocket();
-    test_socket();
+    test_sslsocket();
+    // test_socket();
     return 0;
 }

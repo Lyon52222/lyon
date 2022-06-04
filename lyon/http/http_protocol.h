@@ -163,7 +163,7 @@ public:
     typedef std::shared_ptr<HttpRequest> ptr;
     typedef std::map<std::string, std::string, CaseInsensitiveLess> MyMap;
 
-    HttpRequest(uint8_t version = 0x11, bool connection = true);
+    HttpRequest(uint8_t version = 0x11, bool connection = false);
 
     /**
      * @brief 获取完整的协议头

@@ -138,8 +138,6 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         } while (!response_parser->isChunksDone());
     }
     if (!body.empty()) {
-        body.shrink_to_fit();
-        LYON_LOG_DEBUG(g_logger) << body.size() << std::endl << body;
         response_parser->getData()->setBody(body);
     }
 
@@ -210,9 +208,9 @@ HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr request,
 }
 
 HttpResult::ptr
-HttpConnection::DoRequest(HttpMethod method, Uri::ptr uri,
+HttpConnection::DoRequest(HttpMethod method, Uri::ptr uri, uint64_t timeout_ms,
                           const std::map<std::string, std::string> &headers,
-                          const std::string &body, uint64_t timeout_ms) {
+                          const std::string &body) {
     HttpRequest::ptr request(new HttpRequest());
     request->setMethod(method);
     request->setPath(uri->getPath());
@@ -230,6 +228,8 @@ HttpConnection::DoRequest(HttpMethod method, Uri::ptr uri,
         if (strcasecmp(header.first.c_str(), "host")) {
             if (!header.second.empty()) {
                 has_host = true;
+            } else {
+                continue;
             }
         }
         request->setHeader(header.first, header.second);
@@ -240,6 +240,44 @@ HttpConnection::DoRequest(HttpMethod method, Uri::ptr uri,
     request->setBody(body);
 
     return DoRequest(request, uri, timeout_ms);
+}
+
+HttpResult::ptr
+HttpConnection::DoGet(Uri::ptr uri, uint64_t timeout_ms,
+                      const std::map<std::string, std::string> &headers,
+                      const std::string &body) {
+    return DoRequest(HttpMethod::GET, uri, timeout_ms, headers, body);
+}
+
+HttpResult::ptr
+HttpConnection::DoGet(const std::string &uristr, uint64_t timeout_ms,
+                      const std::map<std::string, std::string> &headers,
+                      const std::string &body) {
+    Uri::ptr uri = Uri::Parser(uristr);
+    if (!uri) {
+        return std::make_shared<HttpResult>(HttpResult::Error::PARSER_URI_FAIL,
+                                            nullptr, "parser uri fail");
+    }
+    return DoGet(uri, timeout_ms, headers, body);
+}
+
+HttpResult::ptr
+HttpConnection::DoPost(Uri::ptr uri, uint64_t timeout_ms,
+                       const std::map<std::string, std::string> &headers,
+                       const std::string &body) {
+    return DoRequest(HttpMethod::POST, uri, timeout_ms, headers, body);
+}
+
+HttpResult::ptr
+HttpConnection::DoPost(const std::string &uristr, uint64_t timeout_ms,
+                       const std::map<std::string, std::string> &headers,
+                       const std::string &body) {
+    Uri::ptr uri = Uri::Parser(uristr);
+    if (!uri) {
+        return std::make_shared<HttpResult>(HttpResult::Error::PARSER_URI_FAIL,
+                                            nullptr, "parser uri fail");
+    }
+    return DoPost(uri, timeout_ms, headers, body);
 }
 
 HttpConnectionPool::HttpConnectionPool(const std::string &host,
@@ -263,6 +301,7 @@ HttpConnection::ptr HttpConnectionPool::getConnection() {
 
     MutexType::Lock lock(m_mutex);
 
+    //从连接池中找到第一个有效连接，并且将无效连接删除掉。
     while (!m_connections.empty()) {
         auto conn = m_connections.front();
         m_connections.pop_front();
@@ -285,6 +324,7 @@ HttpConnection::ptr HttpConnectionPool::getConnection() {
         delete conn;
     }
     m_total -= invalid_connections.size();
+    //如果找不到有效连接的话就创建一个
     if (!rt) {
         IPAddress::ptr addr = Address::LookUpAnyIpAddress(m_host);
         if (!addr) {
@@ -307,6 +347,7 @@ HttpConnection::ptr HttpConnectionPool::getConnection() {
         ++m_total;
     }
 
+    //这里使用shared_ptr进行封装，使得。Connection在使用完后，并不是直接释放掉。而是将连接加入到连接池中。
     return HttpConnection::ptr(rt, std::bind(HttpConnectionPool::ReleasePtr,
                                              std::placeholders::_1, this));
 }
@@ -350,6 +391,7 @@ HttpResult::ptr HttpConnectionPool::doRequest(HttpRequest::ptr request,
 
 void HttpConnectionPool::ReleasePtr(HttpConnection *ptr,
                                     HttpConnectionPool *pool) {
+    //这里将socket连接进行重用
     ptr->incRequest();
     if (!ptr->isConnected() ||
         (ptr->getCreateTime() + pool->m_maxLiveTime >= GetCurrentTimeMS()) ||
@@ -363,5 +405,79 @@ void HttpConnectionPool::ReleasePtr(HttpConnection *ptr,
     pool->m_connections.push_back(ptr);
 }
 
+HttpResult::ptr
+HttpConnectionPool::doGet(const std::string &path, uint64_t timeout_ms,
+                          const std::map<std::string, std::string> &headers,
+                          const std::string &body) {
+    return doRequest(HttpMethod::GET, path, timeout_ms, headers, body);
+}
+
+HttpResult::ptr
+HttpConnectionPool::doGet(Uri::ptr uri, uint64_t timeout_ms,
+                          const std::map<std::string, std::string> &headers,
+                          const std::string &body) {
+    std::stringstream ss;
+    ss << uri->getPath() << (uri->getQuery().empty() ? "" : "?")
+       << uri->getQuery() << (uri->getFragment().empty() ? "" : "#")
+       << uri->getFragment();
+    std::string path = ss.str();
+    return doRequest(HttpMethod::GET, path, timeout_ms, headers, body);
+}
+
+HttpResult::ptr
+HttpConnectionPool::doPost(const std::string &path, uint64_t timeout_ms,
+                           const std::map<std::string, std::string> &headers,
+                           const std::string &body) {
+    return doRequest(HttpMethod::POST, path, timeout_ms, headers, body);
+}
+
+HttpResult::ptr
+HttpConnectionPool::doPost(Uri::ptr uri, uint64_t timeout_ms,
+                           const std::map<std::string, std::string> &headers,
+                           const std::string &body) {
+    std::stringstream ss;
+    ss << uri->getPath() << (uri->getQuery().empty() ? "" : "?")
+       << uri->getQuery() << (uri->getFragment().empty() ? "" : "#")
+       << uri->getFragment();
+    std::string path = ss.str();
+    return doRequest(HttpMethod::POST, path, timeout_ms, headers, body);
+}
+
+HttpResult::ptr
+HttpConnectionPool::doRequest(HttpMethod method, const std::string &path,
+                              uint64_t timeout_ms,
+                              const std::map<std::string, std::string> &headers,
+                              const std::string &body) {
+    HttpRequest::ptr request(new HttpRequest());
+    request->setMethod(method);
+    request->setPath(path);
+    request->setConnection(true);
+    bool has_host = false;
+    for (auto &header : headers) {
+        if (strcasecmp(header.first.c_str(), "connection") == 0) {
+            if (strcasecmp(header.second.c_str(), "keep-alive") == 0) {
+                request->setConnection(true);
+            } else {
+                request->setConnection(false);
+            }
+        }
+        if (strcasecmp(header.first.c_str(), "host")) {
+            if (!header.second.empty()) {
+                has_host = true;
+            } else {
+                continue;
+            }
+        }
+        request->setHeader(header.first, header.second);
+    }
+    if (!has_host) {
+        if (!m_host.empty())
+            request->setHeader("Host", m_host);
+        else
+            request->setHeader("Host", m_vhost);
+    }
+    request->setBody(body);
+    return doRequest(request, timeout_ms);
+}
 } // namespace http
 } // namespace lyon

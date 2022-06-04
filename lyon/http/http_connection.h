@@ -17,6 +17,7 @@ struct HttpResult {
     enum class Error {
         //正常
         OK = 0,
+        PARSER_URI_FAIL,
         INVALID_URL,
         INVALID_HOST,
         CONNECT_FAIL,
@@ -56,9 +57,29 @@ public:
                                      uint64_t timeout_ms);
 
     static HttpResult::ptr
-    DoRequest(HttpMethod method, Uri::ptr uri,
-              const std::map<std::string, std::string> &headers,
-              const std::string &body, uint64_t timeout_ms);
+    DoRequest(HttpMethod method, Uri::ptr uri, uint64_t timeout_ms,
+              const std::map<std::string, std::string> &headers = {},
+              const std::string &body = "");
+
+    static HttpResult::ptr
+    DoGet(Uri::ptr uri, uint64_t timeout_ms,
+          const std::map<std::string, std::string> &headers = {},
+          const std::string &body = "");
+
+    static HttpResult::ptr
+    DoGet(const std::string &uristr, uint64_t timeout_ms,
+          const std::map<std::string, std::string> &headers = {},
+          const std::string &body = "");
+
+    static HttpResult::ptr
+    DoPost(Uri::ptr uri, uint64_t timeout_ms,
+           const std::map<std::string, std::string> &headers = {},
+           const std::string &body = "");
+
+    static HttpResult::ptr
+    DoPost(const std::string &uristr, uint64_t timeout_ms,
+           const std::map<std::string, std::string> &headers = {},
+           const std::string &body = "");
 
     uint64_t getCreateTime() const { return m_createTime; }
     uint32_t incRequest() { return ++m_request; }
@@ -79,12 +100,36 @@ public:
                        uint16_t port, uint32_t maxSize, uint32_t maxLiveTime,
                        uint32_t maxRequest);
 
-    HttpConnectionPool::ptr Create(const std::string &host,
-                                   const std::string &vhost, uint16_t port,
-                                   uint32_t maxSize, uint32_t maxLiveTime,
-                                   uint32_t maxRequest);
+    static HttpConnectionPool::ptr
+    Create(const std::string &host, const std::string &vhost, uint16_t port,
+           uint32_t maxSize, uint32_t maxLiveTime, uint32_t maxRequest);
 
     HttpConnection::ptr getConnection();
+
+    HttpResult::ptr
+    doGet(const std::string &path, uint64_t timeout_ms,
+          const std::map<std::string, std::string> &headers = {},
+          const std::string &body = "");
+
+    HttpResult::ptr
+    doGet(Uri::ptr uri, uint64_t timeout_ms,
+          const std::map<std::string, std::string> &headers = {},
+          const std::string &body = "");
+
+    HttpResult::ptr
+    doPost(const std::string &path, uint64_t timeout_ms,
+           const std::map<std::string, std::string> &headers = {},
+           const std::string &body = "");
+
+    HttpResult::ptr
+    doPost(Uri::ptr uri, uint64_t timeout_ms,
+           const std::map<std::string, std::string> &headers = {},
+           const std::string &body = "");
+
+    HttpResult::ptr
+    doRequest(HttpMethod method, const std::string &path, uint64_t timeout_ms,
+              const std::map<std::string, std::string> &headers = {},
+              const std::string &body = "");
 
     HttpResult::ptr doRequest(HttpRequest::ptr request, uint64_t timeout_ms);
 
@@ -118,10 +163,19 @@ private:
      */
     uint32_t m_maxRequest;
 
+    /**
+     * @m_connections 连接池
+     */
     std::list<HttpConnection *> m_connections;
 
+    /**
+     * @m_total 当前的总连接数
+     */
     std::atomic<uint32_t> m_total = {0};
 
+    /**
+     * @m_mutex 互斥量
+     */
     MutexType m_mutex;
 };
 
