@@ -281,6 +281,39 @@ void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
     }
 }
 
+LogAppender::ptr
+LogAppenderManager::getAppender(LogAppender::LogAppenderType type,
+                                const std::string &path) {
+    if (type == LogAppender::STD) {
+        return StdOutLogAppender::GetSingleton();
+    } else if (type == LogAppender::FILE) {
+        FileLogAppender *rt;
+        MutexType::Lock lock(m_mutex);
+        auto itr = m_fileAppenders.find(path);
+        if (itr == m_fileAppenders.end()) {
+            rt = new FileLogAppender(path);
+            m_fileAppenders[path] = rt;
+        } else {
+            rt = itr->second;
+        }
+
+        return LogAppender::ptr(rt, std::bind(LogAppenderManager::ReleasePtr,
+                                              std::placeholders::_1, this));
+
+    } else {
+        return nullptr;
+    }
+}
+void LogAppenderManager::ReleasePtr(FileLogAppender *ptr,
+                                    LogAppenderManager *mgr) {
+    MutexType::Lock lock(mgr->m_mutex);
+    auto itr = mgr->m_fileAppenders.find(ptr->getFilePath());
+    if (itr != mgr->m_fileAppenders.end()) {
+        delete itr->second;
+        mgr->m_fileAppenders.erase(ptr->getFilePath());
+    }
+}
+
 LogAppender::ptr StdOutLogAppender::GetSingleton() {
     static LogAppender::ptr stdoutappender(new StdOutLogAppender());
     return stdoutappender;
@@ -634,10 +667,16 @@ struct LogConfigInit {
                 for (auto &app : itr_new->appenders) {
                     LogAppender::ptr appender;
                     if (app.type == LogAppender::FILE) {
-                        appender.reset(new FileLogAppender(app.file));
+                        // appender.reset(new FileLogAppender(app.file));
+                        // 这里使用AppenderManager来确保相同文件名获取到的是同一个appender。
+                        //不过好像，不用这个也没问题
+                        appender = LogAppenderMgr::GetInstance()->getAppender(
+                            LogAppender::FILE, app.file);
                     } else if (app.type == LogAppender::STD) {
                         // appender.reset(new StdOutLogAppender());
-                        appender = StdOutLogAppender::GetSingleton();
+                        // appender = StdOutLogAppender::GetSingleton();
+                        appender = LogAppenderMgr::GetInstance()->getAppender(
+                            LogAppender::STD);
                     }
                     if (app.level != LogLevel::UNKNOWN)
                         appender->setLevel(app.level);
@@ -675,7 +714,9 @@ Logger::ptr LoggerManager::getLogger(const std::string &name) {
     if (item == m_loggers.end()) {
         auto logger = Logger::ptr(new Logger(name));
         // logger->addAppender(LogAppender::ptr(new StdOutLogAppender()));
-        logger->addAppender(StdOutLogAppender::GetSingleton());
+        // logger->addAppender(StdOutLogAppender::GetSingleton());
+        logger->addAppender(
+            LogAppenderMgr::GetInstance()->getAppender(LogAppender::STD));
 
         m_loggers[name] = logger;
         if (name == "root") {
@@ -693,7 +734,9 @@ Logger::ptr LoggerManager::getRoot() {
         m_root_logger.reset(new Logger());
         // m_root_logger->addAppender(LogAppender::ptr(new
         // StdOutLogAppender()));
-        m_root_logger->addAppender(StdOutLogAppender::GetSingleton());
+        // m_root_logger->addAppender(StdOutLogAppender::GetSingleton());
+        m_root_logger->addAppender(
+            LogAppenderMgr::GetInstance()->getAppender(LogAppender::STD));
         m_loggers[m_root_logger->getName()] = m_root_logger;
     }
     return m_root_logger;

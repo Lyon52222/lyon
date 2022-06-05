@@ -53,9 +53,11 @@ public:
      * @param f 调度任务
      * @param s_thread 是否在指定线程上执行
      * @param thread 任务在哪个线程上执行
+     * @param urgent 任务是否紧急
      */
     template <class FiberOrFunc>
-    void addJob(FiberOrFunc f, bool s_thread = false, pthread_t thread = 0) {
+    void addJob(FiberOrFunc f, bool s_thread = false, pthread_t thread = 0,
+                bool urgent = false) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
@@ -73,16 +75,18 @@ public:
      * @param end 结束迭代器
      * @param s_thread 是否在指定线程上执行
      * @param thread 任务在哪个线程上执行
+     * @param urgent 任务是否紧急
      */
     template <class InputIterator>
     void addJobs(InputIterator begin, InputIterator end, bool s_thread = false,
-                 pthread_t thread = 0) {
+                 pthread_t thread = 0, bool urgent = false) {
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
             while (begin != end) {
-                need_tickle = scheduleWithoutLock(&*begin, s_thread, thread) ||
-                              need_tickle;
+                need_tickle =
+                    scheduleWithoutLock(&*begin, s_thread, thread, urgent) ||
+                    need_tickle;
                 begin++;
             }
         }
@@ -124,11 +128,12 @@ private:
      * @tparam FiberOrCb 任务类型
      * @param f 任务
      * @param thread 任务需要在那个线程上执行
+     * @param urgent 任务是否紧急
      * @return 是否需要通知唤醒线程
      */
     template <class FiberOrFunc>
     bool scheduleWithoutLock(FiberOrFunc f, bool s_thread = false,
-                             pthread_t thread = 0) {
+                             pthread_t thread = 0, bool urgent = false) {
         // if (m_stopping) {
         //     LYON_LOG_WARN(LYON_LOG_GET_LOGGER("system")) << "Scheduler
         //     stoped!"; return false;
@@ -137,7 +142,10 @@ private:
         Job ft(f, s_thread, thread);
 
         if (ft.fiber || ft.cb) {
-            m_jobs.push_back(ft);
+            if (urgent)
+                m_jobs.push_front(ft);
+            else
+                m_jobs.push_back(ft);
         }
 
         return tickle;

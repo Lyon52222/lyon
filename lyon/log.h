@@ -213,28 +213,49 @@ public:
              LogEvent::ptr event) override;
 
 public:
+    StdOutLogAppender() = default;
     static LogAppender::ptr GetSingleton();
-
-private:
-    StdOutLogAppender() {}
 };
 
-// TODO:对于一个文件应该只有一个FileLogAppender与之对应
 //输出到文件的Appender
 class FileLogAppender : public LogAppender {
 public:
-    FileLogAppender(const std::string &path);
     typedef std::shared_ptr<FileLogAppender> ptr;
+    FileLogAppender(const std::string &path);
     LogAppenderType getType() override { return FILE; }
+
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
 
     bool reopen();
 
+    const std::string &getFilePath() const { return m_fpath; }
+
 private:
+    FileLogAppender() = default;
     std::string m_fpath;
     std::ofstream m_fstream;
 };
+
+/**
+ * @brief Appender管理类，用于保证，不同Logger对请求的同名Appender是同一个
+ */
+class LogAppenderManager {
+public:
+    typedef Mutex MutexType;
+    friend class StdOutLogAppender;
+    friend class FileLogAppender;
+
+    LogAppender::ptr getAppender(LogAppender::LogAppenderType type,
+                                 const std::string &path = "");
+
+private:
+    static void ReleasePtr(FileLogAppender *ptr, LogAppenderManager *mgr);
+    std::map<std::string, FileLogAppender *> m_fileAppenders;
+    MutexType m_mutex;
+};
+
+typedef Singleton<LogAppenderManager> LogAppenderMgr;
 
 //日志输出器
 class Logger : public std::enable_shared_from_this<Logger> {

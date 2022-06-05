@@ -161,10 +161,11 @@ unsigned int sleep(unsigned int seconds) {
 
     // 设置一个定时器，然后让出执行
     // bind类模版方法
-    iom->addTimer(seconds * 1000,
-                  std::bind((void(Scheduler::*)(Fiber::ptr, bool, pthread_t)) &
-                                IOManager::addJob,
-                            iom, fiber, false, 0));
+    iom->addTimer(
+        seconds * 1000,
+        std::bind((void(Scheduler::*)(Fiber::ptr, bool, pthread_t, bool)) &
+                      IOManager::addJob,
+                  iom, fiber, false, 0, true));
     // iom->addTimer(seconds * 1000, [iom, fiber]() { iom->addJob(fiber); });
 
     lyon::Fiber::HoldToScheduler();
@@ -177,10 +178,11 @@ int usleep(__useconds_t useconds) {
     }
     lyon::IOManager *iom = lyon::IOManager::GetCurrentIOManager();
     lyon::Fiber::ptr fiber = lyon::Fiber::GetCurrentFiber();
-    iom->addTimer(useconds / 1000,
-                  std::bind((void(Scheduler::*)(Fiber::ptr, bool, pthread_t)) &
-                                IOManager::addJob,
-                            iom, fiber, false, 0));
+    iom->addTimer(
+        useconds / 1000,
+        std::bind((void(Scheduler::*)(Fiber::ptr, bool, pthread_t, bool)) &
+                      IOManager::addJob,
+                  iom, fiber, false, 0, true));
     lyon::Fiber::HoldToScheduler();
     return 0;
 }
