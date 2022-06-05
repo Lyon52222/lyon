@@ -1,7 +1,7 @@
 #ifndef __LYON__STREAM_H__
 #define __LYON__STREAM_H__
 
-#include "bytearray.h"
+#include "serialize/bytearray.h"
 #include <memory>
 namespace lyon {
 

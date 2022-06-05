@@ -1,4 +1,4 @@
-#include "lyon/bytearray.h"
+#include "lyon/serialize/bytearray.h"
 #include <cstddef>
 #include <cstdint>
 #include <lyon/log.h>
@@ -29,19 +29,25 @@ void test_f() {
             << #type << " " << #write_fun << " " << #read_fun << " OK!";       \
     }
 
-    XX(int8_t, 1, writeFint8, readFint8, 10);
-    XX(uint8_t, 100, writeFuint8, readFuint8, 10);
-    XX(int16_t, 100, writeFint16, readFint16, 10);
-    XX(uint16_t, 100, writeFuint16, readFuint16, 10);
-    XX(int32_t, 100, writeFint32, readFint32, 10);
-    XX(uint32_t, 100, writeFuint32, readFuint32, 10);
-    XX(int64_t, 100, writeFint64, readFint64, 10);
-    XX(uint64_t, 100, writeFuint64, readFuint64, 10);
+    // XX(int8_t, 1, writeFint8, readFint8, 10);
+    // XX(uint8_t, 100, writeFuint8, readFuint8, 10);
+    // XX(int16_t, 100, writeFint16, readFint16, 10);
+    // XX(uint16_t, 100, writeFuint16, readFuint16, 10);
+    // XX(int32_t, 100, writeFint32, readFint32, 10);
+    // XX(uint32_t, 100, writeFuint32, readFuint32, 10);
+    // XX(int64_t, 100, writeFint64, readFint64, 10);
+    // XX(uint64_t, 100, writeFuint64, readFuint64, 10);
 
-    XX(int32_t, 100, writeInt32, readInt32, 10);
-    XX(uint32_t, 100, writeUint32, readUint32, 10);
-    XX(int64_t, 100, writeInt64, readInt64, 10);
-    XX(uint64_t, 100, writeUint64, readUint64, 10);
+    // XX(int32_t, 100, writeInt32, readInt32, 10);
+    // XX(uint32_t, 100, writeUint32, readUint32, 10);
+    // XX(int64_t, 100, writeInt64, readInt64, 10);
+    // XX(uint64_t, 100, writeUint64, readUint64, 10);
+
+    lyon::ByteArray::ptr array(new lyon::ByteArray(1000));
+    array->writeStringVarint("afdafsdafdsafdsf");
+    array->setPosition(0);
+    std::string str = array->readStringVarint();
+    std::cout << str << std::endl;
 }
 
 int main(int argc, char *argv[]) {

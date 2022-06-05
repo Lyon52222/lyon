@@ -89,6 +89,11 @@ public:
     }
 };
 
+/**
+ * @brief 从T类型的字典转化为YAML格式的字符串
+ *
+ * @tparam T 字典的类型
+ */
 template <class T> class LexicalCast<std::map<std::string, T>, std::string> {
 public:
     std::string operator()(const std::map<std::string, T> &m) {
@@ -103,6 +108,11 @@ public:
     }
 };
 
+/**
+ * @brief 从YAML格式的字符串转化为T类型的字典。
+ *
+ * @tparam T 字典的类型
+ */
 template <class T> class LexicalCast<std::string, std::map<std::string, T>> {
 public:
     std::map<std::string, T> operator()(const std::string &s) {

@@ -1,7 +1,7 @@
 #include "http_session.h"
 #include "http_parser.h"
 #include "iostream"
-#include "lyon/bytearray.h"
+#include "lyon/serialize/bytearray.h"
 #include <cstdint>
 #include <sys/types.h>
 namespace lyon {

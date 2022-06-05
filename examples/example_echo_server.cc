@@ -1,8 +1,8 @@
 #include "lyon/tcp_server.h"
 #include <lyon/address.h>
-#include <lyon/bytearray.h>
 #include <lyon/iomanager.h>
 #include <lyon/log.h>
+#include <lyon/serialize/bytearray.h>
 #include <lyon/socket.h>
 #include <memory>
 #include <sys/socket.h>

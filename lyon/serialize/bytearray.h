@@ -99,6 +99,7 @@ public:
     void read(const void *buf, size_t size);
     void read(const void *buf, size_t size, size_t position);
 
+    //以固定长度写入
     void writeFint8(int8_t value);
     void writeFuint8(uint8_t value);
     void writeFint16(int16_t value);
@@ -108,6 +109,7 @@ public:
     void writeFint64(int64_t value);
     void writeFuint64(uint64_t value);
 
+    //以Varint格式写入
     void writeInt32(int32_t value);
     void writeUint32(uint32_t value);
     void writeInt64(int64_t value);

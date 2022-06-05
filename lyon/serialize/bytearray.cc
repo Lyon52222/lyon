@@ -1,6 +1,6 @@
 #include "bytearray.h"
-#include "log.h"
-#include "utils/endian.h"
+#include "lyon/log.h"
+#include "lyon/utils/endian.h"
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
