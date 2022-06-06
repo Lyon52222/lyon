@@ -123,6 +123,7 @@ public:
     void writeStringVarint(const std::string &str);
 
     bool readFromFile(const std::string &file);
+    void loadFromStr(const std::string &content);
 
     int8_t readFint8();
     uint8_t readFuint8();

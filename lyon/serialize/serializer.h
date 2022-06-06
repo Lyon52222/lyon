@@ -2,6 +2,7 @@
 #define __LYON_SERIALIZE_SERIALIZER_H__
 
 #include "bytearray.h"
+#include <bits/utility.h>
 #include <iostream>
 #include <list>
 #include <map>
@@ -22,8 +23,12 @@ public:
 
     void setPosition(size_t position);
 
+    void clear();
+
+    void loadFromStr(const std::string &content);
+
     //因为这里必须要用到constexpr，所以项目在这里变更为C17
-    template <class T> void writeF(const T &v) {
+    template <class T> void writeF(const T &v) const {
         if constexpr (std::is_same<T, int8_t>::value) {
             m_ba->writeFint8(v);
         } else if constexpr (std::is_same<T, uint8_t>::value) {
@@ -45,11 +50,13 @@ public:
         } else if constexpr (std::is_same<T, double>::value) {
             m_ba->writeDouble(v);
         } else if constexpr (std::is_same<T, std::string>::value) {
-            m_ba->writeStringVarint(v);
+            m_ba->writeStringF64(v);
+        } else if constexpr (std::is_same<T, const char *>::value) {
+            m_ba->writeStringF64(std::string(v));
         }
     }
 
-    template <class T> void write(const T &v) {
+    template <class T> void write(const T &v) const {
         if (m_fix) {
             writeF(v);
             return;
@@ -76,10 +83,12 @@ public:
             m_ba->writeDouble(v);
         } else if constexpr (std::is_same<T, std::string>::value) {
             m_ba->writeStringVarint(v);
+        } else if constexpr (std::is_same<T, const char *>::value) {
+            m_ba->writeStringVarint(std::string(v));
         }
     }
 
-    template <class T> void readF(T &v) {
+    template <class T> void readF(T &v) const {
         if constexpr (std::is_same<T, int8_t>::value) {
             v = m_ba->readFint8();
         } else if constexpr (std::is_same<T, uint8_t>::value) {
@@ -105,7 +114,7 @@ public:
         }
     }
 
-    template <class T> void read(T &v) {
+    template <class T> void read(T &v) const {
         if (m_fix) {
             readF(v);
             return;
@@ -140,18 +149,44 @@ private:
     ByteArray::ptr m_ba;
 };
 
-template <class T> const Serializer &operator<<(Serializer &ser, const T &v) {
+template <class T>
+const Serializer &operator<<(const Serializer &ser, const T &v) {
     ser.write(v);
     return ser;
 }
 
-template <class T> const Serializer &operator>>(Serializer &ser, T &v) {
+template <class T> const Serializer &operator>>(const Serializer &ser, T &v) {
     ser.read(v);
     return ser;
 }
 
+template <class... Args>
+const Serializer &operator<<(const Serializer &ser,
+                             const std::tuple<Args...> &args) {
+    const auto &unpack = [&ser]<class Tuple, std::size_t... Index>(
+                             const Tuple &t, std::index_sequence<Index...>) {
+        //引用折叠。这里是二元左折叠。
+        //展开后的代码为 ((ser<<get<Index0>(t))<<get<Index1>(t)...)
+        (ser << ... << std::get<Index>(t));
+        // (std::cout << ... << std::get<Index>(t));
+    };
+    unpack(args, std::index_sequence_for<Args...>{});
+    return ser;
+}
+
+template <class... Args>
+const Serializer &operator>>(const Serializer &ser, std::tuple<Args...> &args) {
+    const auto &pack = [&ser]<class Tuple, std::size_t... Index>(
+                           Tuple &t, std::index_sequence<Index...>) {
+        (ser >> ... >> std::get<Index>(t));
+    };
+
+    pack(args, std::index_sequence_for<Args...>{});
+    return ser;
+}
+
 template <class T>
-const Serializer &operator<<(Serializer &ser, const std::vector<T> &v) {
+const Serializer &operator<<(const Serializer &ser, const std::vector<T> &v) {
     ser << v.size();
     for (size_t i = 0; i < v.size(); ++i) {
         ser << v[i];
@@ -160,7 +195,7 @@ const Serializer &operator<<(Serializer &ser, const std::vector<T> &v) {
 }
 
 template <class T>
-const Serializer &operator>>(Serializer &ser, std::vector<T> &v) {
+const Serializer &operator>>(const Serializer &ser, std::vector<T> &v) {
     decltype(v.size()) size;
     ser >> size;
     for (size_t i = 0; i < size; ++i) {
@@ -172,7 +207,7 @@ const Serializer &operator>>(Serializer &ser, std::vector<T> &v) {
 }
 
 template <class T>
-const Serializer &operator<<(Serializer &ser, const std::list<T> &v) {
+const Serializer &operator<<(const Serializer &ser, const std::list<T> &v) {
     ser << v.size();
     for (size_t i = 0; i < v.size(); ++i) {
         ser << v[i];
@@ -181,7 +216,7 @@ const Serializer &operator<<(Serializer &ser, const std::list<T> &v) {
 }
 
 template <class T>
-const Serializer &operator>>(Serializer &ser, std::list<T> &v) {
+const Serializer &operator>>(const Serializer &ser, std::list<T> &v) {
     decltype(v.size()) size;
     ser >> size;
     for (size_t i = 0; i < size; ++i) {
@@ -193,19 +228,19 @@ const Serializer &operator>>(Serializer &ser, std::list<T> &v) {
 }
 
 template <class F, class S>
-const Serializer &operator<<(Serializer &ser, const std::pair<F, S> &v) {
+const Serializer &operator<<(const Serializer &ser, const std::pair<F, S> &v) {
     ser << v.first << v.second;
     return ser;
 }
 
 template <class F, class S>
-const Serializer &operator>>(Serializer &ser, const std::pair<F, S> &v) {
+const Serializer &operator>>(const Serializer &ser, const std::pair<F, S> &v) {
     ser >> v.first >> v.second;
     return ser;
 }
 
 template <class K, class V>
-const Serializer &operator<<(Serializer &ser, const std::map<K, V> &v) {
+const Serializer &operator<<(const Serializer &ser, const std::map<K, V> &v) {
     ser << v.size();
     for (auto &i : v) {
         ser << i;
@@ -214,7 +249,7 @@ const Serializer &operator<<(Serializer &ser, const std::map<K, V> &v) {
 }
 
 template <class K, class V>
-const Serializer &operator>>(Serializer &ser, std::map<K, V> &v) {
+const Serializer &operator>>(const Serializer &ser, std::map<K, V> &v) {
     decltype(v.size()) size;
     ser >> size;
     for (size_t i = 0; i < size; i++) {

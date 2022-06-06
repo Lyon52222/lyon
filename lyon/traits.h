@@ -13,6 +13,9 @@ template <class Ret, class... Args> struct function_traits<Ret(Args...)> {
     using stl_function_type = std::function<function_type>;
     typedef Ret (*pointer)(Args...);
 
+    using args_type =
+        std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...>;
+
     template <size_t I> struct args {
         static_assert(I < arity,
                       "index is out of range, inde must less than sizeof Args");

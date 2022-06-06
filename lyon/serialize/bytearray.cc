@@ -407,6 +407,11 @@ bool ByteArray::readFromFile(const std::string &file) {
     return true;
 }
 
+void ByteArray::loadFromStr(const std::string &content) {
+    clear();
+    write(content.c_str(), content.size());
+}
+
 int8_t ByteArray::readFint8() {
     int8_t val = 0;
     read(&val, sizeof(int8_t));

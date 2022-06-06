@@ -54,7 +54,7 @@ private:
     //内容长度
     uint32_t m_contentLen = 0;
     //数据包内容
-    Serializer::ptr m_ser;
+    std::string m_content;
 };
 
 } // namespace lyon::rpc
