@@ -1,7 +1,7 @@
 #ifndef __LYON_STREAMS_SOCKET_STREAM_H__
 #define __LYON_STREAMS_SOCKET_STREAM_H__
 #include "lyon/socket.h"
-#include "lyon/stream.h"
+#include "stream.h"
 
 namespace lyon {
 

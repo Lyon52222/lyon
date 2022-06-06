@@ -32,7 +32,7 @@ set(
   lyon/socket.cc
   lyon/ssl_socket.cc
   lyon/tcp_server.cc
-  lyon/stream.cc
+  lyon/streams/stream.cc
   lyon/streams/socket_stream.cc
   lyon/serialize/bytearray.cc
   lyon/serialize/serializer.cc

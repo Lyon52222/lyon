@@ -22,6 +22,7 @@ public:
 
     void setPosition(size_t position);
 
+    //因为这里必须要用到constexpr，所以项目在这里变更为C17
     template <class T> void writeF(const T &v) {
         if constexpr (std::is_same<T, int8_t>::value) {
             m_ba->writeFint8(v);
