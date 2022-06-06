@@ -83,6 +83,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_tcp_server "tests/test_tcp_server.cc" lyon "${LIBS}")
   lyon_add_executable(test_http_server "tests/test_http_server.cc" lyon "${LIBS}")
   lyon_add_executable(test_http_connection "tests/test_http_connection.cc" lyon "${LIBS}")
+  lyon_add_executable(test_traits "tests/test_traits.cc" lyon "${LIBS}")
 
 endif()
 
