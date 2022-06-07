@@ -389,6 +389,10 @@ void ByteArray::writeStringVarint(const std::string &str) {
     write(str.c_str(), str.size());
 }
 
+void ByteArray::writeStringRaw(const std::string &str) {
+    write(str.c_str(), str.size());
+}
+
 bool ByteArray::readFromFile(const std::string &file) {
     std::ifstream ifs;
     ifs.open(file, std::ios::binary);

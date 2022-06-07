@@ -68,7 +68,6 @@ void test_method() {
 
     int ans;
 
-    ser.setPosition(0);
     ser >> ans;
 
     std::cout << ans << std::endl;

@@ -20,12 +20,18 @@ public:
     typedef std::shared_ptr<Serializer> ptr;
 
     Serializer(size_t ba_size = 4096, bool fix = false);
+    Serializer(ByteArray::ptr ba, bool fix);
+    Serializer(const std::string &str, bool fix);
 
     void setPosition(size_t position);
 
     void clear();
 
     void loadFromStr(const std::string &content);
+
+    std::string toString();
+
+    ByteArray::ptr getByteArray() const { return m_ba; }
 
     //因为这里必须要用到constexpr，所以项目在这里变更为C17
     template <class T> void writeF(const T &v) const {

@@ -121,6 +121,7 @@ public:
     void writeStringF32(const std::string &str);
     void writeStringF64(const std::string &str);
     void writeStringVarint(const std::string &str);
+    void writeStringRaw(const std::string &str);
 
     bool readFromFile(const std::string &file);
     void loadFromStr(const std::string &content);

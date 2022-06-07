@@ -1,60 +1,68 @@
 #ifndef __LYON_RPC_METHOD_H__
 #define __LYON_RPC_METHOD_H__
+#include "lyon/serialize/serializer.h"
 #include "lyon/traits.h"
-#include <bits/utility.h>
-#include <lyon/serialize/serializer.h>
 #include <memory>
 #include <string>
 namespace lyon::rpc {
 
-class IRPCMethod {
-public:
-  typedef std::shared_ptr<IRPCMethod> ptr;
-
-  IRPCMethod(const std::string &name) : m_name(name) {}
-
-  virtual ~IRPCMethod();
-
-  virtual Serializer &operator()(Serializer &ser) = 0;
-
-  virtual const std::string &getName() const { return m_name; }
-
-protected:
-  std::string m_name;
-};
-
-template <class F> class RPCMethod : public IRPCMethod {
+/**
+ * @brief 将注册的方法单独封装成一个类，这样可以添加一些额外的属性
+ */
+class RPCMethod {
 public:
   typedef std::shared_ptr<RPCMethod> ptr;
 
-  RPCMethod(const std::string &name, F func) : IRPCMethod(name) {
-    m_func = func;
+  template <class F>
+  RPCMethod(const std::string &name, F func, const std::string &desc = "")
+      : m_name(name), m_description(desc) {
+    m_func = [func, this](Serializer &args) -> bool {
+      return proxy(func, args);
+    };
   }
 
-  virtual Serializer &operator()(Serializer &ser) override {
-    //获得参数类型
+  template <class F> bool proxy(F func, Serializer &args) {
     using Args = typename function_traits<F>::args_type;
     //获得返回值类型
     using Ret = typename function_traits<F>::return_type;
-    Args args;
-    ser >> args;
+    Args args_tuple;
 
-    constexpr auto size =
-        std::tuple_size<typename std::decay<Args>::type>::value;
-    const auto &unpack =
-        [ this, &args ]<std::size_t... Index>(std::index_sequence<Index...>) {
-      return m_func(std::get<Index>(std::forward<Args>(args))...);
+    try {
+      args >> args_tuple;
+      args.clear();
+
+      constexpr auto size =
+          std::tuple_size<typename std::decay<Args>::type>::value;
+      const auto &unpack =
+          [&func, &args ]<std::size_t... Index>(std::index_sequence<Index...>) {
+        return func(std::get<Index>(std::forward<Args>(args))...);
+      };
+
+      Ret rt = unpack(std::make_index_sequence<size>{});
+      args << rt;
+    } catch (...) {
+      return false;
     };
-
-    Ret rt = unpack(std::make_index_sequence<size>{});
-
-    ser.setPosition(0);
-    ser << rt;
-    return ser;
+    args.setPosition(0);
+    return true;
   }
 
+  /**
+   * @brief 调用方法，args中保存了参数，调用完成后返回值保存在args中
+   *
+   * @param args 序列化好的参数
+   * @return 调用是否成功
+   */
+  bool operator()(Serializer &args) { return m_func(args); }
+
+  bool call(Serializer &args) { return m_func(args); }
+
+  const std::string &getName() { return m_name; }
+
 private:
-  F m_func;
+  const std::string m_name;
+  const std::string m_description;
+  std::function<bool(Serializer &)> m_func;
 };
 
 } // namespace lyon::rpc
