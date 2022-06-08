@@ -2,8 +2,7 @@
 #include "http_protocol.h"
 #include <fnmatch.h>
 #include <memory>
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 Servlet::ptr Servlet::clone() const { return nullptr; }
 
@@ -158,6 +157,4 @@ int32_t NotFoundServlet::handle(HttpRequest::ptr request,
     return 0;
 }
 
-} // namespace http
-
-} // namespace lyon
+} // namespace lyon::http

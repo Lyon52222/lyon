@@ -24,7 +24,7 @@ private:
  *
  * @tparam T 锁类型
  */
-template <class T> struct ScopeLockImpl {
+template <typename T> struct ScopeLockImpl {
 public:
     ScopeLockImpl(T &mutex) : m_mutex(mutex) {
         m_mutex.lock();
@@ -57,7 +57,7 @@ private:
  *
  * @tparam T 锁类型
  */
-template <class T> struct ReadScopeLockImpl {
+template <typename T> struct ReadScopeLockImpl {
 public:
     ReadScopeLockImpl(T &mutex) : m_mutex(mutex) {
         m_mutex.rdlock();
@@ -90,7 +90,7 @@ private:
  *
  * @tparam T 锁类型
  */
-template <class T> struct WriteScopeLockImpl {
+template <typename T> struct WriteScopeLockImpl {
 public:
     WriteScopeLockImpl(T &mutex) : m_mutex(mutex) {
         m_mutex.wrlock();

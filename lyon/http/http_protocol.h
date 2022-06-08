@@ -1,5 +1,5 @@
-#ifndef __LYON_HTTP_HTTP_H__
-#define __LYON_HTTP_HTTP_H__
+#ifndef __LYON_HTTP_PROTOCOL_H__
+#define __LYON_HTTP_PROTOCOL_H__
 
 #include <boost/lexical_cast.hpp>
 #include <cstdint>
@@ -7,9 +7,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-namespace lyon {
-
-namespace http {
+namespace lyon::http {
 
 /* Status Codes */
 #define HTTP_STATUS_MAP(XX)                                                    \
@@ -142,7 +140,7 @@ struct CaseInsensitiveLess {
     bool operator()(const std::string &lhs, const std::string &rhs) const;
 };
 
-template <class MapType, class T>
+template <typename MapType, typename T>
 T getAs(const MapType &m, const std::string &key, const T &def = T()) {
     auto itr = m.find(key);
     if (itr == m.end()) {
@@ -238,17 +236,17 @@ public:
     std::string toString() const;
 
 public:
-    template <class T>
+    template <typename T>
     T getHeaderAs(const std::string &key, const T &def = T()) {
         return getAs(m_headers, key, def);
     }
 
-    template <class T>
+    template <typename T>
     T getCookisAs(const std::string &key, const T &def = T()) {
         return getAs(m_cookies, key, def);
     }
 
-    template <class T>
+    template <typename T>
     T getParamAs(const std::string &key, const T &def = T()) {
         return getAs(m_params, key, def);
     }
@@ -333,7 +331,7 @@ public:
     std::string toString() const;
 
 public:
-    template <class T>
+    template <typename T>
     T getHeaderAs(const std::string &key, const T &def = T()) {
         return getAs(m_headers, key, def);
     }
@@ -351,7 +349,6 @@ private:
 };
 
 std::ostream &operator<<(std::ostream &os, const HttpResponse &response);
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http
 
 #endif

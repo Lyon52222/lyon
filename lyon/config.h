@@ -20,7 +20,7 @@ namespace lyon {
  * @tparam F 原本类型
  * @tparam T 目标类型
  */
-template <class F, class T> class LexicalCast {
+template <typename F, typename T> class LexicalCast {
 public:
     T operator()(const F &f) { return boost::lexical_cast<T>(f); };
 };
@@ -30,7 +30,7 @@ public:
  *
  * @tparam T vector类型
  */
-template <class T> class LexicalCast<std::vector<T>, std::string> {
+template <typename T> class LexicalCast<std::vector<T>, std::string> {
 public:
     std::string operator()(const std::vector<T> &v) {
         YAML::Node node(YAML::NodeType::Sequence);
@@ -48,7 +48,7 @@ public:
  *
  * @tparam T vector类型
  */
-template <class T> class LexicalCast<std::string, std::vector<T>> {
+template <typename T> class LexicalCast<std::string, std::vector<T>> {
 public:
     std::vector<T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
@@ -62,7 +62,7 @@ public:
     }
 };
 
-template <class T> class LexicalCast<std::list<T>, std::string> {
+template <typename T> class LexicalCast<std::list<T>, std::string> {
 public:
     std::string operator()(const std::list<T> &l) {
         YAML::Node node(YAML::NodeType::Sequence);
@@ -75,7 +75,7 @@ public:
     }
 };
 
-template <class T> class LexicalCast<std::string, std::list<T>> {
+template <typename T> class LexicalCast<std::string, std::list<T>> {
 public:
     std::list<T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
@@ -94,7 +94,7 @@ public:
  *
  * @tparam T 字典的类型
  */
-template <class T> class LexicalCast<std::map<std::string, T>, std::string> {
+template <typename T> class LexicalCast<std::map<std::string, T>, std::string> {
 public:
     std::string operator()(const std::map<std::string, T> &m) {
         YAML::Node node(YAML::NodeType::Map);
@@ -113,7 +113,7 @@ public:
  *
  * @tparam T 字典的类型
  */
-template <class T> class LexicalCast<std::string, std::map<std::string, T>> {
+template <typename T> class LexicalCast<std::string, std::map<std::string, T>> {
 public:
     std::map<std::string, T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
@@ -127,7 +127,7 @@ public:
     }
 };
 
-template <class T> class LexicalCast<std::set<T>, std::string> {
+template <typename T> class LexicalCast<std::set<T>, std::string> {
 public:
     std::string operator()(const std::set<T> &s) {
         YAML::Node node;
@@ -140,7 +140,7 @@ public:
     }
 };
 
-template <class T> class LexicalCast<std::string, std::set<T>> {
+template <typename T> class LexicalCast<std::string, std::set<T>> {
 public:
     std::set<T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
@@ -180,8 +180,8 @@ protected:
  *
  * @tparam T 配置项值的类型
  */
-template <class T, class FromStr = LexicalCast<std::string, T>,
-          class ToStr = LexicalCast<T, std::string>>
+template <typename T, typename FromStr = LexicalCast<std::string, T>,
+          typename ToStr = LexicalCast<T, std::string>>
 class ConfigVar : public ConfigVarBase {
 public:
     typedef std::shared_ptr<ConfigVar> ptr;
@@ -300,7 +300,7 @@ public:
      * @param default_value 配置项值
      * @param description 配置项描述
      */
-    template <class T>
+    template <typename T>
     static typename ConfigVar<T>::ptr
     SetConfig(const std::string &name, const T &default_value,
               const std::string &description) {
@@ -329,7 +329,7 @@ public:
      * @tparam T 配置项类型
      * @param name 配置名
      */
-    template <class T>
+    template <typename T>
     static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
         RWMutexType::RDLock lock(GetRWMutex());
         auto itr = GetConfigs().find(name);

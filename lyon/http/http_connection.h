@@ -1,5 +1,5 @@
-#ifndef __LYON_HTTP_HTTP_CONNECTION_H__
-#define __LYON_HTTP_HTTP_CONNECTION_H__
+#ifndef __LYON__HTTP_CONNECTION_H__
+#define __LYON__HTTP_CONNECTION_H__
 #include "http_protocol.h"
 #include "lyon/mutex.h"
 #include "lyon/streams/socket_stream.h"
@@ -9,8 +9,7 @@
 #include <list>
 #include <lyon/util.h>
 #include <memory>
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 struct HttpResult {
     typedef std::shared_ptr<HttpResult> ptr;
@@ -179,7 +178,6 @@ private:
     MutexType m_mutex;
 };
 
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http
 
 #endif

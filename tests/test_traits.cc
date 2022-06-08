@@ -2,7 +2,7 @@
 #include <functional>
 #include <iostream>
 
-template <class T> void PrintType() {
+template <typename T> void PrintType() {
     std::cout << typeid(T).name() << std::endl;
 }
 

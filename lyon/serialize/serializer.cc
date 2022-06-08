@@ -1,13 +1,17 @@
 #include "serializer.h"
 namespace lyon {
 
-Serializer::Serializer(size_t ba_size, bool fix) : m_fix(fix) {
+Serializer::Serializer(bool compress) : m_compress(compress) {
     m_ba = std::make_shared<ByteArray>();
 }
 
-Serializer::Serializer(ByteArray::ptr ba, bool fix) : m_fix(fix) { m_ba = ba; }
+Serializer::Serializer(ByteArray::ptr ba, bool compress)
+    : m_compress(compress) {
+    m_ba = ba;
+}
 
-Serializer::Serializer(const std::string &str, bool fix) : m_fix(fix) {
+Serializer::Serializer(const std::string &str, bool compress)
+    : m_compress(compress) {
     m_ba = std::make_shared<ByteArray>();
     m_ba->loadFromStr(str);
 }

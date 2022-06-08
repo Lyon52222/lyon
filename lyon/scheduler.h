@@ -55,7 +55,7 @@ public:
      * @param thread 任务在哪个线程上执行
      * @param urgent 任务是否紧急
      */
-    template <class FiberOrFunc>
+    template <typename FiberOrFunc>
     void addJob(FiberOrFunc f, bool s_thread = false, pthread_t thread = 0,
                 bool urgent = false) {
         bool need_tickle = false;
@@ -77,7 +77,7 @@ public:
      * @param thread 任务在哪个线程上执行
      * @param urgent 任务是否紧急
      */
-    template <class InputIterator>
+    template <typename InputIterator>
     void addJobs(InputIterator begin, InputIterator end, bool s_thread = false,
                  pthread_t thread = 0, bool urgent = false) {
         bool need_tickle = false;
@@ -131,7 +131,7 @@ private:
      * @param urgent 任务是否紧急
      * @return 是否需要通知唤醒线程
      */
-    template <class FiberOrFunc>
+    template <typename FiberOrFunc>
     bool scheduleWithoutLock(FiberOrFunc f, bool s_thread = false,
                              pthread_t thread = 0, bool urgent = false) {
         // if (m_stopping) {

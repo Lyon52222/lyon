@@ -74,14 +74,14 @@ public:
     int setOption(int level, int opt_name, const void *opt_value,
                   socklen_t opt_len);
 
-    template <class T>
+    template <typename T>
     int setOption(int level, int opt_name, const T &opt_value) {
         return setOption(level, opt_name, &opt_value, sizeof(T));
     }
 
     int getOption(int level, int opt_name, void *opt_value, socklen_t *opt_len);
 
-    template <class T> int getOption(int level, int opt_name, T &opt_value) {
+    template <typename T> int getOption(int level, int opt_name, T &opt_value) {
         int opt_len = sizeof(T);
         return getOption(level, opt_name, &opt_value, &opt_len);
     }

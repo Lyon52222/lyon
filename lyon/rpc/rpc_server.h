@@ -6,13 +6,13 @@
 #include "rpc_protocol.h"
 namespace lyon::rpc {
 
-class RPCServer : public TcpServer {
+class RpcServer : public TcpServer {
 public:
-    typedef std::shared_ptr<RPCServer> ptr;
+    typedef std::shared_ptr<RpcServer> ptr;
 
     using TcpServer::TcpServer;
 
-    RPCServer(IOManager *worker = IOManager::GetCurrentIOManager(),
+    RpcServer(IOManager *worker = IOManager::GetCurrentIOManager(),
               IOManager *ioworker = IOManager::GetCurrentIOManager(),
               IOManager *acceptWorker = IOManager::GetCurrentIOManager());
 
@@ -20,9 +20,9 @@ public:
 
     void registMethod(RPCMethod::ptr method);
 
-    virtual RPCProtocol::ptr handleMethodRequest(RPCProtocol::ptr protocol);
+    virtual RpcProtocol::ptr handleMethodRequest(RpcProtocol::ptr protocol);
 
-    template <class F> void registMethod(const std::string &name, F func) {
+    template <typename F> void registMethod(const std::string &name, F func) {
         auto func_ptr(new RPCMethod(name, func));
         m_methods.emplace(name, func_ptr);
     }

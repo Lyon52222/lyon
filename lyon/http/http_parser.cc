@@ -2,8 +2,7 @@
 #include "lyon/config.h"
 #include "lyon/log.h"
 #include <cstdint>
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
@@ -261,5 +260,4 @@ int HttpResponseParser::isChunked() const { return m_parser.chunked; }
 int HttpResponseParser::getChunkSize() const { return m_parser.content_len; }
 
 int HttpResponseParser::isChunksDone() const { return m_parser.chunks_done; }
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http

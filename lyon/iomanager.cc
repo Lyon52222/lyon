@@ -128,7 +128,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     // Event new_event = static_cast<Event>(fd_ctx->events | event);
 
     epoll_event epevent;
-    epevent.events = EPOLLET | fd_ctx->events | event;
+    epevent.events = static_cast<Event>(EPOLLET) | fd_ctx->events | event;
     //设置事件对应的附加 数据指针，后续可以重新得到。
     epevent.data.ptr = fd_ctx;
 
@@ -196,7 +196,7 @@ bool IOManager::deleEvent(int fd, Event event) {
     int op = new_event ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
 
     epoll_event epevent;
-    epevent.events = EPOLLET | new_event;
+    epevent.events = static_cast<Event>(EPOLLET) | new_event;
     epevent.data.ptr = fd_ctx;
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if (rt) {
@@ -240,7 +240,7 @@ bool IOManager::triggerEvent(int fd, Event event) {
     int op = new_event ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
 
     epoll_event epevent;
-    epevent.events = EPOLLET | new_event;
+    epevent.events = static_cast<Event>(EPOLLET) | new_event;
     epevent.data.ptr = fd_ctx;
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if (rt) {

@@ -13,7 +13,7 @@ class RPCMethod {
 public:
   typedef std::shared_ptr<RPCMethod> ptr;
 
-  template <class F>
+  template <typename F>
   RPCMethod(const std::string &name, F func, const std::string &desc = "")
       : m_name(name), m_description(desc) {
     m_func = [func, this](Serializer &args) -> bool {
@@ -21,7 +21,7 @@ public:
     };
   }
 
-  template <class F> bool proxy(F func, Serializer &args) {
+  template <typename F> bool proxy(F func, Serializer &args) {
     using Args = typename function_traits<F>::args_type;
     //获得返回值类型
     using Ret = typename function_traits<F>::return_type;
@@ -33,9 +33,9 @@ public:
 
       constexpr auto size =
           std::tuple_size<typename std::decay<Args>::type>::value;
-      const auto &unpack =
-          [&func, &args ]<std::size_t... Index>(std::index_sequence<Index...>) {
-        return func(std::get<Index>(std::forward<Args>(args))...);
+      const auto &unpack = [&func, &args_tuple ]<std::size_t... Index>(
+          std::index_sequence<Index...>) {
+        return func(std::get<Index>(std::forward<Args>(args_tuple))...);
       };
 
       Ret rt = unpack(std::make_index_sequence<size>{});
@@ -53,9 +53,9 @@ public:
    * @param args 序列化好的参数
    * @return 调用是否成功
    */
-  bool operator()(Serializer &args) { return m_func(args); }
+  [[nodiscard]] bool operator()(Serializer &args) { return m_func(args); }
 
-  bool call(Serializer &args) { return m_func(args); }
+  [[nodiscard]] bool call(Serializer &args) { return m_func(args); }
 
   const std::string &getName() { return m_name; }
 

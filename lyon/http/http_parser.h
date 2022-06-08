@@ -1,5 +1,5 @@
-#ifndef __LYON_HTTP_HTTP_PARSER_H__
-#define __LYON_HTTP_HTTP_PARSER_H__
+#ifndef __LYON_HTTP_PARSER_H__
+#define __LYON_HTTP_PARSER_H__
 
 #include "http_common.h"
 #include "http_protocol.h"
@@ -7,8 +7,7 @@
 #include "http_response_parser.h"
 #include <cstdint>
 #include <memory>
-namespace lyon {
-namespace http {
+namespace lyon ::http {
 
 /**
  * @brief 请求协议的解析类，负责将请求报文解析成其对应的解析类
@@ -60,8 +59,6 @@ private:
     http_response_parser m_parser;
 };
 
-} // namespace http
-
-} // namespace lyon
+} // namespace lyon::http
 
 #endif // !__LYON_HTTP_HTTP_PARSER_H__

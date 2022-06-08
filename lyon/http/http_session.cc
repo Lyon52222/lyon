@@ -4,8 +4,7 @@
 #include "lyon/serialize/bytearray.h"
 #include <cstdint>
 #include <sys/types.h>
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 HttpRequest::ptr HttpSession::recvRequest() {
     HttpRequestParser::ptr request_parser(new HttpRequestParser());
@@ -78,5 +77,4 @@ int HttpSession::sendResponse(HttpResponse::ptr response) {
     return writeFixSize(str.c_str(), str.size());
 }
 
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http

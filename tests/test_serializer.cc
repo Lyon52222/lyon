@@ -64,7 +64,7 @@ void test_method() {
 
     ser.setPosition(0);
 
-    rpc_add(ser);
+    bool rt = rpc_add(ser);
 
     int ans;
 

@@ -3,10 +3,10 @@
 
 #include <functional>
 namespace lyon {
-template <class F> struct function_traits;
+template <typename F> struct function_traits;
 
 // 普通函数
-template <class Ret, class... Args> struct function_traits<Ret(Args...)> {
+template <typename Ret, typename... Args> struct function_traits<Ret(Args...)> {
     enum { arity = sizeof...(Args) };
     typedef Ret function_type(Args...);
     typedef Ret return_type;
@@ -25,17 +25,17 @@ template <class Ret, class... Args> struct function_traits<Ret(Args...)> {
 };
 
 // 函数指针
-template <class Ret, class... Args>
+template <typename Ret, typename... Args>
 struct function_traits<Ret (*)(Args...)> : function_traits<Ret(Args...)> {};
 
 // std::function
-template <class Ret, class... Args>
+template <typename Ret, typename... Args>
 struct function_traits<std::function<Ret(Args...)>>
     : function_traits<Ret(Args...)> {};
 
 // member function
 #define FUNCION_TRAITS(...)                                                    \
-    template <class ReturnType, class ClassType, class... Args>                \
+    template <typename ReturnType, typename ClassType, typename... Args>       \
     struct function_traits<ReturnType (ClassType::*)(Args...) __VA_ARGS__>     \
         : function_traits<ReturnType(Args...)> {};
 
@@ -45,7 +45,7 @@ FUNCION_TRAITS(volatile)
 FUNCION_TRAITS(const volatile)
 
 // 函数对象
-template <class Callable>
+template <typename Callable>
 struct function_traits : function_traits<decltype(&Callable::operator())> {};
 
 } // namespace lyon

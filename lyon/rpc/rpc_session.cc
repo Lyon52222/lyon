@@ -1,14 +1,11 @@
 #include "rpc_session.h"
 #include <cstdint>
-#include <lyon/serialize/bytearray.h>
-#include <lyon/serialize/serializer.h>
-#include <rpc_protocol.h>
 namespace lyon::rpc {
 
-RPCProtocol::ptr RPCSession::recvRPCProtocol() {
-    RPCProtocol::ptr protocol(new RPCProtocol());
-    ByteArray::ptr ba(new ByteArray(RPCProtocol::HEAD_LEN));
-    int rt = read(ba, RPCProtocol::HEAD_LEN);
+RpcProtocol::ptr RpcSession::recvRpcProtocol() {
+    RpcProtocol::ptr protocol(new RpcProtocol());
+    ByteArray::ptr ba(new ByteArray(RpcProtocol::HEAD_LEN));
+    int rt = read(ba, RpcProtocol::HEAD_LEN);
     if (rt <= 0) {
         return nullptr;
     }
@@ -31,7 +28,7 @@ RPCProtocol::ptr RPCSession::recvRPCProtocol() {
     return protocol;
 }
 
-int RPCSession::sendRPCProtocol(RPCProtocol::ptr protocol) {
+int RpcSession::sendRpcProtocol(RpcProtocol::ptr protocol) {
     ByteArray::ptr ba = protocol->serialize();
     return write(ba, ba->getReadableSize());
 }

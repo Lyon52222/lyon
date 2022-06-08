@@ -1,5 +1,5 @@
-#ifndef __LYON_HTTP_HTTP_SERVLET_H__
-#define __LYON_HTTP_HTTP_SERVLET_H__
+#ifndef __LYON_HTTP_SERVLET_H__
+#define __LYON_HTTP_SERVLET_H__
 #include "http_protocol.h"
 #include "http_session.h"
 #include "lyon/mutex.h"
@@ -8,8 +8,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 /**
  * @brief Servlet虚基类，用于处理request的请求,并将结果保存到response中
@@ -94,7 +93,7 @@ private:
  *
  * @tparam T Servlet类型
  */
-template <class T> class NewServletCreator : public IServletCreator {
+template <typename T> class NewServletCreator : public IServletCreator {
 public:
     typedef std::shared_ptr<NewServletCreator<T>> ptr;
     virtual Servlet::ptr create() const override { return Servlet::ptr(new T); }
@@ -181,8 +180,6 @@ private:
     std::string m_content;
 };
 
-} // namespace http
-
-} // namespace lyon
+} // namespace lyon::http
 
 #endif

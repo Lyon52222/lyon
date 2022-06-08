@@ -1,10 +1,9 @@
-#ifndef __LYON_HTTP_HTTP_SERVER_H__
-#define __LYON_HTTP_HTTP_SERVER_H__
+#ifndef __LYON_HTTP_SERVER_H__
+#define __LYON_HTTP_SERVER_H__
 #include "http_servlet.h"
 #include "lyon/tcp_server.h"
 
-namespace lyon {
-namespace http {
+namespace lyon::http {
 /**
  * @brief 在TcpServer的基础上进一步封装，将Accept的socket封装成HttpSession。
  * 并且将管理后续HttpSession接收和发送的报文。
@@ -32,6 +31,5 @@ private:
     Servlet::ptr m_servlet;
 };
 
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http
 #endif

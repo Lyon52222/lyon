@@ -1,12 +1,11 @@
-#ifndef __LYON_HTTP_HTTP_SESSION_H__
-#define __LYON_HTTP_HTTP_SESSION_H__
+#ifndef __LYON_HTTP_SESSION_H__
+#define __LYON_HTTP_SESSION_H__
 
 #include "http_protocol.h"
 #include "lyon/socket.h"
 #include "lyon/streams/socket_stream.h"
 #include <memory>
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 /**
  * @brief 在SocketStream上进一步封装的Http会话类
@@ -22,7 +21,6 @@ public:
     int sendResponse(HttpResponse::ptr response);
 };
 
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http
 
 #endif

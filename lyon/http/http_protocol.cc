@@ -2,8 +2,7 @@
 #include <cstdint>
 #include <sstream>
 #include <string.h>
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 const char *HttpStatus2String(HttpStatus status) {
     switch (status) {
@@ -205,5 +204,4 @@ std::string HttpResponse ::toString() const {
 std::ostream &operator<<(std::ostream &os, const HttpResponse &response) {
     return response.dump(os);
 }
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http

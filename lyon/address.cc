@@ -28,11 +28,11 @@ static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
  * @param bits 掩码位数
  * @return 掩码
  */
-template <class T> static T CreateMask(uint32_t bits) {
+template <typename T> static T CreateMask(uint32_t bits) {
     return (1 << (sizeof(T) * 8 - bits)) - 1;
 }
 
-template <class T> static uint32_t CountMaskLen(T mask) {
+template <typename T> static uint32_t CountMaskLen(T mask) {
     uint32_t len = 0;
     while (mask) {
         len++;

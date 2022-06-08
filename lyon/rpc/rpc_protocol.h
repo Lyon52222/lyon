@@ -15,9 +15,9 @@ namespace lyon::rpc {
  * | magic | version | type  | flag  | seq_id | content_len | content |
  * +------+
  */
-class RPCProtocol {
+class RpcProtocol {
 public:
-    typedef std::shared_ptr<RPCProtocol> ptr;
+    typedef std::shared_ptr<RpcProtocol> ptr;
 
     static constexpr uint8_t MAGIC = 0x34;
     //当前协议版本号
@@ -40,9 +40,9 @@ public:
         RPC_METHOD_RESPONSE
     };
 
-    RPCProtocol();
+    RpcProtocol();
 
-    RPCProtocol(MSG_TYPE type, uint8_t flag);
+    RpcProtocol(MSG_TYPE type, uint8_t flag);
 
     void parserHead(ByteArray::ptr ba);
     ByteArray::ptr serialize() const;
@@ -53,8 +53,8 @@ public:
     uint8_t getVersion() const { return m_version; }
 
     MSG_TYPE getType() const { return static_cast<MSG_TYPE>(m_type); }
-    bool isUrgenT() const { return m_flag & 0x02; }
-    bool isFix() const { return m_flag & 0x01; }
+    bool isUrgent() const { return m_flag & 0x02; }
+    bool isCompress() const { return m_flag & 0x01; }
     uint32_t getSeqId() const { return m_seqId; }
     uint32_t getContentLen() const { return m_contentLen; }
     const std::string &getContent() { return m_content; }
@@ -62,8 +62,8 @@ public:
     void setSeqId(uint8_t id) { m_seqId = id; }
     void setContent(const std::string &content) { m_content = content; }
 
-    static RPCProtocol::ptr CreateMethodRequest();
-    static RPCProtocol::ptr CreateMethodResponse();
+    static RpcProtocol::ptr CreateMethodRequest();
+    static RpcProtocol::ptr CreateMethodResponse();
 
 private:
     //魔法数字
@@ -74,7 +74,7 @@ private:
     uint8_t m_type = 0;
     //标记位
     // 0 0 0 0 0 0 |        0       |       0
-    //             | 数据包是否紧急 |数据是否未使用varint压缩
+    //             | 数据包是否紧急 |数据是否使用varint压缩
     uint8_t m_flag = 0x01;
     //数据包编号
     uint32_t m_seqId = 0;

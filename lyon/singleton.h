@@ -8,7 +8,7 @@ namespace lyon {
  *
  * @tparam T 单例类
  */
-template <class T> class Singleton {
+template <typename T> class Singleton {
 public:
     static T *GetInstance() {
         static T instance;
@@ -16,7 +16,7 @@ public:
     }
 };
 
-template <class T> class SingletonPtr {
+template <typename T> class SingletonPtr {
 public:
     static std::shared_ptr<T> GetInstalce() {
         static std::shared_ptr<T> instance(new T);

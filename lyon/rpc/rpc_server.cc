@@ -1,51 +1,59 @@
 #include "rpc_server.h"
 #include "rpc_method.h"
-#include <rpc_protocol.h>
-#include <rpc_session.h>
+#include "rpc_protocol.h"
+#include "rpc_result.h"
+#include "rpc_session.h"
 namespace lyon::rpc {
 
-RPCServer::RPCServer(IOManager *worker, IOManager *ioworker,
+RpcServer::RpcServer(IOManager *worker, IOManager *ioworker,
                      IOManager *acceptWorker)
     : TcpServer(worker, ioworker, acceptWorker) {}
 
-void RPCServer::handleClient(Socket::ptr sock) {
-    RPCSession::ptr session(new RPCSession(sock));
+void RpcServer::handleClient(Socket::ptr sock) {
+    RpcSession::ptr session(new RpcSession(sock));
 
-    RPCProtocol::ptr request = session->recvRPCProtocol();
-    RPCProtocol::ptr response;
+    RpcProtocol::ptr request = session->recvRpcProtocol();
+    RpcProtocol::ptr response;
 
-    if (request->getType() == RPCProtocol::MSG_TYPE::RPC_METHOD_REQUEST) {
+    if (request->getType() == RpcProtocol::MSG_TYPE::RPC_METHOD_REQUEST) {
         response = handleMethodRequest(request);
     }
 
     if (response)
-        session->sendRPCProtocol(response);
+        session->sendRpcProtocol(response);
 }
 
-RPCProtocol::ptr RPCServer::handleMethodRequest(RPCProtocol::ptr request) {
-    Serializer content(request->getContent(), request->isFix());
+RpcProtocol::ptr RpcServer::handleMethodRequest(RpcProtocol::ptr request) {
+    Serializer content(request->getContent(), request->isCompress());
     std::string method_name;
     content >> method_name;
 
-    RPCProtocol::ptr response = RPCProtocol::CreateMethodResponse();
+    RpcProtocol::ptr response = RpcProtocol::CreateMethodResponse();
     response->setSeqId(request->getSeqId());
+
+    // RpcResult<>::ptr result;
+    std::unique_ptr<RpcResult<>> result;
     if (!m_methods.contains(method_name)) {
-        response->setContent("method not found");
+        result = std::make_unique<RpcResult<>>(RpcResultState::METHOD_NOT_FOUND,
+                                               "method not found");
     } else {
         if (m_methods[method_name]->call(content)) {
-            response->setContent(content.toString());
+            result = std::make_unique<RpcResult<>>(RpcResultState::OK, "OK");
+            // TODO:这里要考虑如何将返回值直接存放为可以使用Serializer反序列化的数据
         } else {
-            response->setContent("call method error");
+            result = std::make_unique<RpcResult<>>(
+                RpcResultState::METHOD_RUN_ERROR, "method run error");
         }
     }
+    response->setContent(result->toString());
     return response;
 }
 
-void RPCServer::registMethod(RPCMethod::ptr method) {
+void RpcServer::registMethod(RPCMethod::ptr method) {
     m_methods.emplace(method->getName(), method);
 }
 
-RPCMethod::ptr RPCServer::getMethod(const std::string &name) {
+RPCMethod::ptr RpcServer::getMethod(const std::string &name) {
     auto itr = m_methods.find(name);
     if (itr == m_methods.end()) {
         return nullptr;

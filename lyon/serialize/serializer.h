@@ -19,9 +19,9 @@ class Serializer {
 public:
     typedef std::shared_ptr<Serializer> ptr;
 
-    Serializer(size_t ba_size = 4096, bool fix = false);
-    Serializer(ByteArray::ptr ba, bool fix);
-    Serializer(const std::string &str, bool fix);
+    Serializer(bool compress = true);
+    Serializer(ByteArray::ptr ba, bool compress);
+    Serializer(const std::string &str, bool compress);
 
     void setPosition(size_t position);
 
@@ -34,142 +34,147 @@ public:
     ByteArray::ptr getByteArray() const { return m_ba; }
 
     //因为这里必须要用到constexpr，所以项目在这里变更为C17
-    template <class T> void writeF(const T &v) const {
-        if constexpr (std::is_same<T, int8_t>::value) {
+    template <typename T> void writeF(const T &v) const {
+        if constexpr (std::is_same_v<T, int8_t>) {
             m_ba->writeFint8(v);
-        } else if constexpr (std::is_same<T, uint8_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint8_t>) {
             m_ba->writeFuint8(v);
-        } else if constexpr (std::is_same<T, int16_t>::value) {
+        } else if constexpr (std::is_same_v<T, int16_t>) {
             m_ba->writeFint16(v);
-        } else if constexpr (std::is_same<T, uint16_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint16_t>) {
             m_ba->writeFuint16(v);
-        } else if constexpr (std::is_same<T, int32_t>::value) {
+        } else if constexpr (std::is_same_v<T, int32_t>) {
             m_ba->writeFint32(v);
-        } else if constexpr (std::is_same<T, uint32_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint32_t>) {
             m_ba->writeFuint32(v);
-        } else if constexpr (std::is_same<T, int64_t>::value) {
+        } else if constexpr (std::is_same_v<T, int64_t>) {
             m_ba->writeFint64(v);
-        } else if constexpr (std::is_same<T, uint64_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint64_t>) {
             m_ba->writeFuint64(v);
-        } else if constexpr (std::is_same<T, float>::value) {
+        } else if constexpr (std::is_same_v<T, float>) {
             m_ba->writeFloat(v);
-        } else if constexpr (std::is_same<T, double>::value) {
+        } else if constexpr (std::is_same_v<T, double>) {
             m_ba->writeDouble(v);
-        } else if constexpr (std::is_same<T, std::string>::value) {
+        } else if constexpr (std::is_same_v<T, std::string>) {
             m_ba->writeStringF64(v);
-        } else if constexpr (std::is_same<T, const char *>::value) {
+        } else if constexpr (std::is_same_v<T, const char *>) {
+            m_ba->writeStringF64(std::string(v));
+        } else if constexpr (std::is_same_v<T, char *>) {
             m_ba->writeStringF64(std::string(v));
         }
     }
 
-    template <class T> void write(const T &v) const {
-        if (m_fix) {
+    template <typename T> void write(const T &v) const {
+        if (!m_compress) {
             writeF(v);
             return;
         }
-        if constexpr (std::is_same<T, int8_t>::value) {
+        if constexpr (std::is_same_v<T, int8_t>) {
             m_ba->writeFint8(v);
-        } else if constexpr (std::is_same<T, uint8_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint8_t>) {
             m_ba->writeFuint8(v);
-        } else if constexpr (std::is_same<T, int16_t>::value) {
+        } else if constexpr (std::is_same_v<T, int16_t>) {
             m_ba->writeFint16(v);
-        } else if constexpr (std::is_same<T, uint16_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint16_t>) {
             m_ba->writeFuint16(v);
-        } else if constexpr (std::is_same<T, int32_t>::value) {
+        } else if constexpr (std::is_same_v<T, int32_t>) {
             m_ba->writeInt32(v);
-        } else if constexpr (std::is_same<T, uint32_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint32_t>) {
             m_ba->writeUint32(v);
-        } else if constexpr (std::is_same<T, int64_t>::value) {
+        } else if constexpr (std::is_same_v<T, int64_t>) {
             m_ba->writeInt64(v);
-        } else if constexpr (std::is_same<T, uint64_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint64_t>) {
             m_ba->writeUint64(v);
-        } else if constexpr (std::is_same<T, float>::value) {
+        } else if constexpr (std::is_same_v<T, float>) {
             m_ba->writeFloat(v);
-        } else if constexpr (std::is_same<T, double>::value) {
+        } else if constexpr (std::is_same_v<T, double>) {
             m_ba->writeDouble(v);
-        } else if constexpr (std::is_same<T, std::string>::value) {
+        } else if constexpr (std::is_same_v<T, std::string>) {
             m_ba->writeStringVarint(v);
-        } else if constexpr (std::is_same<T, const char *>::value) {
+        } else if constexpr (std::is_same_v<T, const char *>) {
+            m_ba->writeStringVarint(std::string(v));
+        } else if constexpr (std::is_same_v<T, char *>) {
             m_ba->writeStringVarint(std::string(v));
         }
     }
 
-    template <class T> void readF(T &v) const {
-        if constexpr (std::is_same<T, int8_t>::value) {
+    template <typename T> void readF(T &v) const {
+        if constexpr (std::is_same_v<T, int8_t>) {
             v = m_ba->readFint8();
-        } else if constexpr (std::is_same<T, uint8_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint8_t>) {
             v = m_ba->readFuint8();
-        } else if constexpr (std::is_same<T, int16_t>::value) {
+        } else if constexpr (std::is_same_v<T, int16_t>) {
             v = m_ba->readFint16();
-        } else if constexpr (std::is_same<T, uint16_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint16_t>) {
             v = m_ba->readFuint16();
-        } else if constexpr (std::is_same<T, int32_t>::value) {
+        } else if constexpr (std::is_same_v<T, int32_t>) {
             v = m_ba->readFint32();
-        } else if constexpr (std::is_same<T, uint32_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint32_t>) {
             v = m_ba->readFuint32();
-        } else if constexpr (std::is_same<T, int64_t>::value) {
+        } else if constexpr (std::is_same_v<T, int64_t>) {
             v = m_ba->readFint64();
-        } else if constexpr (std::is_same<T, uint64_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint64_t>) {
             v = m_ba->readFuint64();
-        } else if constexpr (std::is_same<T, float>::value) {
+        } else if constexpr (std::is_same_v<T, float>) {
             v = m_ba->readFloat();
-        } else if constexpr (std::is_same<T, double>::value) {
+        } else if constexpr (std::is_same_v<T, double>) {
             v = m_ba->readDouble();
-        } else if constexpr (std::is_same<T, std::string>::value) {
-            v = m_ba->readStringVarint();
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            v = m_ba->readStringF64();
         }
     }
 
-    template <class T> void read(T &v) const {
-        if (m_fix) {
+    template <typename T> void read(T &v) const {
+        if (!m_compress) {
             readF(v);
             return;
         }
-        if constexpr (std::is_same<T, int8_t>::value) {
+        if constexpr (std::is_same_v<T, int8_t>) {
             v = m_ba->readFint8();
-        } else if constexpr (std::is_same<T, uint8_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint8_t>) {
             v = m_ba->readFuint8();
-        } else if constexpr (std::is_same<T, int16_t>::value) {
+        } else if constexpr (std::is_same_v<T, int16_t>) {
             v = m_ba->readFint16();
-        } else if constexpr (std::is_same<T, uint16_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint16_t>) {
             v = m_ba->readFuint16();
-        } else if constexpr (std::is_same<T, int32_t>::value) {
+        } else if constexpr (std::is_same_v<T, int32_t>) {
             v = m_ba->readInt32();
-        } else if constexpr (std::is_same<T, uint32_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint32_t>) {
             v = m_ba->readUint32();
-        } else if constexpr (std::is_same<T, int64_t>::value) {
+        } else if constexpr (std::is_same_v<T, int64_t>) {
             v = m_ba->readInt64();
-        } else if constexpr (std::is_same<T, uint64_t>::value) {
+        } else if constexpr (std::is_same_v<T, uint64_t>) {
             v = m_ba->readUint64();
-        } else if constexpr (std::is_same<T, float>::value) {
+        } else if constexpr (std::is_same_v<T, float>) {
             v = m_ba->readFloat();
-        } else if constexpr (std::is_same<T, double>::value) {
+        } else if constexpr (std::is_same_v<T, double>) {
             v = m_ba->readDouble();
-        } else if constexpr (std::is_same<T, std::string>::value) {
+        } else if constexpr (std::is_same_v<T, std::string>) {
             v = m_ba->readStringVarint();
         }
     }
 
 private:
-    bool m_fix;
+    bool m_compress;
     ByteArray::ptr m_ba;
 };
 
-template <class T>
+template <typename T>
 const Serializer &operator<<(const Serializer &ser, const T &v) {
     ser.write(v);
     return ser;
 }
 
-template <class T> const Serializer &operator>>(const Serializer &ser, T &v) {
+template <typename T>
+const Serializer &operator>>(const Serializer &ser, T &v) {
     ser.read(v);
     return ser;
 }
 
-template <class... Args>
+template <typename... Args>
 const Serializer &operator<<(const Serializer &ser,
                              const std::tuple<Args...> &args) {
-    const auto &unpack = [&ser]<class Tuple, std::size_t... Index>(
+    const auto &unpack = [&ser]<typename Tuple, std::size_t... Index>(
                              const Tuple &t, std::index_sequence<Index...>) {
         //引用折叠。这里是二元左折叠。
         //展开后的代码为 ((ser<<get<Index0>(t))<<get<Index1>(t)...)
@@ -180,9 +185,9 @@ const Serializer &operator<<(const Serializer &ser,
     return ser;
 }
 
-template <class... Args>
+template <typename... Args>
 const Serializer &operator>>(const Serializer &ser, std::tuple<Args...> &args) {
-    const auto &pack = [&ser]<class Tuple, std::size_t... Index>(
+    const auto &pack = [&ser]<typename Tuple, std::size_t... Index>(
                            Tuple &t, std::index_sequence<Index...>) {
         (ser >> ... >> std::get<Index>(t));
     };
@@ -191,7 +196,7 @@ const Serializer &operator>>(const Serializer &ser, std::tuple<Args...> &args) {
     return ser;
 }
 
-template <class T>
+template <typename T>
 const Serializer &operator<<(const Serializer &ser, const std::vector<T> &v) {
     ser << v.size();
     for (size_t i = 0; i < v.size(); ++i) {
@@ -200,7 +205,7 @@ const Serializer &operator<<(const Serializer &ser, const std::vector<T> &v) {
     return ser;
 }
 
-template <class T>
+template <typename T>
 const Serializer &operator>>(const Serializer &ser, std::vector<T> &v) {
     decltype(v.size()) size;
     ser >> size;
@@ -212,7 +217,7 @@ const Serializer &operator>>(const Serializer &ser, std::vector<T> &v) {
     return ser;
 }
 
-template <class T>
+template <typename T>
 const Serializer &operator<<(const Serializer &ser, const std::list<T> &v) {
     ser << v.size();
     for (size_t i = 0; i < v.size(); ++i) {
@@ -221,7 +226,7 @@ const Serializer &operator<<(const Serializer &ser, const std::list<T> &v) {
     return ser;
 }
 
-template <class T>
+template <typename T>
 const Serializer &operator>>(const Serializer &ser, std::list<T> &v) {
     decltype(v.size()) size;
     ser >> size;
@@ -233,19 +238,19 @@ const Serializer &operator>>(const Serializer &ser, std::list<T> &v) {
     return ser;
 }
 
-template <class F, class S>
+template <typename F, typename S>
 const Serializer &operator<<(const Serializer &ser, const std::pair<F, S> &v) {
     ser << v.first << v.second;
     return ser;
 }
 
-template <class F, class S>
+template <typename F, typename S>
 const Serializer &operator>>(const Serializer &ser, const std::pair<F, S> &v) {
     ser >> v.first >> v.second;
     return ser;
 }
 
-template <class K, class V>
+template <typename K, typename V>
 const Serializer &operator<<(const Serializer &ser, const std::map<K, V> &v) {
     ser << v.size();
     for (auto &i : v) {
@@ -254,7 +259,7 @@ const Serializer &operator<<(const Serializer &ser, const std::map<K, V> &v) {
     return ser;
 }
 
-template <class K, class V>
+template <typename K, typename V>
 const Serializer &operator>>(const Serializer &ser, std::map<K, V> &v) {
     decltype(v.size()) size;
     ser >> size;

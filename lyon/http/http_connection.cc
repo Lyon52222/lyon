@@ -8,8 +8,7 @@
 #include <lyon/util.h>
 #include <memory>
 #include <sstream>
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
@@ -479,5 +478,4 @@ HttpConnectionPool::doRequest(HttpMethod method, const std::string &path,
     request->setBody(body);
     return doRequest(request, timeout_ms);
 }
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http

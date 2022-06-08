@@ -43,8 +43,12 @@ set(
   lyon/http/http_server.cc
   lyon/http/http_servlet.cc
   lyon/http/http_connection.cc
+  lyon/rpc/rpc_protocol.cc
   lyon/rpc/rpc_method.cc
+  lyon/rpc/rpc_result.cc
+  lyon/rpc/rpc_session.cc
   lyon/rpc/rpc_server.cc
+  lyon/rpc/rpc_client.cc
 )
 
 # 使用ragel解析src_rl文件并且将解析文件保存到outputdir下。

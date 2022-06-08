@@ -8,13 +8,13 @@
 
 namespace lyon::rpc {
 
-class RPCSession : public SocketStream {
+class RpcSession : public SocketStream {
 public:
-    typedef std::shared_ptr<RPCSession> ptr;
+    typedef std::shared_ptr<RpcSession> ptr;
 
-    RPCSession(Socket::ptr sock) : SocketStream(sock) {}
-    RPCProtocol::ptr recvRPCProtocol();
-    int sendRPCProtocol(RPCProtocol::ptr protocol);
+    RpcSession(Socket::ptr sock) : SocketStream(sock) {}
+    RpcProtocol::ptr recvRpcProtocol();
+    int sendRpcProtocol(RpcProtocol::ptr protocol);
 };
 
 } // namespace lyon::rpc

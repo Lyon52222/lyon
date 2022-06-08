@@ -1,8 +1,7 @@
 #include "http_server.h"
 #include "http_session.h"
 #include "lyon/log.h"
-namespace lyon {
-namespace http {
+namespace lyon::http {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
@@ -36,5 +35,4 @@ void HttpServer::handleClient(Socket::ptr sock) {
     session->close();
 }
 
-} // namespace http
-} // namespace lyon
+} // namespace lyon::http
