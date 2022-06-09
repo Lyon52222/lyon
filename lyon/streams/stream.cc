@@ -17,7 +17,6 @@ int Stream::readFixSize(void *buffer, size_t size) {
 int Stream::readFixSize(ByteArray::ptr bytearray, size_t size) {
     size_t remaind = size;
     while (remaind > 0) {
-        // std::cout << remaind << std::endl;
         size_t readed = read(bytearray, remaind);
         if (readed <= 0) {
             return readed;

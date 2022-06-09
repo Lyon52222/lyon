@@ -153,9 +153,6 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     //获取对应事件的事件描述上下文
     auto &event_ctx = fd_ctx->getEventContext(event);
 
-    LYON_LOG_INFO(g_logger)
-        << "addevent fd = " << fd << " event = " << (EPOLL_EVENTS)event;
-
     LYON_ASSERT(!event_ctx.cb && !event_ctx.fiber && !event_ctx.scheduler);
 
     event_ctx.scheduler = GetCurrentScheduler();

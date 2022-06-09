@@ -23,17 +23,17 @@ enum class RpcResultState : std::uint8_t {
     ARGS_ERROR
 };
 
-struct ResultType {};
-
 /**
  * @brief RPC请求后返回的具体内容
  *
  * @tparam T 返回值的类型
  */
-template <typename T = ResultType> class RpcResult {
+template <typename T = std::string> class RpcResult {
 public:
     typedef T type;
     typedef std::shared_ptr<RpcResult> ptr;
+
+    RpcResult() {}
 
     RpcResult(RpcResultState state, const std::string &msg) : m_msg(msg) {
         m_state = static_cast<uint8_t>(state);
@@ -52,8 +52,32 @@ public:
      *
      */
     std::string toString() {
-        // TODO:
-        return "";
+        Serializer ser;
+        ser << m_state << m_msg;
+        return ser.toString();
+    }
+
+    friend const Serializer &operator<<(const Serializer &ser,
+                                        RpcResult<T> &ret) {
+        ser << ret.m_state << ret.m_msg;
+        if (ret.m_state !=
+                static_cast<uint8_t>(RpcResultState::METHOD_NOT_FOUND) &&
+            ret.m_state !=
+                static_cast<uint8_t>(RpcResultState::METHOD_RUN_ERROR))
+            ser << ret.m_val;
+        return ser;
+    }
+
+    friend const Serializer &operator>>(const Serializer &ser,
+                                        RpcResult<T> &ret) {
+        ser >> ret.m_state >> ret.m_msg;
+        //这里的状态表示返回值信息是无效的。
+        if (ret.m_state !=
+                static_cast<uint8_t>(RpcResultState::METHOD_NOT_FOUND) &&
+            ret.m_state !=
+                static_cast<uint8_t>(RpcResultState::METHOD_RUN_ERROR))
+            ser >> ret.m_val;
+        return ser;
     }
 
 private:
@@ -61,23 +85,6 @@ private:
     std::string m_msg;
     T m_val;
 };
-
-template <typename T = std::string>
-const Serializer &operator<<(const Serializer &ser, RpcResult<T> &ret) {
-    ser << ret.m_state << ret.m_msg;
-    if (ret.m_state != RpcResultState::METHOD_NOT_FOUND)
-        ser << ret.m_val;
-    return ser;
-}
-
-template <typename T>
-const Serializer &operator>>(const Serializer &ser, RpcResult<T> &ret) {
-    ser >> ret.m_state >> ret.m_msg;
-    //这里的状态表示返回值信息是无效的。
-    if (ret.m_state != RpcResultState::METHOD_NOT_FOUND)
-        ser >> ret.m_val;
-    return ser;
-}
 
 } // namespace lyon::rpc
 

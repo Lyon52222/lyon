@@ -91,6 +91,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_http_connection "tests/test_http_connection.cc" lyon "${LIBS}")
   lyon_add_executable(test_traits "tests/test_traits.cc" lyon "${LIBS}")
   lyon_add_executable(test_rpc_server "tests/test_rpc_server.cc" lyon "${LIBS}")
+  lyon_add_executable(test_rpc_client "tests/test_rpc_client.cc" lyon "${LIBS}")
 
 endif()
 

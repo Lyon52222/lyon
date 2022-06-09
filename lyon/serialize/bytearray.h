@@ -68,10 +68,31 @@ public:
      */
     size_t testCapacity(size_t size);
 
+    /**
+     * @brief 获取当前操作的位置
+     *
+     * @return 当前操作位置
+     */
     size_t getPosition() const { return m_position; }
+
+    size_t getSize() const { return m_size; }
+
+    /**
+     * @brief 重新设置当前操作位置
+     *
+     * @param position 位置
+     * @return 设置是否成功
+     */
     bool setPosition(size_t position);
 
+    /**
+     * @brief 将自己的可读取空间映射到iovec数组中
+     *
+     * @param buffers iovec数组
+     * @param size 需要映射的大小
+     */
     void getReadBuffer(std::vector<iovec> &buffers, size_t size);
+
     void getReadBuffer(std::vector<iovec> &buffers, size_t size,
                        size_t position);
     /**

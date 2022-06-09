@@ -101,21 +101,22 @@ void ByteArray::getReadBuffer(std::vector<iovec> &buffers, size_t size) {
     }
     size_t npos = m_position % m_baseSize;
     size_t ncap = m_cur->size - npos;
+    Node *cur = m_cur;
     while (size > 0) {
         iovec buffer;
         if (size <= ncap) {
-            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = size;
             //这里只是将自己的内存空间借出去，具体用了多少需要调用setPosition来设置。
             // m_position += size;
             size = 0;
         } else {
-            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = ncap;
             // m_position += ncap;
             size -= ncap;
-            m_cur = m_cur->next;
-            ncap = m_cur->size;
+            cur = cur->next;
+            ncap = cur->size;
             npos = 0;
         }
         buffers.push_back(buffer);
@@ -129,20 +130,21 @@ void ByteArray::getWriteBuffer(std::vector<iovec> &buffers, size_t size) {
     testCapacity(size);
     size_t npos = m_position % m_baseSize;
     size_t ncap = m_cur->size - npos;
+    Node *cur = m_cur;
     while (size > 0) {
         iovec buffer;
         if (size <= ncap) {
-            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = size;
             // m_position += size;
             size = 0;
         } else {
-            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = ncap;
             // m_position += ncap;
             size -= ncap;
-            m_cur = m_cur->next;
-            ncap = m_cur->size;
+            cur = cur->next;
+            ncap = cur->size;
             npos = 0;
         }
         buffers.push_back(buffer);
@@ -156,19 +158,25 @@ void ByteArray::getReadBuffer(std::vector<iovec> &buffers, size_t size,
         throw std::out_of_range("ByteArray::getReadBuffer out of range");
     }
     size_t npos = position % m_baseSize;
-    size_t ncap = m_cur->size - npos;
+    Node *cur = m_cur;
+    size_t count = position / m_baseSize;
+    while (count > 0) {
+        cur = cur->next;
+        --count;
+    }
+    size_t ncap = cur->size - npos;
     while (size > 0) {
         iovec buffer;
         if (size <= ncap) {
-            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = size;
             size = 0;
         } else {
-            buffer.iov_base = m_cur->ptr + npos;
+            buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = ncap;
             size -= ncap;
-            m_cur = m_cur->next;
-            ncap = m_cur->size;
+            cur = cur->next;
+            ncap = cur->size;
             npos = 0;
         }
         buffers.push_back(buffer);

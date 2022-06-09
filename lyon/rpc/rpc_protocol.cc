@@ -1,5 +1,6 @@
 #include "rpc_protocol.h"
 #include <cstdint>
+#include <sstream>
 namespace lyon::rpc {
 
 std::atomic<uint64_t> RpcProtocol::m_id = {0};
@@ -28,7 +29,6 @@ ByteArray::ptr RpcProtocol::serialize() const {
     ba->writeFuint32(m_seqId);
     ba->writeFuint32(m_contentLen);
     ba->writeStringRaw(m_content);
-
     return ba;
 }
 
@@ -40,15 +40,30 @@ bool RpcProtocol::isValid() const {
     return true;
 }
 
+void RpcProtocol::setContent(const std::string &content) {
+    m_content = content;
+    m_contentLen = m_content.size();
+}
+
+std::string RpcProtocol::toString() const {
+    std::stringstream ss;
+    ss << "[" << static_cast<unsigned>(m_magic) << "|"
+       << static_cast<unsigned>(m_version) << "|"
+       << static_cast<unsigned>(m_type) << "|" << static_cast<unsigned>(m_flag)
+       << "|" << m_seqId << "|" << m_contentLen << "|" << m_content << "]";
+    return ss.str();
+}
+
 RpcProtocol::ptr RpcProtocol::CreateMethodRequest() {
     RpcProtocol::ptr protocol(
         new RpcProtocol(MSG_TYPE::RPC_METHOD_REQUEST, 0x01));
     protocol->setSeqId(++m_id);
     return protocol;
 }
-RpcProtocol::ptr RpcProtocol::CreateMethodResponse() {
+RpcProtocol::ptr RpcProtocol::CreateMethodResponse(uint32_t seq_id) {
     RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_METHOD_REQUEST, 0x01));
+        new RpcProtocol(MSG_TYPE::RPC_METHOD_RESPONSE, 0x01));
+    protocol->setSeqId(seq_id);
     return protocol;
 }
 

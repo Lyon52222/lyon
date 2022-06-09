@@ -14,6 +14,7 @@ Serializer::Serializer(const std::string &str, bool compress)
     : m_compress(compress) {
     m_ba = std::make_shared<ByteArray>();
     m_ba->loadFromStr(str);
+    m_ba->setPosition(0);
 }
 void Serializer::setPosition(size_t position) { m_ba->setPosition(position); }
 

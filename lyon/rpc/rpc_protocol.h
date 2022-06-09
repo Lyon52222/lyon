@@ -60,10 +60,12 @@ public:
     const std::string &getContent() { return m_content; }
 
     void setSeqId(uint8_t id) { m_seqId = id; }
-    void setContent(const std::string &content) { m_content = content; }
+    void setContent(const std::string &content);
+
+    std::string toString() const;
 
     static RpcProtocol::ptr CreateMethodRequest();
-    static RpcProtocol::ptr CreateMethodResponse();
+    static RpcProtocol::ptr CreateMethodResponse(uint32_t seq_id);
 
 private:
     //魔法数字

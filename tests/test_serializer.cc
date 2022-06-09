@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <iostream>
 #include <lyon/rpc/rpc_method.h>
+#include <lyon/rpc/rpc_protocol.h>
 
 void test_int() {
     lyon::Serializer ser;
@@ -73,8 +74,14 @@ void test_method() {
     std::cout << ans << std::endl;
 }
 
+void test_protocol() {
+    lyon::rpc::RpcProtocol proto;
+    std::cout << proto.toString() << std::endl;
+}
+
 int main(int argc, char *argv[]) {
     // test_args();
-    test_method();
+    // test_method();
+    test_protocol();
     return 0;
 }

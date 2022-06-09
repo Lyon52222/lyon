@@ -5,6 +5,7 @@
 #include <bits/utility.h>
 #include <iostream>
 #include <list>
+#include <lyon/log.h>
 #include <map>
 #include <memory>
 #include <set>
@@ -61,6 +62,9 @@ public:
             m_ba->writeStringF64(std::string(v));
         } else if constexpr (std::is_same_v<T, char *>) {
             m_ba->writeStringF64(std::string(v));
+        } else {
+            LYON_LOG_DEBUG(LYON_LOG_GET_LOGGER("system"))
+                << "Type: " << typeid(T).name() << " not suport serializer";
         }
     }
 
@@ -95,6 +99,9 @@ public:
             m_ba->writeStringVarint(std::string(v));
         } else if constexpr (std::is_same_v<T, char *>) {
             m_ba->writeStringVarint(std::string(v));
+        } else {
+            LYON_LOG_DEBUG(LYON_LOG_GET_LOGGER("system"))
+                << "Type: " << typeid(T).name() << " not suport serializer";
         }
     }
 
@@ -121,6 +128,9 @@ public:
             v = m_ba->readDouble();
         } else if constexpr (std::is_same_v<T, std::string>) {
             v = m_ba->readStringF64();
+        } else {
+            LYON_LOG_DEBUG(LYON_LOG_GET_LOGGER("system"))
+                << "Type: " << typeid(T).name() << " not suport serializer";
         }
     }
 
@@ -151,6 +161,9 @@ public:
             v = m_ba->readDouble();
         } else if constexpr (std::is_same_v<T, std::string>) {
             v = m_ba->readStringVarint();
+        } else {
+            LYON_LOG_DEBUG(LYON_LOG_GET_LOGGER("system"))
+                << "Type: " << typeid(T).name() << " not suport serializer";
         }
     }
 

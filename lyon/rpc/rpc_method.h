@@ -30,7 +30,6 @@ public:
     try {
       args >> args_tuple;
       args.clear();
-
       constexpr auto size =
           std::tuple_size<typename std::decay<Args>::type>::value;
       const auto &unpack = [&func, &args_tuple ]<std::size_t... Index>(
