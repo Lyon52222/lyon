@@ -13,7 +13,7 @@ static const int uri_parser_error = 0;
 static const int uri_parser_en_main = 453;
 
 
-#line 125 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 120 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 
 
 Uri::ptr Uri::Parser(const std::string &uristr) {
@@ -26,7 +26,7 @@ Uri::ptr Uri::Parser(const std::string &uristr) {
 	cs = uri_parser_start;
 	}
 
-#line 132 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 127 "/home/lyon/code/C++/lyon/lyon/uri.rl"
     const char *p = uristr.c_str();
     const char *pe = p + uristr.size();
     const char *eof = pe;
@@ -96,17 +96,15 @@ cs = 0;
 tr467:
 #line 17 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 96 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 93 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setQuery(std::string(mark, p - mark));
         mark = NULL;
     }
 	goto st455;
 tr469:
-#line 96 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 93 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setQuery(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -114,19 +112,17 @@ tr469:
 tr475:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 	goto st455;
 tr486:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -154,41 +150,36 @@ tr494:
 tr554:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
 	goto st455;
 tr565:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
 	goto st455;
 tr569:
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -203,9 +194,8 @@ tr572:
         }
         mark = NULL;
     }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -220,9 +210,8 @@ tr576:
     }
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -231,7 +220,7 @@ st455:
 	if ( ++p == pe )
 		goto _test_eof455;
 case 455:
-#line 235 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 224 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 37: goto tr463;
 		case 60: goto st0;
@@ -259,7 +248,7 @@ st456:
 	if ( ++p == pe )
 		goto _test_eof456;
 case 456:
-#line 263 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 252 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 37: goto st1;
 		case 60: goto st0;
@@ -287,7 +276,7 @@ st1:
 	if ( ++p == pe )
 		goto _test_eof1;
 case 1:
-#line 291 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 280 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto st2;
@@ -339,19 +328,17 @@ case 4:
 tr477:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 	goto st457;
 tr487:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -380,7 +367,7 @@ st457:
 	if ( ++p == pe )
 		goto _test_eof457;
 case 457:
-#line 384 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 371 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 34: goto st0;
 		case 35: goto st455;
@@ -429,19 +416,17 @@ case 6:
 tr483:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 	goto st458;
 tr489:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -469,41 +454,36 @@ tr497:
 tr562:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
 	goto st458;
 tr568:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
 	goto st458;
 tr571:
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -518,9 +498,8 @@ tr575:
         }
         mark = NULL;
     }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -535,9 +514,8 @@ tr579:
     }
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -546,7 +524,7 @@ st458:
 	if ( ++p == pe )
 		goto _test_eof458;
 case 458:
-#line 550 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 528 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 34: goto st0;
 		case 35: goto tr467;
@@ -573,7 +551,7 @@ st459:
 	if ( ++p == pe )
 		goto _test_eof459;
 case 459:
-#line 577 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 555 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 34: goto st0;
 		case 35: goto tr469;
@@ -600,7 +578,7 @@ st7:
 	if ( ++p == pe )
 		goto _test_eof7;
 case 7:
-#line 604 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 582 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto st8;
@@ -690,7 +668,7 @@ st9:
 	if ( ++p == pe )
 		goto _test_eof9;
 case 9:
-#line 694 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 672 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 32: goto st10;
 		case 48: goto st10;
@@ -705,7 +683,7 @@ st10:
 	if ( ++p == pe )
 		goto _test_eof10;
 case 10:
-#line 709 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 687 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto st11;
 	goto st0;
@@ -837,19 +815,17 @@ case 462:
 tr508:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 	goto st463;
 tr488:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -858,7 +834,7 @@ st463:
 	if ( ++p == pe )
 		goto _test_eof463;
 case 463:
-#line 862 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 838 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 35: goto tr490;
 		case 47: goto tr491;
@@ -875,7 +851,7 @@ st464:
 	if ( ++p == pe )
 		goto _test_eof464;
 case 464:
-#line 879 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 855 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 35: goto tr494;
 		case 47: goto tr495;
@@ -1014,7 +990,7 @@ st468:
 	if ( ++p == pe )
 		goto _test_eof468;
 case 468:
-#line 1018 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 994 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st468;
 		case 35: goto tr486;
@@ -1044,7 +1020,7 @@ st32:
 	if ( ++p == pe )
 		goto _test_eof32;
 case 32:
-#line 1048 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1024 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto st33;
@@ -1070,19 +1046,17 @@ case 33:
 tr482:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 	goto st469;
 tr500:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -1091,7 +1065,7 @@ st469:
 	if ( ++p == pe )
 		goto _test_eof469;
 case 469:
-#line 1095 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1069 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st34;
 		case 35: goto tr490;
@@ -1172,7 +1146,6 @@ tr38:
 #line 33 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setUserinfo(std::string(mark, p - mark));
         }
         mark = NULL;
@@ -1184,7 +1157,6 @@ tr484:
 #line 33 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setUserinfo(std::string(mark, p - mark));
         }
         mark = NULL;
@@ -1194,7 +1166,7 @@ st470:
 	if ( ++p == pe )
 		goto _test_eof470;
 case 470:
-#line 1198 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1170 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 2: goto tr472;
 		case 32: goto tr473;
@@ -1233,7 +1205,7 @@ st471:
 	if ( ++p == pe )
 		goto _test_eof471;
 case 471:
-#line 1237 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1209 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st471;
 		case 35: goto tr486;
@@ -1262,7 +1234,7 @@ st37:
 	if ( ++p == pe )
 		goto _test_eof37;
 case 37:
-#line 1266 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1238 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto st38;
@@ -1293,7 +1265,7 @@ st472:
 	if ( ++p == pe )
 		goto _test_eof472;
 case 472:
-#line 1297 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1269 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st471;
 		case 35: goto tr486;
@@ -1738,7 +1710,7 @@ st488:
 	if ( ++p == pe )
 		goto _test_eof488;
 case 488:
-#line 1742 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1714 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st471;
 		case 35: goto tr486;
@@ -1772,7 +1744,7 @@ st489:
 	if ( ++p == pe )
 		goto _test_eof489;
 case 489:
-#line 1776 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1748 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st471;
 		case 35: goto tr486;
@@ -1806,7 +1778,7 @@ st490:
 	if ( ++p == pe )
 		goto _test_eof490;
 case 490:
-#line 1810 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1782 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st471;
 		case 35: goto tr486;
@@ -1864,7 +1836,7 @@ st39:
 	if ( ++p == pe )
 		goto _test_eof39;
 case 39:
-#line 1868 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 1840 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 58: goto st147;
 		case 118: goto st226;
@@ -4723,7 +4695,7 @@ st492:
 	if ( ++p == pe )
 		goto _test_eof492;
 case 492:
-#line 4727 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 4699 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st34;
 		case 35: goto tr494;
@@ -4758,7 +4730,7 @@ st493:
 	if ( ++p == pe )
 		goto _test_eof493;
 case 493:
-#line 4762 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 4734 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st468;
 		case 35: goto tr486;
@@ -5219,7 +5191,7 @@ st509:
 	if ( ++p == pe )
 		goto _test_eof509;
 case 509:
-#line 5223 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5195 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st468;
 		case 35: goto tr486;
@@ -5254,7 +5226,7 @@ st510:
 	if ( ++p == pe )
 		goto _test_eof510;
 case 510:
-#line 5258 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5230 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st468;
 		case 35: goto tr486;
@@ -5289,7 +5261,7 @@ st511:
 	if ( ++p == pe )
 		goto _test_eof511;
 case 511:
-#line 5293 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5265 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st468;
 		case 35: goto tr486;
@@ -5349,7 +5321,7 @@ st513:
 	if ( ++p == pe )
 		goto _test_eof513;
 case 513:
-#line 5353 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5325 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 34: goto st0;
 		case 35: goto st455;
@@ -5392,7 +5364,7 @@ st514:
 	if ( ++p == pe )
 		goto _test_eof514;
 case 514:
-#line 5396 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5368 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 34: goto st0;
 		case 35: goto st455;
@@ -5480,7 +5452,7 @@ st230:
 	if ( ++p == pe )
 		goto _test_eof230;
 case 230:
-#line 5484 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5456 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 32: goto st231;
 		case 48: goto st231;
@@ -5495,7 +5467,7 @@ st231:
 	if ( ++p == pe )
 		goto _test_eof231;
 case 231:
-#line 5499 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5471 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto st232;
 	goto st0;
@@ -5627,10 +5599,9 @@ case 517:
 tr556:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -5647,10 +5618,9 @@ tr573:
     }
 	goto st518;
 tr566:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -5672,7 +5642,7 @@ st518:
 	if ( ++p == pe )
 		goto _test_eof518;
 case 518:
-#line 5676 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5646 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 34: goto st0;
 		case 35: goto tr569;
@@ -5721,19 +5691,17 @@ case 245:
 tr590:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 	goto st519;
 tr567:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -5742,7 +5710,7 @@ st519:
 	if ( ++p == pe )
 		goto _test_eof519;
 case 519:
-#line 5746 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5714 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 35: goto tr572;
 		case 47: goto tr573;
@@ -5759,7 +5727,7 @@ st520:
 	if ( ++p == pe )
 		goto _test_eof520;
 case 520:
-#line 5763 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5731 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 35: goto tr576;
 		case 47: goto tr577;
@@ -5898,7 +5866,7 @@ st524:
 	if ( ++p == pe )
 		goto _test_eof524;
 case 524:
-#line 5902 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5870 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st524;
 		case 35: goto tr565;
@@ -5928,7 +5896,7 @@ st255:
 	if ( ++p == pe )
 		goto _test_eof255;
 case 255:
-#line 5932 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5900 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto st256;
@@ -5954,19 +5922,17 @@ case 256:
 tr561:
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 	goto st525;
 tr582:
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -5975,7 +5941,7 @@ st525:
 	if ( ++p == pe )
 		goto _test_eof525;
 case 525:
-#line 5979 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 5945 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st257;
 		case 35: goto tr572;
@@ -6056,7 +6022,6 @@ tr263:
 #line 33 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setUserinfo(std::string(mark, p - mark));
         }
         mark = NULL;
@@ -6068,7 +6033,6 @@ tr563:
 #line 33 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setUserinfo(std::string(mark, p - mark));
         }
         mark = NULL;
@@ -6078,7 +6042,7 @@ st526:
 	if ( ++p == pe )
 		goto _test_eof526;
 case 526:
-#line 6082 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 6046 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 2: goto tr551;
 		case 32: goto tr552;
@@ -6117,7 +6081,7 @@ st527:
 	if ( ++p == pe )
 		goto _test_eof527;
 case 527:
-#line 6121 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 6085 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st527;
 		case 35: goto tr565;
@@ -6146,7 +6110,7 @@ st260:
 	if ( ++p == pe )
 		goto _test_eof260;
 case 260:
-#line 6150 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 6114 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto st261;
@@ -6177,7 +6141,7 @@ st528:
 	if ( ++p == pe )
 		goto _test_eof528;
 case 528:
-#line 6181 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 6145 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st527;
 		case 35: goto tr565;
@@ -6622,7 +6586,7 @@ st544:
 	if ( ++p == pe )
 		goto _test_eof544;
 case 544:
-#line 6626 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 6590 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st527;
 		case 35: goto tr565;
@@ -6656,7 +6620,7 @@ st545:
 	if ( ++p == pe )
 		goto _test_eof545;
 case 545:
-#line 6660 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 6624 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st527;
 		case 35: goto tr565;
@@ -6690,7 +6654,7 @@ st546:
 	if ( ++p == pe )
 		goto _test_eof546;
 case 546:
-#line 6694 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 6658 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st527;
 		case 35: goto tr565;
@@ -6748,7 +6712,7 @@ st262:
 	if ( ++p == pe )
 		goto _test_eof262;
 case 262:
-#line 6752 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 6716 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 58: goto st370;
 		case 118: goto st449;
@@ -9607,7 +9571,7 @@ st548:
 	if ( ++p == pe )
 		goto _test_eof548;
 case 548:
-#line 9611 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 9575 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st257;
 		case 35: goto tr576;
@@ -9642,7 +9606,7 @@ st549:
 	if ( ++p == pe )
 		goto _test_eof549;
 case 549:
-#line 9646 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 9610 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st524;
 		case 35: goto tr565;
@@ -10103,7 +10067,7 @@ st565:
 	if ( ++p == pe )
 		goto _test_eof565;
 case 565:
-#line 10107 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 10071 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st524;
 		case 35: goto tr565;
@@ -10138,7 +10102,7 @@ st566:
 	if ( ++p == pe )
 		goto _test_eof566;
 case 566:
-#line 10142 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 10106 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st524;
 		case 35: goto tr565;
@@ -10173,7 +10137,7 @@ st567:
 	if ( ++p == pe )
 		goto _test_eof567;
 case 567:
-#line 10177 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 10141 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	switch( (*p) ) {
 		case 33: goto st524;
 		case 35: goto tr565;
@@ -10854,34 +10818,30 @@ case 568:
 	case 510: 
 	case 511: 
 	case 512: 
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 	break;
 	case 518: 
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
 	break;
 	case 459: 
-#line 96 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 93 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setQuery(std::string(mark, p - mark));
         mark = NULL;
     }
 	break;
 	case 456: 
-#line 101 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 97 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setFragment(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -10889,9 +10849,8 @@ case 568:
 	case 458: 
 #line 17 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 96 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 93 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setQuery(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -10899,9 +10858,8 @@ case 568:
 	case 455: 
 #line 17 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 101 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 97 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setFragment(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -10922,10 +10880,9 @@ case 568:
 	case 470: 
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
@@ -10941,9 +10898,8 @@ case 568:
         }
         mark = NULL;
     }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -10952,16 +10908,14 @@ case 568:
 	case 526: 
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -10977,9 +10931,8 @@ case 568:
     }
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
@@ -11030,30 +10983,28 @@ case 568:
 	case 566: 
 	case 567: 
 	case 568: 
-#line 40 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 39 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, p - mark));
         }
     }
 #line 18 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{ mark = p; }
-#line 73 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 71 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 	{
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, p - mark));
         mark = NULL;
     }
 	break;
-#line 11050 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
+#line 11001 "/home/lyon/code/C++/lyon/lyon/uri.rl.cc"
 	}
 	}
 
 	_out: {}
 	}
 
-#line 136 "/home/lyon/code/C++/lyon/lyon/uri.rl"
+#line 131 "/home/lyon/code/C++/lyon/lyon/uri.rl"
 
     if (cs == uri_parser_error) {
         return nullptr;

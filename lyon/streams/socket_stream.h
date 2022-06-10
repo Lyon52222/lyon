@@ -17,13 +17,13 @@ public:
 
     ~SocketStream();
 
-    virtual int read(void *buffer, size_t size) override;
+    virtual ssize_t read(void *buffer, size_t size) override;
 
-    virtual int read(ByteArray::ptr bytearray, size_t size) override;
+    virtual ssize_t read(ByteArray::ptr bytearray, size_t size) override;
 
-    virtual int write(const void *buffer, size_t size) override;
+    virtual ssize_t write(const void *buffer, size_t size) override;
 
-    virtual int write(ByteArray::ptr bytearray, size_t size) override;
+    virtual ssize_t write(ByteArray::ptr bytearray, size_t size) override;
 
     bool isConnected() const { return m_socket && m_socket->isConnected(); };
 

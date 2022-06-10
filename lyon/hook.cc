@@ -143,11 +143,13 @@ retry:
             }
             //如果是定时器触发的返回事件，那么就定义为超时了，直接返回
             if (tcond->cancelled) {
+                LYON_LOG_DEBUG(g_logger) << "back by timer";
                 //如果io超时了
                 errno = tcond->cancelled;
                 return -1;
             }
 
+            LYON_LOG_DEBUG(g_logger) << "back by epoll";
             //否则是epoll触发，说明事件已经准备好，goto去读取数据
             goto retry;
         }

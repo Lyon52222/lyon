@@ -17,12 +17,13 @@ void test_regist() {
     lyon::Serializer ser;
     ser << 4 << 6;
     ser.setPosition(0);
-    bool rt = rpc_server->getMethod("add")->call(ser);
+    if (rpc_server->getMethod("add")->call(ser)) {
 
-    int ans;
-    ser >> ans;
+        int ans;
+        ser >> ans;
 
-    std::cout << ans << std::endl;
+        std::cout << ans << std::endl;
+    }
 }
 
 void test_server() {

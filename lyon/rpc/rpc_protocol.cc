@@ -60,9 +60,24 @@ RpcProtocol::ptr RpcProtocol::CreateMethodRequest() {
     protocol->setSeqId(++m_id);
     return protocol;
 }
+
 RpcProtocol::ptr RpcProtocol::CreateMethodResponse(uint32_t seq_id) {
     RpcProtocol::ptr protocol(
         new RpcProtocol(MSG_TYPE::RPC_METHOD_RESPONSE, 0x01));
+    protocol->setSeqId(seq_id);
+    return protocol;
+}
+
+RpcProtocol::ptr RpcProtocol::CreateServerRegistRequest() {
+    RpcProtocol::ptr protocol(
+        new RpcProtocol(MSG_TYPE::RPC_REGIST_REQUEST, 0x01));
+    protocol->setSeqId(++m_id);
+    return protocol;
+}
+
+RpcProtocol::ptr RpcProtocol::CreateServerRegistResponse(uint32_t seq_id) {
+    RpcProtocol::ptr protocol(
+        new RpcProtocol(MSG_TYPE::RPC_REGIST_RESPONSE, 0x01));
     protocol->setSeqId(seq_id);
     return protocol;
 }

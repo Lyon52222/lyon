@@ -1,30 +1,34 @@
 #include "lyon/rpc/rpc_client.h"
+#include <future>
 #include <lyon/address.h>
 #include <lyon/iomanager.h>
+#include <lyon/log.h>
 #include <lyon/rpc/rpc_result.h>
+
+static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
 void test_call() {
     lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient(1000));
     if (rpc_client->connect("localhost:8088")) {
         lyon::rpc::RpcResult<int> rt = rpc_client->call<int>("add", 123, 89);
-        std::cout << rt.getMsg() << std::endl;
-        std::cout << rt.getVal() << std::endl;
+        LYON_LOG_INFO(g_logger) << rt.getMsg();
+        LYON_LOG_INFO(g_logger) << rt.getVal();
 
         //没有问题
         lyon::rpc::RpcResult<int> rt2 = rpc_client->call<int>("addf", 123, 89);
-        std::cout << rt2.getMsg() << std::endl;
-        std::cout << rt2.getVal() << std::endl;
+        LYON_LOG_INFO(g_logger) << rt2.getMsg();
+        LYON_LOG_INFO(g_logger) << rt2.getVal();
 
         // TODO:这里还存在非法参数也会被成功解析的问题
         lyon::rpc::RpcResult<int> rt3 = rpc_client->call<int>("add", "ves", 89);
-        std::cout << rt3.getMsg() << std::endl;
-        std::cout << rt3.getVal() << std::endl;
+        LYON_LOG_INFO(g_logger) << rt3.getMsg();
+        LYON_LOG_INFO(g_logger) << rt3.getVal();
     }
 }
 
 void call_back(lyon::rpc::RpcResult<int> result) {
-    std::cout << result.getMsg() << std::endl;
-    std::cout << result.getVal() << std::endl;
+    LYON_LOG_INFO(g_logger) << result.getMsg();
+    LYON_LOG_INFO(g_logger) << result.getVal();
 };
 
 void test_async_call() {
@@ -34,9 +38,36 @@ void test_async_call() {
     }
 }
 
+void test_future_call() {
+    lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient(1000));
+    if (rpc_client->connect("localhost:8088")) {
+        auto future = rpc_client->future_call<int>("add", 1, 3);
+
+        std::future_status status;
+        do {
+            status = future.wait_for(std::chrono::seconds(1));
+            if (status == std::future_status::deferred) {
+                LYON_LOG_INFO(g_logger) << "deferred\n";
+            } else if (status == std::future_status::timeout) {
+                LYON_LOG_INFO(g_logger) << "timeout\n";
+            } else if (status == std::future_status::ready) {
+                LYON_LOG_INFO(g_logger) << "ready!\n";
+
+                auto result = future.get();
+
+                LYON_LOG_INFO(g_logger) << result.getMsg();
+                LYON_LOG_INFO(g_logger) << result.getVal();
+
+                break;
+            }
+        } while (status != std::future_status::ready);
+    }
+}
+
 int main(int argc, char *argv[]) {
-    lyon::IOManager iom(1);
+    lyon::IOManager iom(2);
     // iom.addJob(test_call);
-    iom.addJob(test_async_call);
+    // iom.addJob(test_async_call);
+    iom.addJob(test_future_call);
     return 0;
 }

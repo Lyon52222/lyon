@@ -65,13 +65,14 @@ void test_method() {
 
     ser.setPosition(0);
 
-    bool rt = rpc_add(ser);
+    if (rpc_add(ser)) {
 
-    int ans;
+        int ans;
 
-    ser >> ans;
+        ser >> ans;
 
-    std::cout << ans << std::endl;
+        std::cout << ans << std::endl;
+    }
 }
 
 void test_protocol() {

@@ -32,14 +32,12 @@ namespace lyon {
     }
     action save_userinfo {
         if (mark) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setUserinfo(std::string(mark, fpc - mark));
         }
         mark = NULL;
     }
     action save_host {
         if (mark != NULL) {
-            // std::cout << std::string(mark, fpc - mark) << std::endl;
             uri->setHost(std::string(mark, fpc - mark));
         }
     }
@@ -71,7 +69,6 @@ port >markh %save_port)? ) >markh;
     action save_segment { mark = NULL; }
 
     action save_path {
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setPath(std::string(mark, fpc - mark));
         mark = NULL;
     }
@@ -94,12 +91,10 @@ port >markh %save_port)? ) >markh;
             path_empty);
 
     action save_query {
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setQuery(std::string(mark, fpc - mark));
         mark = NULL;
     }
     action save_fragment {
-        // std::cout << std::string(mark, fpc - mark) << std::endl;
         uri->setFragment(std::string(mark, fpc - mark));
         mark = NULL;
     }

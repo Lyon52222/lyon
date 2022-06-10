@@ -19,9 +19,9 @@ public:
      * @param size 需要读取数据的长度
      * @return 读取的字节数
      */
-    virtual int read(void *buffer, size_t size) = 0;
+    virtual ssize_t read(void *buffer, size_t size) = 0;
 
-    virtual int read(ByteArray::ptr bytearray, size_t size) = 0;
+    virtual ssize_t read(ByteArray::ptr bytearray, size_t size) = 0;
 
     /**
      * @brief 将buffer中的数据写入到流中
@@ -30,18 +30,18 @@ public:
      * @param lenght 数据长度
      * @return 写入的子节数
      */
-    virtual int write(const void *buffer, size_t size) = 0;
+    virtual ssize_t write(const void *buffer, size_t size) = 0;
 
-    virtual int write(ByteArray::ptr bytearray, size_t size) = 0;
+    virtual ssize_t write(ByteArray::ptr bytearray, size_t size) = 0;
 
     //因为，read
     // write可能无法保证能够一次写完或读取所有内容。所以，创建FixSize来保证
 
-    int readFixSize(void *buffer, size_t size);
-    int readFixSize(ByteArray::ptr bytearray, size_t size);
+    ssize_t readFixSize(void *buffer, size_t size);
+    ssize_t readFixSize(ByteArray::ptr bytearray, size_t size);
 
-    int writeFixSize(const void *buffer, size_t size);
-    int writeFixSize(ByteArray::ptr bytearray, size_t size);
+    ssize_t writeFixSize(const void *buffer, size_t size);
+    ssize_t writeFixSize(ByteArray::ptr bytearray, size_t size);
 
     virtual void close() = 0;
     virtual ~Stream(){};

@@ -7,6 +7,7 @@
 #include "rpc_result.h"
 #include "rpc_session.h"
 #include <cstdint>
+#include <future>
 #include <lyon/iomanager.h>
 #include <lyon/log.h>
 #include <memory>
@@ -25,17 +26,41 @@ public:
     [[nodiscard]] bool connect(const std::string &host);
 
     template <typename T, typename... Args>
+    std::future<RpcResult<T>> future_call(const std::string &name,
+                                          const Args &...args) {
+        std::function<RpcResult<T>()> call_job = [this, name,
+                                                  args...]() -> RpcResult<T> {
+            return call<T>(name, args...);
+        };
+
+        // promise用于产生future
+        auto promise = std::make_shared<std::promise<RpcResult<T>>>();
+
+        RpcClient::ptr this_ptr = shared_from_this();
+        IOManager::GetCurrentIOManager()->addJob(
+            [this_ptr, promise, call_job]() mutable {
+                //调用成功后设置value,是的future有效
+                promise->set_value(call_job());
+                this_ptr = nullptr;
+            });
+
+        return promise->get_future();
+    }
+
+    template <typename T, typename... Args>
     void async_call(std::function<void(RpcResult<T>)> call_back,
                     const std::string &name, const Args &...args) {
-        // NOTE:这里传递this可能出现的问题就是，当调度到call_job的时候可能this已经被析构了。
+        //这里传递this可能出现的问题就是，当调度到call_job的时候可能this已经被析构了。
 
         std::function<RpcResult<T>()> call_job = [this, name,
                                                   args...]() -> RpcResult<T> {
             return call<T>(name, args...);
         };
 
+        //所以这里使用shared_ptr来保持，延缓当前client的析构
         RpcClient::ptr this_ptr = shared_from_this();
 
+        // lambda表达式值捕获是在lambda表达式定义的时候进行捕获，而引用捕获则实在调用时进行的捕获。//因此这里如果采用引用捕获的话也会有函数调用时变量失效的问题
         IOManager::GetCurrentIOManager()->addJob(
             [this_ptr, call_back, call_job]() mutable {
                 call_back(call_job());

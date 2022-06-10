@@ -33,7 +33,7 @@ void test() {
     lyon::IOManager iom(2);
     iom.addTimer(
         1000,
-        [&uri, &headers]() {
+        [uri, headers]() {
             lyon::http::HttpResult::ptr rt =
                 lyon::http::HttpConnection::DoRequest(
                     lyon::http::HttpMethod::GET, uri, 4000, headers, "hi");
