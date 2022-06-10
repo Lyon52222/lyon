@@ -32,17 +32,18 @@ void RpcServer::handleClient(Socket::ptr sock) {
         if (request->getType() == RpcProtocol::MSG_TYPE::RPC_METHOD_REQUEST) {
             //如果是函数调用请求
             response = handleMethodRequest(request);
-            LYON_LOG_DEBUG(g_logger)
-                << "Server send Response = " << response->toString();
         }
+        LYON_LOG_DEBUG(g_logger)
+            << "Server send Response = " << response->toString();
 
         if (response) {
             session->sendRpcProtocol(response);
         }
-        if (!session->isConnected()) {
+        // TODO:这里暂时假设所有请求都是短连接
+        if (true || !session->isConnected()) {
             break;
         }
-    } while (false);
+    } while (true);
     session->close();
 }
 

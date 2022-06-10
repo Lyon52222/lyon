@@ -17,13 +17,16 @@ bool FdCtx::init() {
         return true;
     }
     struct stat fd_stat;
-    if (fstat(m_fd, &fd_stat)) {
+    //查询文件描述符信息
+    if (fstat(m_fd, &fd_stat) == -1) {
         m_isInit = false;
+        m_isSockt = false;
     } else {
         m_isInit = true;
         m_isSockt = S_ISSOCK(fd_stat.st_mode);
     }
 
+    //如果文件描述符是socket,将其设置为非阻塞模式
     if (m_isSockt) {
         int flags = fcntl_f(m_fd, F_GETFL, 0);
         if (!(flags & O_NONBLOCK))
@@ -70,7 +73,7 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create) {
     }
     rlock.unlock();
     RWMutexType::WRLock wlock(m_mutex);
-    FdCtx::ptr fdctx(new FdCtx(fd));
+    FdCtx::ptr fdctx = std::make_shared<FdCtx>(fd);
     if (fd >= static_cast<int>(m_fds.size())) {
         m_fds.resize(fd * 1.5);
     }
@@ -78,6 +81,7 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create) {
 
     return fdctx;
 }
+
 void FdManager::del(int fd) {
     RWMutexType::WRLock wlock(m_mutex);
     if (fd < 0 || fd >= static_cast<int>(m_fds.size()) || (!m_fds[fd])) {

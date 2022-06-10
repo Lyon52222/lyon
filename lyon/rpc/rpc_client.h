@@ -39,9 +39,6 @@ public:
         //将函数的参数放入请求体中
         request->setContent(ser.toString());
 
-        LYON_LOG_DEBUG(LYON_LOG_GET_LOGGER("system"))
-            << "Client send request" << request->toString();
-
         //发送函数调用请求
         int rt = m_session->sendRpcProtocol(request);
 
@@ -53,6 +50,10 @@ public:
                                 "Send socket error");
         }
 
+        LYON_LOG_DEBUG(LYON_LOG_GET_LOGGER("system"))
+            << "Client send request" << request->toString();
+
+        // TODO:这里可能存在的问题有：1.服务端处理需要时间，2.客户端接收到的应答顺序可能和请求的顺序不一样
         //接收函数调用请求
         RpcProtocol::ptr response = m_session->recvRpcProtocol();
 

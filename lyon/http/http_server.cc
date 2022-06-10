@@ -22,10 +22,10 @@ void HttpServer::handleClient(Socket::ptr sock) {
         HttpResponse::ptr response(new HttpResponse(
             request->getVersion(), (!m_connection || !session->isConnected())));
 
-        m_servlet->handle(request, response, session);
+        if (m_servlet->handle(request, response, session) == 0)
+            session->sendResponse(response);
 
-        session->sendResponse(response);
-
+        //连接是否是长链接
         m_connection = request->isConnection();
 
         if (!m_connection || !session->isConnected()) {

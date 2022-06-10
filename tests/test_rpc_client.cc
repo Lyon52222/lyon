@@ -4,10 +4,8 @@
 #include <lyon/rpc/rpc_result.h>
 
 void test_client() {
-    lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient(3000));
-    lyon::Address::ptr addr =
-        lyon::Address::LookUpAnyIpAddress("localhost:8088");
-    if (rpc_client->connect(addr)) {
+    lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient(1000));
+    if (rpc_client->connect("localhost:8088")) {
         lyon::rpc::RpcResult<int> rt = rpc_client->call<int>("add", 123, 89);
         std::cout << rt.getMsg() << std::endl;
         std::cout << rt.getVal() << std::endl;

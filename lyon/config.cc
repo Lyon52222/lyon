@@ -41,8 +41,8 @@ void Config::LoadFromYaml(const YAML::Node &root) {
         }
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
-        auto conf = GetConfigs().find(key);
-        if (conf != GetConfigs().end()) {
+        //约定优先于配置，只有当程序中约定了配置时，配置文件才有效
+        if (auto conf = GetConfigs().find(key); conf != GetConfigs().end()) {
             auto &val = number.second;
             if (val.IsScalar()) {
                 conf->second->fromString(val.Scalar());
@@ -50,18 +50,6 @@ void Config::LoadFromYaml(const YAML::Node &root) {
                 std::stringstream ss;
                 ss << val;
                 conf->second->fromString(ss.str());
-            }
-        }
-        // INFO:这里觉得是否将为约定的配置项加入到配置中,这里构建时，无法确定配置项具体的类型。只能将其保存为string类型。
-        else {
-            auto &val = number.second;
-            if (val.IsScalar()) {
-                SetConfig(key, val.Scalar(), key);
-            } else {
-                std::stringstream ss;
-                ss << val;
-
-                SetConfig(key, ss.str(), key);
             }
         }
     }
@@ -78,7 +66,6 @@ void Config::LoadFromConfigFile(const std::string &path) {
 }
 
 bool Config::CheckName(const std::string &name) {
-
     if (!IsConfigNameAvilable(name)) {
         LYON_LOG_ERROR(g_logger)
             << "Name : " << name

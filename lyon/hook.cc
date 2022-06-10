@@ -14,7 +14,7 @@ static lyon::Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 static thread_local bool s_hook_enable = false;
 
 static ConfigVar<int>::ptr g_tcp_connect_timeout =
-    Config::SetConfig<int>("tcp.connect.timeout", 5000, "tcp connect timeout");
+    Config::SetConfig<int>("tcp.connect.timeout", 2000, "tcp connect timeout");
 
 static uint64_t s_tcp_connect_timeout = -1;
 
@@ -89,6 +89,7 @@ static ssize_t do_io(int fd, OrginFun fun, const char *hook_fun_name,
     if (!ctx->isSockt() || ctx->getUsrNonblock()) {
         return fun(fd, std::forward<Args>(args)...);
     }
+    //获取在该事件上设置的超时时间
     uint64_t to = ctx->getTimeout(timeout_so);
     std::shared_ptr<timer_cond> tcond(new timer_cond);
 
@@ -96,6 +97,7 @@ retry:
     ssize_t n = fun(fd, std::forward<Args>(args)...);
     // A read from a slow device was interrupted before any data arrived by the
     // delivery of a signal.
+    // ET触发只会触发一次，因此应该在触发后使用while读取
     while (n == -1 && errno == EINTR) {
         n = fun(fd, std::forward<Args>(args)...);
     }
@@ -116,11 +118,13 @@ retry:
                     }
                     //设置超时错误
                     t->cancelled = ETIMEDOUT;
+                    //时间到了之后触发该文件描述符上的事件
                     iom->triggerEvent(
                         fd, static_cast<lyon::IOManager::Event>(event));
                 },
                 wtcond);
         }
+        //给Fd设置监听事件，这里没有给事件设置回掉函数的，默认就是返回到当前协程,也就是位置1
         int rt = iom->addEvent(fd, static_cast<lyon::IOManager::Event>(event));
         if (rt) {
             LYON_LOG_ERROR(g_logger) << hook_fun_name << " add event : (" << fd
@@ -130,16 +134,21 @@ retry:
                 return -1;
             }
         } else {
+            //切换到调度协程(位置1)
             Fiber::HoldToScheduler();
+            //这里有两种可能重新调度该协程：1定时器时间到了，触发事件返回。2epoll监听的事件触发，这是定时器还存在
             //如果在定时器触发前返回，取消定时器
-            if (timer)
+            if (timer) {
                 timer->cancel();
+            }
+            //如果是定时器触发的返回事件，那么就定义为超时了，直接返回
             if (tcond->cancelled) {
                 //如果io超时了
                 errno = tcond->cancelled;
                 return -1;
             }
-            //时间到了，再次去查询原函数，如果这次准备好了则会直接返回
+
+            //否则是epoll触发，说明事件已经准备好，goto去读取数据
             goto retry;
         }
     }
@@ -193,6 +202,7 @@ int socket(int domain, int type, int protocol) {
     }
     int sfd = socket_f(domain, type, protocol);
     if (sfd != -1) {
+        //每次成功创建socket时候都会自动创建一个与之对应的FdCtx
         lyon::FdMgr::GetInstance()->get(sfd, true);
     }
     return sfd;

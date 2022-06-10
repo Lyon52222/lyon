@@ -19,8 +19,9 @@ public:
 
     Servlet(const std::string &name) : m_name(name) {}
 
-    virtual int32_t handle(HttpRequest::ptr request, HttpResponse::ptr response,
-                           HttpSession::ptr session) = 0;
+    [[nodiscard]] virtual int32_t handle(HttpRequest::ptr request,
+                                         HttpResponse::ptr response,
+                                         HttpSession::ptr session) = 0;
 
     virtual Servlet::ptr clone() const;
 
@@ -44,8 +45,9 @@ public:
                       const std::string &name = "FunctionalServlet")
         : Servlet(name), m_cb(cb) {}
 
-    virtual int32_t handle(HttpRequest::ptr request, HttpResponse::ptr response,
-                           HttpSession::ptr session) override;
+    [[nodiscard]] virtual int32_t handle(HttpRequest::ptr request,
+                                         HttpResponse::ptr response,
+                                         HttpSession::ptr session) override;
 
     virtual Servlet::ptr clone() const override;
 
@@ -109,8 +111,9 @@ public:
 
     ServletDispatch();
 
-    virtual int32_t handle(HttpRequest::ptr request, HttpResponse::ptr response,
-                           HttpSession::ptr session) override;
+    [[nodiscard]] virtual int32_t handle(HttpRequest::ptr request,
+                                         HttpResponse::ptr response,
+                                         HttpSession::ptr session) override;
 
     void addAccurateServlet(const std::string &uri,
                             FunctionalServlet::callback cb);
@@ -173,8 +176,9 @@ public:
 
     NotFoundServlet(const std::string &name);
 
-    virtual int32_t handle(HttpRequest::ptr request, HttpResponse::ptr response,
-                           HttpSession::ptr session) override;
+    [[nodiscard]] virtual int32_t handle(HttpRequest::ptr request,
+                                         HttpResponse::ptr response,
+                                         HttpSession::ptr session) override;
 
 private:
     std::string m_content;

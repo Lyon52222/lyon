@@ -9,6 +9,9 @@
 #include <vector>
 namespace lyon {
 
+/**
+ * @brief 文件描述符对应的上下文描述类
+ */
 class FdCtx : public std::enable_shared_from_this<FdCtx> {
 public:
     typedef std::shared_ptr<FdCtx> ptr;
@@ -22,7 +25,20 @@ public:
     void setUsrNonblock(bool val) { m_usrNonblock = val; }
     bool getUsrNonblock() const { return m_usrNonblock; }
 
+    /**
+     * @brief 设置超时时间
+     *
+     * @param type 超时时间类型（send或者recv)
+     * @param val 超时时间
+     */
     void setTimeout(int type, int64_t val);
+
+    /**
+     * @brief 查看超时时间
+     *
+     * @param type 超时时间类型
+     * @return 超时时间
+     */
     int64_t getTimeout(int type);
 
 private:

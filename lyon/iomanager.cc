@@ -132,6 +132,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     //设置事件对应的附加 数据指针，后续可以重新得到。
     epevent.data.ptr = fd_ctx;
 
+    //设置epoll在fd上监听的事件
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if (rt) {
         // if (errno == EEXIST) {
@@ -195,8 +196,7 @@ bool IOManager::deleEvent(int fd, Event event) {
     epoll_event epevent;
     epevent.events = static_cast<Event>(EPOLLET) | new_event;
     epevent.data.ptr = fd_ctx;
-    int rt = epoll_ctl(m_epfd, op, fd, &epevent);
-    if (rt) {
+    if (int rt = epoll_ctl(m_epfd, op, fd, &epevent); rt == -1) {
         LYON_LOG_ERROR(g_logger)
             << "IOManager: "
             << "epoll_ctl( " << m_epfd << ", " << op << ", " << fd << ", "
@@ -239,8 +239,7 @@ bool IOManager::triggerEvent(int fd, Event event) {
     epoll_event epevent;
     epevent.events = static_cast<Event>(EPOLLET) | new_event;
     epevent.data.ptr = fd_ctx;
-    int rt = epoll_ctl(m_epfd, op, fd, &epevent);
-    if (rt) {
+    if (int rt = epoll_ctl(m_epfd, op, fd, &epevent); rt == -1) {
         LYON_LOG_ERROR(g_logger)
             << "IOManager: "
             << "epoll_ctl( " << m_epfd << ", " << op << ", " << fd << ", "
