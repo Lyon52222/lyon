@@ -85,6 +85,7 @@ void TcpServer::startAccept(const Socket::ptr sock) {
     while (!m_isStop) {
         Socket::ptr nsock = sock->accept();
         if (nsock) {
+            //创建socket的时候就设置了超时时间
             nsock->setRecvTimeout(s_tcp_recv_timeout);
             m_worker->addJob(
                 std::bind(&TcpServer::handleClient, shared_from_this(), nsock));

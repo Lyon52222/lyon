@@ -39,8 +39,7 @@ void RpcServer::handleClient(Socket::ptr sock) {
         if (response) {
             session->sendRpcProtocol(response);
         }
-        // TODO:这里暂时假设所有请求都是短连接
-        if (true || !session->isConnected()) {
+        if (!session->isConnected()) {
             break;
         }
     } while (true);

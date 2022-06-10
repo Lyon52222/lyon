@@ -9,6 +9,9 @@
 
 namespace lyon {
 
+/**
+ * @brief 二进制数组，一般作为序列化和反序列化的容器
+ */
 class ByteArray {
 public:
     typedef std::shared_ptr<ByteArray> ptr;
@@ -23,7 +26,13 @@ public:
         Node *next;
     };
 
+    /**
+     * @brief 构造一个每块内存大小为base_size的二进制数组
+     *
+     * @param base_size 每块内存的大小
+     */
     ByteArray(size_t base_size = 4096);
+
     ~ByteArray();
 
     /**
@@ -75,6 +84,11 @@ public:
      */
     size_t getPosition() const { return m_position; }
 
+    /**
+     * @brief 获取当前已使用空间
+     *
+     * @return 已使用空间大小
+     */
     size_t getSize() const { return m_size; }
 
     /**
@@ -93,6 +107,13 @@ public:
      */
     void getReadBuffer(std::vector<iovec> &buffers, size_t size);
 
+    /**
+     * @brief 从positon开始将可读取空间映射到iovec数组中
+     *
+     * @param buffers iovec数组
+     * @param size 需要映射的大小
+     * @param position 起始位置
+     */
     void getReadBuffer(std::vector<iovec> &buffers, size_t size,
                        size_t position);
     /**
@@ -197,10 +218,13 @@ private:
      */
     Node *m_head;
     /**
-     * @{name} 当前数据库节点指针
+     * @{name} 当前操作数据块节点指针
      */
     Node *m_cur;
 
+    /**
+     * @{name} 尾节点指针
+     */
     Node *m_tail;
 };
 

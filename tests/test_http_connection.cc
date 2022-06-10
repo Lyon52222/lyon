@@ -22,22 +22,31 @@ void test_connectionpool() {
 }
 
 void test() {
-    // lyon::Uri::ptr uri = lyon::Uri::Parser("http://localhost:8088/echo");
+    lyon::Uri::ptr uri = lyon::Uri::Parser("http://localhost:8088/echo");
     // lyon::Uri::ptr uri = lyon::Uri::Parser("http://localhost:8088/");
     // lyon::Uri::ptr uri = lyon::Uri::Parser("http://www.baidu.com:80/");
     // chunk
-    lyon::Uri::ptr uri = lyon::Uri::Parser("http://www.sylar.top:80/blog/");
+    // lyon::Uri::ptr uri = lyon::Uri::Parser("http://www.sylar.top:80/blog/");
+
     std::map<std::string, std::string> headers;
 
-    lyon::http::HttpResult::ptr rt = lyon::http::HttpConnection::DoRequest(
-        lyon::http::HttpMethod::GET, uri, 4000, headers, "hi");
+    lyon::IOManager iom(2);
+    iom.addTimer(
+        1000,
+        [&uri, &headers]() {
+            lyon::http::HttpResult::ptr rt =
+                lyon::http::HttpConnection::DoRequest(
+                    lyon::http::HttpMethod::GET, uri, 4000, headers, "hi");
 
-    LYON_LOG_INFO(g_logger) << rt->toString();
+            LYON_LOG_INFO(g_logger) << rt->toString();
+        },
+        true);
 }
 
 int main(int argc, char *argv[]) {
-    lyon::IOManager iom(1);
+    // lyon::IOManager iom(1);
     // iom.addJob(test);
-    iom.addJob(test_connectionpool);
+    test();
+    // iom.addJob(test_connectionpool);
     return 0;
 }

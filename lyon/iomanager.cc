@@ -102,6 +102,8 @@ void IOManager::resizeContext(size_t size) {
 }
 
 int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
+    LYON_LOG_INFO(g_logger)
+        << "addevent fd = " << fd << " event = " << (EPOLL_EVENTS)event;
     FdContext *fd_ctx = nullptr;
     RWMutexType::RDLock rlock(m_mutex);
     if (fd < static_cast<int>(m_fdContexts.size())) {
@@ -128,6 +130,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     // Event new_event = static_cast<Event>(fd_ctx->events | event);
 
     epoll_event epevent;
+    memset(&epevent, 0, sizeof(epevent));
     epevent.events = static_cast<Event>(EPOLLET) | fd_ctx->events | event;
     //设置事件对应的附加 数据指针，后续可以重新得到。
     epevent.data.ptr = fd_ctx;
@@ -160,7 +163,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     if (cb) {
         event_ctx.cb.swap(cb);
     } else {
-        //如果未设置对应的处理函数
+        //如果未设置对应的处理函数,设置为调度时切换为当前协程
         event_ctx.fiber = Fiber::GetCurrentFiber();
         LYON_ASSERT2(event_ctx.fiber->getState() == Fiber::EXEC,
                      "Fiber state error = " << event_ctx.fiber->getState());
@@ -194,6 +197,7 @@ bool IOManager::deleEvent(int fd, Event event) {
     int op = new_event ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
 
     epoll_event epevent;
+    memset(&epevent, 0, sizeof(epevent));
     epevent.events = static_cast<Event>(EPOLLET) | new_event;
     epevent.data.ptr = fd_ctx;
     if (int rt = epoll_ctl(m_epfd, op, fd, &epevent); rt == -1) {
@@ -237,6 +241,7 @@ bool IOManager::triggerEvent(int fd, Event event) {
     int op = new_event ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
 
     epoll_event epevent;
+    memset(&epevent, 0, sizeof(epevent));
     epevent.events = static_cast<Event>(EPOLLET) | new_event;
     epevent.data.ptr = fd_ctx;
     if (int rt = epoll_ctl(m_epfd, op, fd, &epevent); rt == -1) {
@@ -277,6 +282,7 @@ bool IOManager::triggerAll(int fd) {
 
     int op = EPOLL_CTL_DEL;
     epoll_event epevent;
+    memset(&epevent, 0, sizeof(epevent));
     epevent.events = 0;
     epevent.data.ptr = fd_ctx;
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
@@ -434,6 +440,7 @@ IOManager::FdContext::getEventContext(Event e) {
     }
     throw std::invalid_argument("getEventContext: invalid event type");
 }
+
 void IOManager::FdContext::resetEventContext(EventContext &ctx) {
     ctx.scheduler = nullptr;
     ctx.fiber.reset();
@@ -443,7 +450,6 @@ void IOManager::FdContext::triggerEvent(Event e) {
     LYON_ASSERT(events & e);
     EventContext &ctx = getEventContext(e);
     events = static_cast<Event>(events & (~e));
-
     if (ctx.cb) {
         GetCurrentScheduler()->addJob(&ctx.cb);
     } else {

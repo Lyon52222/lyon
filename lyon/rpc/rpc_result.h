@@ -20,7 +20,8 @@ enum class RpcResultState : std::uint8_t {
     //方法运行错误
     METHOD_RUN_ERROR,
     //参数解析错误
-    ARGS_ERROR
+    ARGS_ERROR,
+    RECV_BAD_RESPONSE
 };
 
 /**

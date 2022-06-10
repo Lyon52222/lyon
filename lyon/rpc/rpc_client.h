@@ -15,7 +15,9 @@ class RpcClient {
 public:
     typedef std::shared_ptr<RpcClient> ptr;
 
-    RpcClient(uint64_t timeoutMs) : m_timeoutMs(timeoutMs) {}
+    RpcClient(uint64_t timeoutMs);
+
+    ~RpcClient();
 
     [[nodiscard]] bool connect(Address::ptr addr);
 
@@ -54,8 +56,14 @@ public:
             << "Client send request" << request->toString();
 
         // TODO:这里可能存在的问题有：1.服务端处理需要时间，2.客户端接收到的应答顺序可能和请求的顺序不一样
+
         //接收函数调用请求
         RpcProtocol::ptr response = m_session->recvRpcProtocol();
+
+        if (!response) {
+            return RpcResult<T>(RpcResultState::RECV_BAD_RESPONSE,
+                                "Recv bad response");
+        }
 
         LYON_LOG_DEBUG(LYON_LOG_GET_LOGGER("system"))
             << "Client recv response" << response->toString();

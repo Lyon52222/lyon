@@ -104,6 +104,7 @@ void ByteArray::getReadBuffer(std::vector<iovec> &buffers, size_t size) {
     Node *cur = m_cur;
     while (size > 0) {
         iovec buffer;
+        memset(&buffer, 0, sizeof(buffer));
         if (size <= ncap) {
             buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = size;
@@ -133,6 +134,7 @@ void ByteArray::getWriteBuffer(std::vector<iovec> &buffers, size_t size) {
     Node *cur = m_cur;
     while (size > 0) {
         iovec buffer;
+        memset(&buffer, 0, sizeof(buffer));
         if (size <= ncap) {
             buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = size;
@@ -167,6 +169,7 @@ void ByteArray::getReadBuffer(std::vector<iovec> &buffers, size_t size,
     size_t ncap = cur->size - npos;
     while (size > 0) {
         iovec buffer;
+        memset(&buffer, 0, sizeof(buffer));
         if (size <= ncap) {
             buffer.iov_base = cur->ptr + npos;
             buffer.iov_len = size;

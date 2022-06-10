@@ -316,6 +316,7 @@ IPAddress::ptr IPv4Address::subnetMask(uint32_t prefix_len) {
         return nullptr;
     }
     sockaddr_in saddr;
+    memset(&saddr, 0, sizeof(saddr));
     saddr.sin_port = 0;
     saddr.sin_addr.s_addr =
         ~byteswapOnLittleEndian(CreateMask<uint32_t>(prefix_len));

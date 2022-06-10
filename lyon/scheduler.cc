@@ -198,7 +198,6 @@ void Scheduler::run() {
                 cb_fiber.reset(new Fiber(job.cb));
             }
             job.reset();
-            // cb_fiber->mainFiberIn();
             cb_fiber->schedulerIn();
             m_activeThreadCount--;
             if (cb_fiber->getState() == Fiber::READY) {

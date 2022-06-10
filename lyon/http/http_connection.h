@@ -45,9 +45,9 @@ struct HttpResult {
 class HttpConnection : public SocketStream {
 public:
     typedef std::shared_ptr<HttpConnection> ptr;
-    HttpConnection(Socket::ptr sock) : SocketStream(sock) {
-        m_createTime = GetCurrentTimeMS();
-    }
+    HttpConnection(Socket::ptr sock);
+
+    ~HttpConnection();
 
     HttpResponse::ptr recvResponse();
     int sendRequest(HttpRequest::ptr request);

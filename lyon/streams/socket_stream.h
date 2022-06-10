@@ -15,6 +15,8 @@ public:
 
     SocketStream(Socket::ptr sock) : m_socket(sock) {}
 
+    ~SocketStream();
+
     virtual int read(void *buffer, size_t size) override;
 
     virtual int read(ByteArray::ptr bytearray, size_t size) override;
@@ -27,9 +29,7 @@ public:
 
     Socket::ptr getSocket() const { return m_socket; }
 
-    void close();
-
-    ~SocketStream();
+    virtual void close() override;
 
 private:
     Socket::ptr m_socket;

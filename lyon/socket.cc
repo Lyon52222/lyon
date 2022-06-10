@@ -313,11 +313,11 @@ bool Socket::close() {
     if (!m_isConnected && m_socket == -1) {
         return true;
     }
-    m_isConnected = false;
     if (m_socket != -1) {
         ::close(m_socket);
         m_socket = -1;
     }
+    m_isConnected = false;
     return false;
 }
 
@@ -333,6 +333,8 @@ ssize_t Socket::recv(iovec *buffers, size_t length, int flags) {
         return -1;
     }
     msghdr msg;
+    //这里如果不memset的话，原内存上可能存在一些值，可能会导致一些奇怪的问题
+    memset(&msg, 0, sizeof(msg));
     msg.msg_iov = (iovec *)buffers;
     msg.msg_iovlen = length;
     return ::recvmsg(m_socket, &msg, flags);
@@ -354,6 +356,7 @@ ssize_t Socket::recvFrom(Address::ptr address, iovec *buffers, size_t length,
         return -1;
     }
     msghdr msg;
+    memset(&msg, 0, sizeof(msg));
     msg.msg_iov = (iovec *)buffers;
     msg.msg_iovlen = length;
     msg.msg_name = address->getAddr();

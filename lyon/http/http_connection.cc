@@ -12,6 +12,14 @@ namespace lyon::http {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
+HttpConnection::HttpConnection(Socket::ptr sock) : SocketStream(sock) {
+    m_createTime = GetCurrentTimeMS();
+}
+
+HttpConnection::~HttpConnection() {
+    LYON_LOG_INFO(g_logger) << "HttpConnection close";
+}
+
 std::string HttpResult::toString() const {
     std::stringstream ss;
     ss << "HttpResult: result = " << (int)result << " error = " << error;

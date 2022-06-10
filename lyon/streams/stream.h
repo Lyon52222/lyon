@@ -43,8 +43,8 @@ public:
     int writeFixSize(const void *buffer, size_t size);
     int writeFixSize(ByteArray::ptr bytearray, size_t size);
 
-    void close();
-    virtual ~Stream() = default;
+    virtual void close() = 0;
+    virtual ~Stream(){};
 };
 
 } // namespace lyon
