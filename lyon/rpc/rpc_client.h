@@ -7,11 +7,12 @@
 #include "rpc_result.h"
 #include "rpc_session.h"
 #include <cstdint>
+#include <lyon/iomanager.h>
 #include <lyon/log.h>
 #include <memory>
 namespace lyon::rpc {
 
-class RpcClient {
+class RpcClient : public std::enable_shared_from_this<RpcClient> {
 public:
     typedef std::shared_ptr<RpcClient> ptr;
 
@@ -24,7 +25,26 @@ public:
     [[nodiscard]] bool connect(const std::string &host);
 
     template <typename T, typename... Args>
-    RpcResult<T> call(const std::string &name, Args... args) {
+    void async_call(std::function<void(RpcResult<T>)> call_back,
+                    const std::string &name, const Args &...args) {
+        // NOTE:这里传递this可能出现的问题就是，当调度到call_job的时候可能this已经被析构了。
+
+        std::function<RpcResult<T>()> call_job = [this, name,
+                                                  args...]() -> RpcResult<T> {
+            return call<T>(name, args...);
+        };
+
+        RpcClient::ptr this_ptr = shared_from_this();
+
+        IOManager::GetCurrentIOManager()->addJob(
+            [this_ptr, call_back, call_job]() mutable {
+                call_back(call_job());
+                this_ptr = nullptr;
+            });
+    }
+
+    template <typename T, typename... Args>
+    RpcResult<T> call(const std::string &name, const Args &...args) {
         auto args_tuple = std::make_tuple(args...);
         Serializer call_ser;
         call_ser << name << args_tuple;
