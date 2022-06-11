@@ -49,6 +49,7 @@ set(
   lyon/rpc/rpc_session.cc
   lyon/rpc/rpc_server.cc
   lyon/rpc/rpc_client.cc
+  lyon/rpc/rpc_register.cc
 )
 
 # 使用ragel解析src_rl文件并且将解析文件保存到outputdir下。
@@ -92,6 +93,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_traits "tests/test_traits.cc" lyon "${LIBS}")
   lyon_add_executable(test_rpc_server "tests/test_rpc_server.cc" lyon "${LIBS}")
   lyon_add_executable(test_rpc_client "tests/test_rpc_client.cc" lyon "${LIBS}")
+  lyon_add_executable(test_rpc_register "tests/test_rpc_register.cc" lyon "${LIBS}")
 
 endif()
 

@@ -7,6 +7,7 @@
 #include <lyon/log.h>
 #include <lyon/serialize/serializer.h>
 #include <lyon/socket.h>
+#include <memory>
 namespace lyon::rpc {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
@@ -16,10 +17,14 @@ RpcServer::RpcServer(IOManager *worker, IOManager *ioworker,
     : TcpServer(worker, ioworker, acceptWorker) {}
 
 bool RpcServer::start() {
+    // TODO:这里注册可以添加到协程中
     if (!m_registerSession || !m_registerSession->isConnected()) {
+        LYON_LOG_INFO(g_logger) << "RpcServer not bind Register";
+    } else {
         for (auto &method : m_methods) {
             registMethodToRegister(method.second);
         }
+        LYON_LOG_INFO(g_logger) << "Success regist methods to Register";
     }
     return TcpServer::start();
 }
@@ -126,15 +131,16 @@ void RpcServer::registMethod(RpcMethod::ptr method) {
     m_methods.emplace(method->getName(), method);
 }
 
-void RpcServer::registMethodToRegister(RpcMethod::ptr method) {
+bool RpcServer::registMethodToRegister(RpcMethod::ptr method) {
     if (!m_registerSession || !m_registerSession->isConnected()) {
-        return;
+        return false;
     }
     RpcProtocol::ptr request = RpcProtocol::CreateRegistMethodRequest();
 
     Serializer ser;
 
-    ser << method->getName() << method->getRtType() << method->getArgsType();
+    // ser << method->getName() << method->getRtType() << method->getArgsType();
+    ser << (*std::static_pointer_cast<RpcMethodMeta>(method));
 
     request->setContent(ser.toString());
 
@@ -142,7 +148,16 @@ void RpcServer::registMethodToRegister(RpcMethod::ptr method) {
 
     RpcProtocol::ptr response = m_registerSession->recvRpcProtocol();
 
-    // TODO:接收响应并处理。
+    Serializer result_ser(response->getContent(), response->isCompress());
+
+    std::string result;
+
+    result_ser >> result;
+
+    if (result == "OK") {
+        return true;
+    }
+    return true;
 }
 
 RpcMethod::ptr RpcServer::getMethod(const std::string &name) {

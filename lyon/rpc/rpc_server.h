@@ -28,7 +28,7 @@ public:
 
     void registMethod(RpcMethod::ptr method);
 
-    void registMethodToRegister(RpcMethod::ptr method);
+    bool registMethodToRegister(RpcMethod::ptr method);
 
     virtual RpcProtocol::ptr handleMethodRequest(RpcProtocol::ptr protocol);
 

@@ -2,6 +2,7 @@
 #define __LYON_RPC_REGISTER_H__
 
 #include "lyon/tcp_server.h"
+#include "rpc_method.h"
 #include "rpc_protocol.h"
 #include "rpc_session.h"
 #include <memory>
@@ -22,6 +23,7 @@ public:
     RpcProtocol::ptr handleRegistMethod(RpcProtocol::ptr request);
 
 private:
+    std::vector<RpcMethodMeta> m_registedMethod;
 };
 
 } // namespace lyon::rpc

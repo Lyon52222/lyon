@@ -21,7 +21,22 @@ public:
     typedef std::shared_ptr<Serializer> ptr;
 
     Serializer(bool compress = true);
+
+    /**
+     * @brief
+     * 加载已经序列化的数据，注意这里加载的数据必须是已经经过序列化的，否则无法正常解码
+     *
+     * @param ba 序列化数据的二进制文件
+     * @param compress 数据是否压缩
+     */
     Serializer(ByteArray::ptr ba, bool compress);
+
+    /**
+     * @brief 加载已经序列化的数据
+     *
+     * @param str 序列化数据的字符串表示
+     * @param compress 数据是否压缩
+     */
     Serializer(const std::string &str, bool compress);
 
     void setPosition(size_t position);

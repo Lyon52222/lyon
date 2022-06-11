@@ -2,8 +2,6 @@
 #include <lyon/log.h>
 #include <lyon/serialize/serializer.h>
 #include <memory>
-#include <rpc_protocol.h>
-#include <rpc_session.h>
 namespace lyon::rpc {
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
@@ -34,10 +32,26 @@ void RpcRegister::handleClient(Socket::ptr sock) {
 }
 
 RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request) {
-    Serializer info(request->getContent(), request->isCompress());
+    Serializer request_ser(request->getContent(), request->isCompress());
     RpcProtocol::ptr response =
         RpcProtocol::CreateRegistMethodResponse(request->getSeqId());
-    // TODO:设置对应的响应体
+
+    RpcMethodMeta method;
+    request_ser >> method;
+
+    LYON_LOG_DEBUG(g_logger) << "regist method: " << method.toString();
+
+    m_registedMethod.push_back(method);
+
+    Serializer result_ser;
+
+    // TODO:这里有个问题，"OK" 并不会视为string被序列化
+    std::string str = "OK";
+
+    // result_ser << "OK";
+    result_ser << str;
+
+    response->setContent(result_ser.toString());
 
     return response;
 }

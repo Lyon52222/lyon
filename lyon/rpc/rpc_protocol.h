@@ -62,6 +62,8 @@ public:
     void setSeqId(uint8_t id) { m_seqId = id; }
     void setContent(const std::string &content);
 
+    std::ostream &dump(std::ostream &os) const;
+
     std::string toString() const;
 
     static RpcProtocol::ptr CreateCallMethodRequest();

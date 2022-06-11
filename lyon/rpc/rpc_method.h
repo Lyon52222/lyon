@@ -7,15 +7,40 @@
 namespace lyon::rpc {
 
 /**
+ * @brief 方法类元数据，用于注册方法时发送数据使用
+ */
+class RpcMethodMeta {
+public:
+  typedef std::shared_ptr<RpcMethodMeta> ptr;
+  RpcMethodMeta() = default;
+  RpcMethodMeta(const std::string &name, const std::string &desc = "");
+
+  friend const Serializer &operator<<(const Serializer &ser,
+                                      const RpcMethodMeta &meta);
+
+  friend const Serializer &operator>>(const Serializer &ser,
+                                      RpcMethodMeta &meta);
+
+  std::ostream &dump(std::ostream &os) const;
+  std::string toString() const;
+
+protected:
+  std::string m_name;
+  std::string m_rt_type;
+  std::string m_args_type;
+  std::string m_description;
+};
+
+/**
  * @brief 将注册的方法单独封装成一个类，这样可以添加一些额外的属性
  */
-class RpcMethod {
+class RpcMethod : public RpcMethodMeta {
 public:
   typedef std::shared_ptr<RpcMethod> ptr;
 
   template <typename F>
   RpcMethod(const std::string &name, F func, const std::string &desc = "")
-      : m_name(name), m_description(desc) {
+      : RpcMethodMeta(name, desc) {
     m_func = [func, this](Serializer &args) -> bool {
       return proxy(func, args);
     };
@@ -63,10 +88,6 @@ public:
   const std::string &getArgsType() { return m_args_type; }
 
 private:
-  const std::string m_name;
-  std::string m_rt_type;
-  std::string m_args_type;
-  const std::string m_description;
   std::function<bool(Serializer &)> m_func;
 };
 

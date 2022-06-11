@@ -45,12 +45,16 @@ void RpcProtocol::setContent(const std::string &content) {
     m_contentLen = m_content.size();
 }
 
-std::string RpcProtocol::toString() const {
-    std::stringstream ss;
-    ss << "[" << static_cast<unsigned>(m_magic) << "|"
+std::ostream &RpcProtocol::dump(std::ostream &os) const {
+    os << "[" << static_cast<unsigned>(m_magic) << "|"
        << static_cast<unsigned>(m_version) << "|"
        << static_cast<unsigned>(m_type) << "|" << static_cast<unsigned>(m_flag)
        << "|" << m_seqId << "|" << m_contentLen << "|" << m_content << "]";
+    return os;
+}
+std::string RpcProtocol::toString() const {
+    std::stringstream ss;
+    dump(ss);
     return ss.str();
 }
 

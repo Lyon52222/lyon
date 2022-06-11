@@ -118,10 +118,9 @@ public:
     virtual ssize_t sendTo(Address::ptr address, const iovec *buffers,
                            size_t length, int flags = 0);
 
-    virtual std::ostream &dump(std::ostream &os) const;
-
     virtual ~Socket();
 
+    virtual std::ostream &dump(std::ostream &os) const;
     std::string toString() const;
 
     int getSocket() const { return m_socket; }

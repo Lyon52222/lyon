@@ -36,6 +36,8 @@ void test_server() {
     lyon::Address::ptr addr =
         lyon::Address::LookUpAny("0.0.0.0:8088", AF_INET, SOCK_STREAM);
     rpc_server->bindAndListen(addr);
+    rpc_server->bindRegister(
+        lyon::Address::LookUpAnyIpAddress("localhost:8089"));
     rpc_server->start();
 }
 
