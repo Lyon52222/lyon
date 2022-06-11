@@ -17,7 +17,7 @@ RpcClient::~RpcClient() {
 bool RpcClient::connect(Address::ptr addr) {
     Socket::ptr sock = Socket::CreateTCP(addr);
     if (!sock->connect(addr)) {
-        LYON_LOG_INFO(g_logger) << "RPCClient::connect fail";
+        LYON_LOG_ERROR(g_logger) << "RpcClient::connect fail";
         m_session = nullptr;
         return false;
     }
@@ -29,7 +29,7 @@ bool RpcClient::connect(Address::ptr addr) {
 bool RpcClient::connect(const std::string &host) {
     Address::ptr addr = Address::LookUpAnyIpAddress(host);
     if (!addr) {
-        LYON_LOG_INFO(g_logger) << "RPCClient::connect fail";
+        LYON_LOG_ERROR(g_logger) << "RpcClient::connect fail";
         return false;
     }
     return connect(addr);

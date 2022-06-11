@@ -57,7 +57,7 @@ void test_vector() {
 
 void test_method() {
     auto add = [](int a, int b) -> int { return a + b; };
-    lyon::rpc::RPCMethod rpc_add("add", add);
+    lyon::rpc::RpcMethod rpc_add("add", add);
 
     lyon::Serializer ser;
 

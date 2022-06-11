@@ -14,7 +14,7 @@ HttpRequest::ptr HttpSession::recvRequest() {
     char *buf = buffer.get();
     size_t offset = 0;
     do {
-        size_t readed = read(buf + offset, request_size - offset);
+        ssize_t readed = read(buf + offset, request_size - offset);
         if (readed <= 0) {
             close();
             return nullptr;

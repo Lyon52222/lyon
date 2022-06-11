@@ -24,7 +24,7 @@ public:
             ba->clear();
             ba->getWriteBuffer(buffers, 1024);
 
-            int rt = sock->recv(&buffers[0], buffers.size());
+            ssize_t rt = sock->recv(&buffers[0], buffers.size());
 
             if (rt == 0) {
                 LYON_LOG_INFO(g_logger) << "Client closed";

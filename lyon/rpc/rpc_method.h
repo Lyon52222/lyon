@@ -9,16 +9,18 @@ namespace lyon::rpc {
 /**
  * @brief 将注册的方法单独封装成一个类，这样可以添加一些额外的属性
  */
-class RPCMethod {
+class RpcMethod {
 public:
-  typedef std::shared_ptr<RPCMethod> ptr;
+  typedef std::shared_ptr<RpcMethod> ptr;
 
   template <typename F>
-  RPCMethod(const std::string &name, F func, const std::string &desc = "")
+  RpcMethod(const std::string &name, F func, const std::string &desc = "")
       : m_name(name), m_description(desc) {
     m_func = [func, this](Serializer &args) -> bool {
       return proxy(func, args);
     };
+    m_rt_type = typeid(typename function_traits<F>::return_type).name();
+    m_args_type = typeid(typename function_traits<F>::args_type).name();
   }
 
   template <typename F> bool proxy(F func, Serializer &args) {
@@ -57,9 +59,13 @@ public:
   [[nodiscard]] bool call(Serializer &args) { return m_func(args); }
 
   const std::string &getName() { return m_name; }
+  const std::string &getRtType() { return m_rt_type; }
+  const std::string &getArgsType() { return m_args_type; }
 
 private:
   const std::string m_name;
+  std::string m_rt_type;
+  std::string m_args_type;
   const std::string m_description;
   std::function<bool(Serializer &)> m_func;
 };

@@ -14,12 +14,12 @@ void test_call() {
         LYON_LOG_INFO(g_logger) << rt.getMsg();
         LYON_LOG_INFO(g_logger) << rt.getVal();
 
-        //没有问题
-        lyon::rpc::RpcResult<int> rt2 = rpc_client->call<int>("addf", 123, 89);
-        LYON_LOG_INFO(g_logger) << rt2.getMsg();
-        LYON_LOG_INFO(g_logger) << rt2.getVal();
+        //找不到方法名没有问题
+        // lyon::rpc::RpcResult<int> rt2 = rpc_client->call<int>("addf", 123,
+        // 89); LYON_LOG_INFO(g_logger) << rt2.getMsg(); LYON_LOG_INFO(g_logger)
+        // << rt2.getVal();
 
-        // TODO:这里还存在非法参数也会被成功解析的问题
+        //测试通过
         lyon::rpc::RpcResult<int> rt3 = rpc_client->call<int>("add", "ves", 89);
         LYON_LOG_INFO(g_logger) << rt3.getMsg();
         LYON_LOG_INFO(g_logger) << rt3.getVal();
@@ -65,9 +65,9 @@ void test_future_call() {
 }
 
 int main(int argc, char *argv[]) {
-    lyon::IOManager iom(2);
-    // iom.addJob(test_call);
+    lyon::IOManager iom(1);
+    iom.addJob(test_call);
     // iom.addJob(test_async_call);
-    iom.addJob(test_future_call);
+    // iom.addJob(test_future_call);
     return 0;
 }

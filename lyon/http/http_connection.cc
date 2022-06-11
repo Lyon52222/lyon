@@ -36,7 +36,7 @@ HttpResponse::ptr HttpConnection::recvResponse() {
     char *buf = buffer.get();
     size_t offset = 0;
     do {
-        size_t readed = read(buf + offset, response_size - offset);
+        ssize_t readed = read(buf + offset, response_size - offset);
         if (readed <= 0) {
             close();
             return nullptr;
@@ -95,7 +95,7 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         do {
             //解析分块
             do {
-                size_t readed = read(buf + offset, response_size - offset);
+                ssize_t readed = read(buf + offset, response_size - offset);
                 if (readed <= 0) {
                     close();
                     return nullptr;
@@ -129,7 +129,7 @@ HttpResponse::ptr HttpConnection::recvResponse() {
                 body.append(buf, offset);
                 size_t left = chunk_size - offset + 2;
                 while (left > 0) {
-                    size_t readed =
+                    ssize_t readed =
                         read(buf, left < response_size ? left : response_size);
                     if (readed <= 0) {
                         close();

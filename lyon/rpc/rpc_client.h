@@ -72,7 +72,9 @@ public:
     RpcResult<T> call(const std::string &name, const Args &...args) {
         auto args_tuple = std::make_tuple(args...);
         Serializer call_ser;
-        call_ser << name << args_tuple;
+        std::string rt_type = typeid(T).name();
+        std::string args_type = typeid(args_tuple).name();
+        call_ser << name << rt_type << args_type << args_tuple;
         return call<T>(call_ser);
     }
 
@@ -82,7 +84,7 @@ public:
         }
 
         //创建函数调用请求
-        RpcProtocol::ptr request = RpcProtocol::CreateMethodRequest();
+        RpcProtocol::ptr request = RpcProtocol::CreateCallMethodRequest();
         //将函数的参数放入请求体中
         request->setContent(ser.toString());
 

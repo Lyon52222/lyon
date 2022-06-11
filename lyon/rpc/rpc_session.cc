@@ -11,7 +11,7 @@ RpcProtocol::ptr RpcSession::recvRpcProtocol() {
     //先接受消息头
     ByteArray::ptr ba(new ByteArray());
     LYON_LOG_DEBUG(g_logger) << "start read head";
-    int rt = readFixSize(ba, RpcProtocol::HEAD_LEN);
+    ssize_t rt = readFixSize(ba, RpcProtocol::HEAD_LEN);
     LYON_LOG_DEBUG(g_logger) << "read head rt = " << rt;
     if (rt <= 0) {
         LYON_LOG_DEBUG(g_logger) << "RpcSession::recvRpcProtocol read rt=" << rt

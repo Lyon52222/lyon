@@ -4,6 +4,8 @@
 #include "lyon/tcp_server.h"
 #include "rpc_method.h"
 #include "rpc_protocol.h"
+#include "rpc_session.h"
+#include <lyon/address.h>
 namespace lyon::rpc {
 
 class RpcServer : public TcpServer {
@@ -16,21 +18,30 @@ public:
               IOManager *ioworker = IOManager::GetCurrentIOManager(),
               IOManager *acceptWorker = IOManager::GetCurrentIOManager());
 
+    virtual bool start() override;
+
+    bool bindRegister(Address::ptr addr);
+
+    bool bindRegister(const std::string &host);
+
     virtual void handleClient(Socket::ptr sock) override;
 
-    void registMethod(RPCMethod::ptr method);
+    void registMethod(RpcMethod::ptr method);
+
+    void registMethodToRegister(RpcMethod::ptr method);
 
     virtual RpcProtocol::ptr handleMethodRequest(RpcProtocol::ptr protocol);
 
     template <typename F> void registMethod(const std::string &name, F func) {
-        auto func_ptr(new RPCMethod(name, func));
+        auto func_ptr(new RpcMethod(name, func));
         m_methods.emplace(name, func_ptr);
     }
 
-    RPCMethod::ptr getMethod(const std::string &name);
+    RpcMethod::ptr getMethod(const std::string &name);
 
 private:
-    std::map<std::string, RPCMethod::ptr> m_methods;
+    std::map<std::string, RpcMethod::ptr> m_methods;
+    RpcSession::ptr m_registerSession;
 };
 } // namespace lyon::rpc
 

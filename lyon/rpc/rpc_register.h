@@ -1,9 +1,10 @@
 #ifndef __LYON_RPC_REGISTER_H__
 #define __LYON_RPC_REGISTER_H__
 
-#include <lyon/tcp_server.h>
+#include "lyon/tcp_server.h"
+#include "rpc_protocol.h"
+#include "rpc_session.h"
 #include <memory>
-#include <rpc_session.h>
 namespace lyon::rpc {
 
 class RpcRegister : public TcpServer {
@@ -18,7 +19,7 @@ public:
      *
      * @param session 对应的session
      */
-    void handleServerRegist(RpcSession::ptr session);
+    RpcProtocol::ptr handleRegistMethod(RpcProtocol::ptr request);
 
 private:
 };

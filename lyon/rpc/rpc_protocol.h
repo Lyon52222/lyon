@@ -32,12 +32,12 @@ public:
         RPC_CONSUMER,
 
         //向注册中心注册方法
-        RPC_REGIST_REQUEST,
-        RPC_REGIST_RESPONSE,
+        RPC_REGIST_METHOD_REQUEST,
+        RPC_REGIST_METHOD_RESPONSE,
 
         //向server请求方法调用
-        RPC_METHOD_REQUEST,
-        RPC_METHOD_RESPONSE
+        RPC_CALL_METHOD_REQUEST,
+        RPC_CALL_METHOD_RESPONSE
     };
 
     RpcProtocol();
@@ -64,11 +64,11 @@ public:
 
     std::string toString() const;
 
-    static RpcProtocol::ptr CreateMethodRequest();
-    static RpcProtocol::ptr CreateMethodResponse(uint32_t seq_id);
+    static RpcProtocol::ptr CreateCallMethodRequest();
+    static RpcProtocol::ptr CreateCallMethodResponse(uint32_t seq_id);
 
-    static RpcProtocol::ptr CreateServerRegistRequest();
-    static RpcProtocol::ptr CreateServerRegistResponse(uint32_t seq_id);
+    static RpcProtocol::ptr CreateRegistMethodRequest();
+    static RpcProtocol::ptr CreateRegistMethodResponse(uint32_t seq_id);
 
 private:
     //魔法数字

@@ -54,30 +54,30 @@ std::string RpcProtocol::toString() const {
     return ss.str();
 }
 
-RpcProtocol::ptr RpcProtocol::CreateMethodRequest() {
+RpcProtocol::ptr RpcProtocol::CreateCallMethodRequest() {
     RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_METHOD_REQUEST, 0x01));
+        new RpcProtocol(MSG_TYPE::RPC_CALL_METHOD_REQUEST, 0x01));
     protocol->setSeqId(++m_id);
     return protocol;
 }
 
-RpcProtocol::ptr RpcProtocol::CreateMethodResponse(uint32_t seq_id) {
+RpcProtocol::ptr RpcProtocol::CreateCallMethodResponse(uint32_t seq_id) {
     RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_METHOD_RESPONSE, 0x01));
+        new RpcProtocol(MSG_TYPE::RPC_CALL_METHOD_RESPONSE, 0x01));
     protocol->setSeqId(seq_id);
     return protocol;
 }
 
-RpcProtocol::ptr RpcProtocol::CreateServerRegistRequest() {
+RpcProtocol::ptr RpcProtocol::CreateRegistMethodRequest() {
     RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_REGIST_REQUEST, 0x01));
+        new RpcProtocol(MSG_TYPE::RPC_REGIST_METHOD_REQUEST, 0x01));
     protocol->setSeqId(++m_id);
     return protocol;
 }
 
-RpcProtocol::ptr RpcProtocol::CreateServerRegistResponse(uint32_t seq_id) {
+RpcProtocol::ptr RpcProtocol::CreateRegistMethodResponse(uint32_t seq_id) {
     RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_REGIST_RESPONSE, 0x01));
+        new RpcProtocol(MSG_TYPE::RPC_REGIST_METHOD_RESPONSE, 0x01));
     protocol->setSeqId(seq_id);
     return protocol;
 }
