@@ -40,9 +40,10 @@ bool RpcProtocol::isValid() const {
     return true;
 }
 
-void RpcProtocol::setContent(const std::string &content) {
+void RpcProtocol::setContent(const std::string &content, bool is_compress) {
     m_content = content;
     m_contentLen = m_content.size();
+    m_flag = is_compress ? m_flag & 0xff : m_flag & 0xfe;
 }
 
 std::ostream &RpcProtocol::dump(std::ostream &os) const {

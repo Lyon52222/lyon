@@ -248,8 +248,8 @@ const Serializer &operator>>(const Serializer &ser, std::vector<T> &v) {
 template <typename T>
 const Serializer &operator<<(const Serializer &ser, const std::list<T> &v) {
     ser << v.size();
-    for (size_t i = 0; i < v.size(); ++i) {
-        ser << v[i];
+    for (const T &v_ : v) {
+        ser << v_;
     }
     return ser;
 }

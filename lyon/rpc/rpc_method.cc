@@ -5,6 +5,13 @@ namespace lyon::rpc {
 RpcMethodMeta::RpcMethodMeta(const std::string &name, const std::string &desc)
     : m_name(name), m_description(desc) {}
 
+RpcMethodMeta::RpcMethodMeta(const std::string &name,
+                             const std::string &rt_type,
+                             const std::string &args_type,
+                             const std::string &desc)
+    : m_name(name), m_rt_type(rt_type), m_args_type(args_type),
+      m_description(desc) {}
+
 std::ostream &RpcMethodMeta::dump(std::ostream &os) const {
     os << "[ func_name = " << m_name << ", rt_type = " << m_rt_type
        << ", args_type = " << m_args_type << ", desc = " << m_description

@@ -56,4 +56,8 @@ int RpcSession::sendRpcProtocol(RpcProtocol::ptr protocol) {
     return writeFixSize(ba, ba->getReadableSize());
 }
 
+void RpcSession::setTimeout(uint64_t timeout) {
+    getSocket()->setSendTimeout(timeout);
+}
+
 } // namespace lyon::rpc

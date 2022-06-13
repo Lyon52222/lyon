@@ -27,7 +27,7 @@ public:
     RpcProtocol::ptr handleDiscoverMethod(RpcProtocol::ptr request);
 
 private:
-    std::multimap<RpcMethodMeta, std::string> m_registedMethod;
+    std::map<RpcMethodMeta, std::list<std::string>> m_registedMethod;
 };
 
 } // namespace lyon::rpc

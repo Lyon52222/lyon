@@ -3,9 +3,6 @@
 #include "http_protocol.h"
 #include "lyon/log.h"
 #include <cstdint>
-#include <lyon/address.h>
-#include <lyon/socket.h>
-#include <lyon/util.h>
 #include <memory>
 #include <sstream>
 namespace lyon::http {
@@ -13,6 +10,7 @@ namespace lyon::http {
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
 HttpConnection::HttpConnection(Socket::ptr sock) : SocketStream(sock) {
+    m_request = 0;
     m_createTime = GetCurrentTimeMS();
 }
 
@@ -397,19 +395,19 @@ HttpResult::ptr HttpConnectionPool::doRequest(HttpRequest::ptr request,
 }
 
 void HttpConnectionPool::ReleasePtr(HttpConnection *ptr,
-                                    HttpConnectionPool *pool) {
+                                    HttpConnectionPool *poll) {
     //这里将socket连接进行重用
     ptr->incRequest();
     if (!ptr->isConnected() ||
-        (ptr->getCreateTime() + pool->m_maxLiveTime >= GetCurrentTimeMS()) ||
-        ptr->getRequest() > pool->m_maxRequest ||
-        pool->m_total > pool->m_maxSize) {
+        (ptr->getCreateTime() + poll->m_maxLiveTime >= GetCurrentTimeMS()) ||
+        ptr->getRequest() > poll->m_maxRequest ||
+        poll->m_total > poll->m_maxSize) {
         delete ptr;
-        --pool->m_total;
+        --poll->m_total;
         return;
     }
-    MutexType::Lock lock(pool->m_mutex);
-    pool->m_connections.push_back(ptr);
+    MutexType::Lock lock(poll->m_mutex);
+    poll->m_connections.push_back(ptr);
 }
 
 HttpResult::ptr

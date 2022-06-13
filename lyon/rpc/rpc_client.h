@@ -17,13 +17,21 @@ class RpcClient : public std::enable_shared_from_this<RpcClient> {
 public:
     typedef std::shared_ptr<RpcClient> ptr;
 
-    RpcClient(uint64_t timeoutMs);
+    RpcClient(uint64_t timeoutMs = -1);
 
     ~RpcClient();
 
     [[nodiscard]] bool connect(Address::ptr addr);
 
     [[nodiscard]] bool connect(const std::string &host);
+
+    [[nodiscard]] bool isConnected();
+
+    [[nodiscard]] uint64_t getCreateTime();
+
+    uint32_t incRequest() { return ++m_request; }
+    uint32_t decRequest() { return --m_request; }
+    uint32_t getRequest() const { return m_request; }
 
     template <typename T, typename... Args>
     std::future<RpcResult<T>> future_call(const std::string &name,
@@ -88,6 +96,10 @@ public:
         //将函数的参数放入请求体中
         request->setContent(ser.toString());
 
+        Socket::ptr sock = m_session->getSocket();
+
+        sock->setSendTimeout(m_timeoutMs);
+
         //发送函数调用请求
         int rt = m_session->sendRpcProtocol(request);
 
@@ -126,7 +138,9 @@ public:
 
 private:
     RpcSession::ptr m_session = nullptr;
+    uint32_t m_request = 0;
     uint64_t m_timeoutMs = -1;
+    uint64_t m_createTime;
 };
 
 } // namespace lyon::rpc

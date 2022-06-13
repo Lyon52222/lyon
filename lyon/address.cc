@@ -335,7 +335,8 @@ std::ostream &IPv4Address::insert(std::ostream &os) const {
     //    << ((addr >> 8) & 0xff) << '.' << ((addr)&0xff);
     os << inet_ntoa(m_addr.sin_addr);
 
-    os << ':' << byteswapOnLittleEndian(m_addr.sin_port);
+    // os << ':' << byteswapOnLittleEndian(m_addr.sin_port);
+    os << ":" << ntohs(m_addr.sin_port);
     return os;
 }
 

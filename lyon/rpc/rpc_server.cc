@@ -17,14 +17,15 @@ RpcServer::RpcServer(IOManager *worker, IOManager *ioworker,
     : TcpServer(worker, ioworker, acceptWorker) {}
 
 bool RpcServer::start() {
-    // TODO:这里注册可以添加到协程中
     if (!m_registerSession || !m_registerSession->isConnected()) {
         LYON_LOG_INFO(g_logger) << "RpcServer not bind Register";
     } else {
-        for (auto &method : m_methods) {
-            registMethodToRegister(method.second);
-        }
-        LYON_LOG_INFO(g_logger) << "Success regist methods to Register";
+        m_acceptWorker->addJob([this]() {
+            for (auto &method : m_methods) {
+                registMethodToRegister(method.second);
+            }
+            LYON_LOG_INFO(g_logger) << "Success regist methods to Register";
+        });
     }
     return TcpServer::start();
 }
@@ -166,7 +167,7 @@ bool RpcServer::registMethodToRegister(RpcMethod::ptr method) {
     if (result == "OK") {
         return true;
     }
-    return true;
+    return false;
 }
 
 RpcMethod::ptr RpcServer::getMethod(const std::string &name) {

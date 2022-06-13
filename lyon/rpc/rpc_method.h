@@ -13,7 +13,11 @@ class RpcMethodMeta {
 public:
   typedef std::shared_ptr<RpcMethodMeta> ptr;
   RpcMethodMeta() = default;
+
   RpcMethodMeta(const std::string &name, const std::string &desc = "");
+
+  RpcMethodMeta(const std::string &name, const std::string &rt_type,
+                const std::string &args_type, const std::string &desc = "");
 
   friend const Serializer &operator<<(const Serializer &ser,
                                       const RpcMethodMeta &meta);

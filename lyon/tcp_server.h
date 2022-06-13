@@ -43,11 +43,13 @@ public:
 private:
     void startAccept(const Socket::ptr sock);
 
-private:
-    std::vector<Socket::ptr> m_sockets;
+protected:
     IOManager *m_worker;
     IOManager *m_ioworker;
     IOManager *m_acceptWorker;
+
+private:
+    std::vector<Socket::ptr> m_sockets;
     uint64_t m_recvTimeout;
     std::string m_name;
     bool m_isStop;

@@ -24,7 +24,6 @@ struct HttpResult {
         SEND_SOCKET_ERROR,
         TIMEOUT,
         CREATE_SOCKET_ERROR,
-
         POOL_GET_CONN_FAIL,
         POOL_INVALID_SOCK
     };
@@ -133,7 +132,7 @@ public:
     HttpResult::ptr doRequest(HttpRequest::ptr request, uint64_t timeout_ms);
 
 private:
-    static void ReleasePtr(HttpConnection *ptr, HttpConnectionPool *pool);
+    static void ReleasePtr(HttpConnection *ptr, HttpConnectionPool *poll);
 
 private:
     /**

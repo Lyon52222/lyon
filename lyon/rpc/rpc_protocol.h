@@ -63,7 +63,7 @@ public:
     const std::string &getContent() { return m_content; }
 
     void setSeqId(uint8_t id) { m_seqId = id; }
-    void setContent(const std::string &content);
+    void setContent(const std::string &content, bool is_compress = true);
 
     std::ostream &dump(std::ostream &os) const;
 

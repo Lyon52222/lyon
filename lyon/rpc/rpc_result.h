@@ -9,6 +9,8 @@ namespace lyon::rpc {
 enum class RpcResultState : std::uint8_t {
     //正常返回
     OK = 0,
+    //
+    GET_CONNECTION_ERROR,
     //未连接到服务器
     NOT_CONNECT,
     // Socket连接被对方关闭 rt==0
