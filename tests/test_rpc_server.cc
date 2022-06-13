@@ -28,10 +28,12 @@ void test_regist() {
 
 void test_server() {
     auto add = [](int a, int b) { return a + b; };
+    auto addf = [](float a, float b) { return a + b; };
 
     lyon::rpc::RpcServer::ptr rpc_server(new lyon::rpc::RpcServer());
 
     rpc_server->registMethod("add", add);
+    rpc_server->registMethod("add", addf);
 
     lyon::Address::ptr addr =
         lyon::Address::LookUpAny("0.0.0.0:8088", AF_INET, SOCK_STREAM);

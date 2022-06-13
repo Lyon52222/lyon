@@ -9,20 +9,25 @@ static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
 void test_call() {
     lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient(1000));
+    //支持函数名重载
     if (rpc_client->connect("localhost:8088")) {
         lyon::rpc::RpcResult<int> rt = rpc_client->call<int>("add", 123, 89);
         LYON_LOG_INFO(g_logger) << rt.getMsg();
         LYON_LOG_INFO(g_logger) << rt.getVal();
 
+        lyon::rpc::RpcResult<float> rtf =
+            rpc_client->call<float>("add", 12.2f, 89.1f);
+        LYON_LOG_INFO(g_logger) << rtf.getMsg();
+        LYON_LOG_INFO(g_logger) << rtf.getVal();
         //找不到方法名没有问题
         // lyon::rpc::RpcResult<int> rt2 = rpc_client->call<int>("addf", 123,
         // 89); LYON_LOG_INFO(g_logger) << rt2.getMsg(); LYON_LOG_INFO(g_logger)
         // << rt2.getVal();
 
         //测试通过
-        lyon::rpc::RpcResult<int> rt3 = rpc_client->call<int>("add", "ves", 89);
-        LYON_LOG_INFO(g_logger) << rt3.getMsg();
-        LYON_LOG_INFO(g_logger) << rt3.getVal();
+        // lyon::rpc::RpcResult<int> rt3 = rpc_client->call<int>("add", "ves",
+        // 89); LYON_LOG_INFO(g_logger) << rt3.getMsg(); LYON_LOG_INFO(g_logger)
+        // << rt3.getVal();
     }
 }
 

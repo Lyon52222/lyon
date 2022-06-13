@@ -99,27 +99,36 @@ RpcProtocol::ptr RpcServer::handleMethodRequest(RpcProtocol::ptr request) {
     //响应结果的封装
     std::unique_ptr<RpcResult<>> result;
 
-    if (!m_methods.contains(method_name)) {
+    if (m_methods.count(method_name) == 0) {
         result = std::make_unique<RpcResult<>>(RpcResultState::METHOD_NOT_FOUND,
                                                "method not found");
     } else {
-        RpcMethod::ptr method = m_methods[method_name];
+        auto beg = m_methods.lower_bound(method_name);
+        auto end = m_methods.upper_bound(method_name);
+        while (beg != end) {
 
-        //参数或返回值类型不匹配也视为未找到对应方法
-        if (args_type != method->getArgsType() ||
-            rt_type != method->getRtType()) {
-            result = std::make_unique<RpcResult<>>(
-                RpcResultState::METHOD_NOT_FOUND, "method not found");
-        }
-        //调用函数
-        else if (method->call(args)) {
-            result = std::make_unique<RpcResult<>>(RpcResultState::OK, "OK");
-            //将处理结果的封装和函数的返回值放入响应体中
-            response->setContent(result->toString() + args.toString());
-            return response;
-        } else {
-            result = std::make_unique<RpcResult<>>(
-                RpcResultState::METHOD_RUN_ERROR, "method run error");
+            // RpcMethod::ptr method = m_methods[method_name];
+            RpcMethod::ptr method = beg->second;
+
+            //参数或返回值类型不匹配也视为未找到对应方法
+            if (args_type != method->getArgsType() ||
+                rt_type != method->getRtType()) {
+                result = std::make_unique<RpcResult<>>(
+                    RpcResultState::METHOD_ARGS_ERROR, method->toString());
+            }
+            //调用函数
+            else if (method->call(args)) {
+                result =
+                    std::make_unique<RpcResult<>>(RpcResultState::OK, "OK");
+                //将处理结果的封装和函数的返回值放入响应体中
+                response->setContent(result->toString() + args.toString());
+                return response;
+            } else {
+                result = std::make_unique<RpcResult<>>(
+                    RpcResultState::METHOD_RUN_ERROR, "method run error");
+            }
+
+            beg++;
         }
     }
     //其余调用失败的的时候，就不需要仿佛处理结果了。

@@ -35,6 +35,9 @@ public:
         RPC_REGIST_METHOD_REQUEST,
         RPC_REGIST_METHOD_RESPONSE,
 
+        RPC_DISCOVER_METHOD_REQUEST,
+        RPC_DISCOVER_METHOD_RESPONSE,
+
         //向server请求方法调用
         RPC_CALL_METHOD_REQUEST,
         RPC_CALL_METHOD_RESPONSE
@@ -71,6 +74,9 @@ public:
 
     static RpcProtocol::ptr CreateRegistMethodRequest();
     static RpcProtocol::ptr CreateRegistMethodResponse(uint32_t seq_id);
+
+    static RpcProtocol::ptr CreateDiscoverMethodRequest();
+    static RpcProtocol::ptr CreateDiscoverMethodResponse(uint32_t seq_id);
 
 private:
     //魔法数字

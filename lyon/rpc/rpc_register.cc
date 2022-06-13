@@ -1,4 +1,5 @@
 #include "rpc_register.h"
+#include <lyon/address.h>
 #include <lyon/log.h>
 #include <lyon/serialize/serializer.h>
 #include <memory>
@@ -18,7 +19,8 @@ void RpcRegister::handleClient(Socket::ptr sock) {
         RpcProtocol::ptr response;
         if (request->getType() ==
             RpcProtocol::MSG_TYPE::RPC_REGIST_METHOD_REQUEST) {
-            response = handleRegistMethod(request);
+            response = handleRegistMethod(
+                request, session->getSocket()->getRemoteAddress());
         }
 
         if (response) {
@@ -31,7 +33,8 @@ void RpcRegister::handleClient(Socket::ptr sock) {
     session->close();
 }
 
-RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request) {
+RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request,
+                                                 Address::ptr server_addr) {
     Serializer request_ser(request->getContent(), request->isCompress());
     RpcProtocol::ptr response =
         RpcProtocol::CreateRegistMethodResponse(request->getSeqId());
@@ -41,7 +44,8 @@ RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request) {
 
     LYON_LOG_DEBUG(g_logger) << "regist method: " << method.toString();
 
-    m_registedMethod.push_back(method);
+    // m_registedMethod.push_back(method);
+    m_registedMethod.emplace(method, server_addr->toString());
 
     Serializer result_ser;
 
@@ -52,6 +56,13 @@ RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request) {
     result_ser << str;
 
     response->setContent(result_ser.toString());
+
+    return response;
+}
+
+RpcProtocol::ptr RpcRegister::handleDiscoverMethod(RpcProtocol::ptr request) {
+    RpcProtocol::ptr response =
+        RpcProtocol::CreateDiscoverMethodResponse(request->getSeqId());
 
     return response;
 }

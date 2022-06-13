@@ -86,4 +86,19 @@ RpcProtocol::ptr RpcProtocol::CreateRegistMethodResponse(uint32_t seq_id) {
     return protocol;
 }
 
+RpcProtocol::ptr RpcProtocol::CreateDiscoverMethodRequest() {
+    RpcProtocol::ptr protocol(
+        new RpcProtocol(MSG_TYPE::RPC_DISCOVER_METHOD_REQUEST, 0x01));
+    protocol->setSeqId(++m_id);
+    return protocol;
+}
+
+RpcProtocol::ptr RpcProtocol::CreateDiscoverMethodResponse(uint32_t seq_id) {
+
+    RpcProtocol::ptr protocol(
+        new RpcProtocol(MSG_TYPE::RPC_DISCOVER_METHOD_RESPONSE, 0x01));
+    protocol->setSeqId(seq_id);
+    return protocol;
+}
+
 } // namespace lyon::rpc

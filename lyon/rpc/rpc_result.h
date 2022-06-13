@@ -20,7 +20,8 @@ enum class RpcResultState : std::uint8_t {
     //方法运行错误
     METHOD_RUN_ERROR,
     //参数解析错误
-    ARGS_ERROR,
+    METHOD_ARGS_ERROR,
+    //接收到的响应无效
     RECV_BAD_RESPONSE
 };
 
@@ -61,10 +62,13 @@ public:
     friend const Serializer &operator<<(const Serializer &ser,
                                         RpcResult<T> &ret) {
         ser << ret.m_state << ret.m_msg;
+        //这里是server出现错误的情况，这个时候返回的T肯定不是client期望的，解析会出错，所以直接跳过
         if (ret.m_state !=
                 static_cast<uint8_t>(RpcResultState::METHOD_NOT_FOUND) &&
             ret.m_state !=
-                static_cast<uint8_t>(RpcResultState::METHOD_RUN_ERROR))
+                static_cast<uint8_t>(RpcResultState::METHOD_RUN_ERROR) &&
+            ret.m_state !=
+                static_cast<uint8_t>(RpcResultState::METHOD_ARGS_ERROR))
             ser << ret.m_val;
         return ser;
     }
@@ -76,7 +80,9 @@ public:
         if (ret.m_state !=
                 static_cast<uint8_t>(RpcResultState::METHOD_NOT_FOUND) &&
             ret.m_state !=
-                static_cast<uint8_t>(RpcResultState::METHOD_RUN_ERROR))
+                static_cast<uint8_t>(RpcResultState::METHOD_RUN_ERROR) &&
+            ret.m_state !=
+                static_cast<uint8_t>(RpcResultState::METHOD_ARGS_ERROR))
             ser >> ret.m_val;
         return ser;
     }

@@ -40,7 +40,7 @@ public:
     RpcMethod::ptr getMethod(const std::string &name);
 
 private:
-    std::map<std::string, RpcMethod::ptr> m_methods;
+    std::multimap<std::string, RpcMethod::ptr> m_methods;
     RpcSession::ptr m_registerSession;
 };
 } // namespace lyon::rpc

@@ -5,6 +5,7 @@
 #include "rpc_method.h"
 #include "rpc_protocol.h"
 #include "rpc_session.h"
+#include <lyon/address.h>
 #include <memory>
 namespace lyon::rpc {
 
@@ -20,10 +21,13 @@ public:
      *
      * @param session 对应的session
      */
-    RpcProtocol::ptr handleRegistMethod(RpcProtocol::ptr request);
+    RpcProtocol::ptr handleRegistMethod(RpcProtocol::ptr request,
+                                        Address::ptr server_addr);
+
+    RpcProtocol::ptr handleDiscoverMethod(RpcProtocol::ptr request);
 
 private:
-    std::vector<RpcMethodMeta> m_registedMethod;
+    std::multimap<RpcMethodMeta, std::string> m_registedMethod;
 };
 
 } // namespace lyon::rpc

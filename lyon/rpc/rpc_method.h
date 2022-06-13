@@ -24,6 +24,10 @@ public:
   std::ostream &dump(std::ostream &os) const;
   std::string toString() const;
 
+  bool operator<(const RpcMethodMeta &rhs) const;
+  bool operator==(const RpcMethodMeta &rhs) const;
+  bool operator!=(const RpcMethodMeta &rhs) const;
+
 protected:
   std::string m_name;
   std::string m_rt_type;
