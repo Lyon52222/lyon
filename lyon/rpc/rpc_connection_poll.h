@@ -3,7 +3,7 @@
 
 #include "lyon/mutex.h"
 #include "lyon/serialize/serializer.h"
-#include "rpc_client.h"
+#include "rpc_connection.h"
 #include "rpc_method.h"
 #include "rpc_result.h"
 #include "rpc_session.h"
@@ -28,11 +28,11 @@ public:
 
     bool bindRegister(const std::string &host);
 
-    RpcClient::ptr getConnection(const RpcMethodMeta &method);
+    RpcConnection::ptr getConnection(const RpcMethodMeta &method);
 
     std::vector<std::string> discover(const RpcMethodMeta &method);
 
-    static void ReleasePtr(RpcClient *ptr, RpcConnectionPoll *poll,
+    static void ReleasePtr(RpcConnection *ptr, RpcConnectionPoll *poll,
                            RpcMethodMeta method);
 
     template <typename T, typename... Args>
@@ -101,7 +101,7 @@ private:
     std::atomic<uint32_t> m_total = {0};
     RpcSession::ptr m_registerSession;
     //每个方法所对应的连接池
-    std::map<RpcMethodMeta, std::list<RpcClient *>> m_connections;
+    std::map<RpcMethodMeta, std::list<RpcConnection *>> m_connections;
     //每个方法所对应的可用服务器
     std::map<RpcMethodMeta, std::list<std::string>> m_servers;
     MutexType m_mutex;

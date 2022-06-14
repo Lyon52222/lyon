@@ -18,6 +18,8 @@ public:
               IOManager *ioworker = IOManager::GetCurrentIOManager(),
               IOManager *acceptWorker = IOManager::GetCurrentIOManager());
 
+    virtual ~RpcServer();
+
     virtual bool start() override;
 
     bool bindRegister(Address::ptr addr);

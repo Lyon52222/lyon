@@ -5,7 +5,8 @@
 
 ## Requirement:
 yaml-cpp
-jsoncpp
+ragel
+hiredis
 
 
 ## 模块

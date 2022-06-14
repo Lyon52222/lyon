@@ -16,6 +16,10 @@ RpcServer::RpcServer(IOManager *worker, IOManager *ioworker,
                      IOManager *acceptWorker)
     : TcpServer(worker, ioworker, acceptWorker) {}
 
+RpcServer::~RpcServer() {
+    // TODO:这里应该通知register,本server提供的所有服务均已下线
+}
+
 bool RpcServer::start() {
     if (!m_registerSession || !m_registerSession->isConnected()) {
         LYON_LOG_INFO(g_logger) << "RpcServer not bind Register";
@@ -158,17 +162,13 @@ bool RpcServer::registMethodToRegister(RpcMethod::ptr method) {
     m_registerSession->sendRpcProtocol(request);
 
     RpcProtocol::ptr response = m_registerSession->recvRpcProtocol();
-
     Serializer result_ser(response->getContent(), response->isCompress());
-
     std::string result;
-
     result_ser >> result;
-
     if (result == "OK") {
         return true;
     }
-    return false;
+    return true;
 }
 
 RpcMethod::ptr RpcServer::getMethod(const std::string &name) {

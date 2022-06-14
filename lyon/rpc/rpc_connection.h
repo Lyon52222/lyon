@@ -13,13 +13,13 @@
 #include <memory>
 namespace lyon::rpc {
 
-class RpcClient : public std::enable_shared_from_this<RpcClient> {
+class RpcConnection : public std::enable_shared_from_this<RpcConnection> {
 public:
-    typedef std::shared_ptr<RpcClient> ptr;
+    typedef std::shared_ptr<RpcConnection> ptr;
 
-    RpcClient(uint64_t timeoutMs = -1);
+    RpcConnection(uint64_t timeoutMs = -1);
 
-    ~RpcClient();
+    ~RpcConnection();
 
     [[nodiscard]] bool connect(Address::ptr addr);
 
@@ -44,7 +44,7 @@ public:
         // promise用于产生future
         auto promise = std::make_shared<std::promise<RpcResult<T>>>();
 
-        RpcClient::ptr this_ptr = shared_from_this();
+        RpcConnection::ptr this_ptr = shared_from_this();
         IOManager::GetCurrentIOManager()->addJob(
             [this_ptr, promise, call_job]() mutable {
                 //调用成功后设置value,是的future有效
@@ -66,7 +66,7 @@ public:
         };
 
         //所以这里使用shared_ptr来保持，延缓当前client的析构
-        RpcClient::ptr this_ptr = shared_from_this();
+        RpcConnection::ptr this_ptr = shared_from_this();
 
         // lambda表达式值捕获是在lambda表达式定义的时候进行捕获，而引用捕获则实在调用时进行的捕获。//因此这里如果采用引用捕获的话也会有函数调用时变量失效的问题
         IOManager::GetCurrentIOManager()->addJob(

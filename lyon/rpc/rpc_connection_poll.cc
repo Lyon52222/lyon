@@ -38,12 +38,13 @@ bool RpcConnectionPoll::bindRegister(const std::string &host) {
     return bindRegister(addr);
 }
 
-RpcClient::ptr RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
-    std::vector<RpcClient *> invalid_connections;
-    RpcClient *rt = nullptr;
+RpcConnection::ptr
+RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
+    std::vector<RpcConnection *> invalid_connections;
+    RpcConnection *rt = nullptr;
     MutexType::Lock lock(m_mutex);
     if (!m_connections.contains(method)) {
-        m_connections.emplace(method, std::list<RpcClient *>{});
+        m_connections.emplace(method, std::list<RpcConnection *>{});
     }
     while (!m_connections[method].empty()) {
         auto conn = m_connections[method].front();
@@ -68,7 +69,7 @@ RpcClient::ptr RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
     m_total -= invalid_connections.size();
 
     if (!rt) {
-        rt = new RpcClient();
+        rt = new RpcConnection();
         std::list<std::string> &servers = m_servers[method];
         //现在已知的服务器中尝试
         while (!servers.empty()) {
@@ -76,6 +77,7 @@ RpcClient::ptr RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
             //将请求失败的删除
             if (!rt->connect(server)) {
                 servers.pop_front();
+                // TODO:这里应该通知register 该服务已失效
                 continue;
             } else {
                 break;
@@ -106,7 +108,8 @@ RpcClient::ptr RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
         ++m_total;
     }
 
-    return RpcClient::ptr(rt, std::bind(RpcConnectionPoll::ReleasePtr,
+    return RpcConnection::ptr(rt,
+                              std::bind(RpcConnectionPoll::ReleasePtr,
                                         std::placeholders::_1, this, method));
 }
 
@@ -132,7 +135,7 @@ RpcConnectionPoll::discover(const RpcMethodMeta &method) {
     return servers;
 }
 
-void RpcConnectionPoll::ReleasePtr(RpcClient *ptr, RpcConnectionPoll *poll,
+void RpcConnectionPoll::ReleasePtr(RpcConnection *ptr, RpcConnectionPoll *poll,
                                    RpcMethodMeta method) {
     ptr->incRequest();
     if (!ptr->isConnected() ||

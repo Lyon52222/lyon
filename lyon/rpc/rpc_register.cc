@@ -19,7 +19,6 @@ void RpcRegister::handleClient(Socket::ptr sock) {
         if (request->getType() ==
             RpcProtocol::MSG_TYPE::RPC_REGIST_METHOD_REQUEST) {
             response = handleRegistMethod(
-                // TODO:这里获得的remoteaddr的port并不是提供服务的端口号
                 request, session->getSocket()->getRemoteAddress());
         } else if (request->getType() ==
                    RpcProtocol::MSG_TYPE::RPC_DISCOVER_METHOD_REQUEST) {
@@ -29,6 +28,7 @@ void RpcRegister::handleClient(Socket::ptr sock) {
         if (response) {
             session->sendRpcProtocol(response);
         }
+
         if (!session->isConnected()) {
             break;
         }
@@ -45,6 +45,7 @@ RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request,
     RpcMethodMeta method;
     std::vector<uint16_t> server_ports;
     request_ser >> method >> server_ports;
+    // TODO:因为register可能会管理很多服务，所以这可以使用redis存储
 
     // server开放服务的端口可能不止一个，这里暂时简单处理，使用第一个
     std::static_pointer_cast<IPAddress>(server_addr)->setPort(server_ports[0]);
@@ -58,15 +59,11 @@ RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request,
                              << server_addr->toString();
 
     Serializer result_ser;
-
     // TODO:这里有个问题，"OK" 并不会视为string被序列化
     std::string str = "OK";
-
     // result_ser << "OK";
     result_ser << str;
-
     response->setContent(result_ser.toString());
-
     return response;
 }
 

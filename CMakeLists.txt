@@ -32,6 +32,7 @@ set(
   lyon/socket.cc
   lyon/ssl_socket.cc
   lyon/tcp_server.cc
+  lyon/db/redis.cc
   lyon/streams/stream.cc
   lyon/streams/socket_stream.cc
   lyon/serialize/bytearray.cc
@@ -48,7 +49,7 @@ set(
   lyon/rpc/rpc_result.cc
   lyon/rpc/rpc_session.cc
   lyon/rpc/rpc_server.cc
-  lyon/rpc/rpc_client.cc
+  lyon/rpc/rpc_connection.cc
   lyon/rpc/rpc_register.cc
   lyon/rpc/rpc_connection_poll.cc
 )
@@ -64,6 +65,7 @@ add_library(lyon SHARED ${LIB_SRC})
 target_link_libraries(
   lyon PRIVATE yaml-cpp
   ${OPENSSL_LIBRARIES}
+  hiredis
 )
 
 set(
@@ -85,6 +87,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_uri "tests/test_uri.cc" lyon "${LIBS}")
   lyon_add_executable(test_socket "tests/test_socket.cc" lyon "${LIBS}")
   lyon_add_executable(test_bytearray "tests/test_bytearray.cc" lyon "${LIBS}")
+  lyon_add_executable(test_redis "tests/test_redis.cc" lyon "${LIBS}")
   lyon_add_executable(test_serializer "tests/test_serializer.cc" lyon "${LIBS}")
   lyon_add_executable(test_http "tests/test_http.cc" lyon "${LIBS}")
   lyon_add_executable(test_http_parser "tests/test_http_parser.cc" lyon "${LIBS}")
@@ -93,7 +96,7 @@ if(BUILD_TEST)
   lyon_add_executable(test_http_connection "tests/test_http_connection.cc" lyon "${LIBS}")
   lyon_add_executable(test_traits "tests/test_traits.cc" lyon "${LIBS}")
   lyon_add_executable(test_rpc_server "tests/test_rpc_server.cc" lyon "${LIBS}")
-  lyon_add_executable(test_rpc_client "tests/test_rpc_client.cc" lyon "${LIBS}")
+  lyon_add_executable(test_rpc_connection "tests/test_rpc_connection.cc" lyon "${LIBS}")
   lyon_add_executable(test_rpc_register "tests/test_rpc_register.cc" lyon "${LIBS}")
 
 endif()

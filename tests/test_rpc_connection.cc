@@ -1,4 +1,4 @@
-#include "lyon/rpc/rpc_client.h"
+#include "lyon/rpc/rpc_connection.h"
 #include <future>
 #include <lyon/address.h>
 #include <lyon/iomanager.h>
@@ -9,7 +9,7 @@
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
 void test_call() {
-    lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient());
+    lyon::rpc::RpcConnection::ptr rpc_client(new lyon::rpc::RpcConnection());
     //支持函数名重载
     if (rpc_client->connect("localhost:8088")) {
         lyon::rpc::RpcResult<int> rt = rpc_client->call<int>("add", 123, 89);
@@ -38,14 +38,16 @@ void call_back(lyon::rpc::RpcResult<int> result) {
 };
 
 void test_async_call() {
-    lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient(1000));
+    lyon::rpc::RpcConnection::ptr rpc_client(
+        new lyon::rpc::RpcConnection(1000));
     if (rpc_client->connect("localhost:8088")) {
         rpc_client->async_call<int>(call_back, "add", 1, 3);
     }
 }
 
 void test_future_call() {
-    lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient(1000));
+    lyon::rpc::RpcConnection::ptr rpc_client(
+        new lyon::rpc::RpcConnection(1000));
     if (rpc_client->connect("localhost:8088")) {
         auto future = rpc_client->future_call<int>("add", 1, 3);
 
