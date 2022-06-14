@@ -33,7 +33,7 @@ bool RpcClient::connect(Address::ptr addr) {
 bool RpcClient::connect(const std::string &host) {
     Address::ptr addr = Address::LookUpAnyIpAddress(host);
     if (!addr) {
-        LYON_LOG_ERROR(g_logger) << "RpcClient::connect fail";
+        LYON_LOG_ERROR(g_logger) << "RpcClient::lookup IP fail";
         return false;
     }
     return connect(addr);

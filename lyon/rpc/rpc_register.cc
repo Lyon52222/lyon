@@ -1,4 +1,6 @@
 #include "rpc_register.h"
+#include <cstdint>
+#include <lyon/address.h>
 #include <memory>
 namespace lyon::rpc {
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
@@ -17,7 +19,7 @@ void RpcRegister::handleClient(Socket::ptr sock) {
         if (request->getType() ==
             RpcProtocol::MSG_TYPE::RPC_REGIST_METHOD_REQUEST) {
             response = handleRegistMethod(
-                // NOTE:这里获得的remoteaddr的port并不是提供服务的端口号
+                // TODO:这里获得的remoteaddr的port并不是提供服务的端口号
                 request, session->getSocket()->getRemoteAddress());
         } else if (request->getType() ==
                    RpcProtocol::MSG_TYPE::RPC_DISCOVER_METHOD_REQUEST) {
@@ -41,9 +43,11 @@ RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request,
         RpcProtocol::CreateRegistMethodResponse(request->getSeqId());
 
     RpcMethodMeta method;
-    request_ser >> method;
+    std::vector<uint16_t> server_ports;
+    request_ser >> method >> server_ports;
 
-    // m_registedMethod.push_back(method);
+    // server开放服务的端口可能不止一个，这里暂时简单处理，使用第一个
+    std::static_pointer_cast<IPAddress>(server_addr)->setPort(server_ports[0]);
     if (m_registedMethod.contains(method)) {
         m_registedMethod[method].push_back(server_addr->toString());
     } else {

@@ -68,13 +68,38 @@ RpcClient::ptr RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
     m_total -= invalid_connections.size();
 
     if (!rt) {
-        std::vector<std::string> servers = discover(method);
-        LYON_LOG_DEBUG(g_logger) << "discover " << servers[0];
-        if (servers.empty()) {
-            return nullptr;
-        }
         rt = new RpcClient();
-        if (!rt->connect(servers[0])) {
+        std::list<std::string> &servers = m_servers[method];
+        //现在已知的服务器中尝试
+        while (!servers.empty()) {
+            std::string &server = servers.front();
+            //将请求失败的删除
+            if (!rt->connect(server)) {
+                servers.pop_front();
+                continue;
+            } else {
+                break;
+            }
+        }
+        //如果尝试完了都没成功
+        if (!rt->isConnected()) {
+            //想register发现服务器
+            std::vector<std::string> discovered_servers = discover(method);
+            servers.insert(servers.begin(), discovered_servers.begin(),
+                           discovered_servers.end());
+            while (!servers.empty()) {
+                std::string &server = servers.front();
+                //将请求失败的删除
+                if (!rt->connect(server)) {
+                    servers.pop_front();
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if (!rt->isConnected()) {
             return nullptr;
         }
 
@@ -89,6 +114,7 @@ std::vector<std::string>
 RpcConnectionPoll::discover(const RpcMethodMeta &method) {
     std::vector<std::string> servers;
     if (!m_registerSession || !m_registerSession->isConnected()) {
+        LYON_LOG_INFO(g_logger) << "RpcConnectionPoll not bind Register";
         return servers;
     }
 

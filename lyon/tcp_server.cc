@@ -5,6 +5,7 @@
 #include "log.h"
 #include "socket.h"
 #include <cstdint>
+#include <sys/socket.h>
 namespace lyon {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
@@ -33,7 +34,7 @@ static _TcpServerIniter _tcp_server_initer;
 TcpServer::TcpServer(IOManager *worker, IOManager *ioworker,
                      IOManager *acceptWorker)
     : m_worker(worker), m_ioworker(ioworker), m_acceptWorker(acceptWorker),
-      m_recvTimeout(s_tcp_recv_timeout), m_name("lyon/1.0.0"), m_isStop(true) {}
+      m_isStop(true), m_recvTimeout(s_tcp_recv_timeout), m_name("lyon/1.0.0") {}
 
 TcpServer::~TcpServer() {
     for (auto &s : m_sockets) {
@@ -67,9 +68,15 @@ bool TcpServer::bindAndListen(const std::vector<Address::ptr> &addrs,
             continue;
         }
         m_sockets.push_back(sock);
+        //获取监听的端口列表
+        if (addr->getFamily() == AF_INET || addr->getFamily() == AF_INET6) {
+            m_listeningPorts.push_back(
+                static_pointer_cast<IPAddress>(addr)->getPort());
+        }
     }
     if (!failed_addrs.empty()) {
         m_sockets.clear();
+        m_listeningPorts.clear();
         return false;
     }
 
@@ -123,6 +130,10 @@ void TcpServer::stop() {
 
 void TcpServer::handleClient(Socket::ptr sock) {
     LYON_LOG_INFO(g_logger) << "TcpServer::handleClient : " << *sock;
+}
+
+const std::vector<uint16_t> &TcpServer::getListeningPorts() const {
+    return m_listeningPorts;
 }
 
 } // namespace lyon

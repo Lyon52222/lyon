@@ -48,11 +48,14 @@ protected:
     IOManager *m_ioworker;
     IOManager *m_acceptWorker;
 
+    const std::vector<uint16_t> &getListeningPorts() const;
+
 private:
-    std::vector<Socket::ptr> m_sockets;
+    bool m_isStop;
     uint64_t m_recvTimeout;
     std::string m_name;
-    bool m_isStop;
+    std::vector<Socket::ptr> m_sockets;
+    std::vector<uint16_t> m_listeningPorts;
 };
 
 } // namespace lyon

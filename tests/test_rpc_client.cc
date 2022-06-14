@@ -9,7 +9,7 @@
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
 
 void test_call() {
-    lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient(1000));
+    lyon::rpc::RpcClient::ptr rpc_client(new lyon::rpc::RpcClient());
     //支持函数名重载
     if (rpc_client->connect("localhost:8088")) {
         lyon::rpc::RpcResult<int> rt = rpc_client->call<int>("add", 123, 89);
@@ -81,7 +81,7 @@ void test_poll_call() {
 }
 
 int main(int argc, char *argv[]) {
-    lyon::IOManager iom(1);
+    lyon::IOManager iom(2);
     // iom.addJob(test_call);
     // iom.addJob(test_async_call);
     // iom.addJob(test_future_call);

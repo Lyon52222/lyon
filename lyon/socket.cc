@@ -288,17 +288,21 @@ bool Socket::connect(Address::ptr address, uint64_t timeout_ms) {
     }
     if (timeout_ms == (uint64_t)-1) {
         if (::connect(m_socket, address->getAddr(), address->getAddrLen())) {
-            LYON_LOG_ERROR(g_logger) << "Socket::connect m_socket" << m_socket
-                                     << " address = " << address->toString();
+            LYON_LOG_ERROR(g_logger)
+                << "Socket::connect fail m_socket" << m_socket
+                << " address = " << address->toString()
+                << " error = " << strerror(errno);
             close();
             return false;
         }
     } else {
         if (::connect_with_timeout(m_socket, address->getAddr(),
                                    address->getAddrLen(), timeout_ms)) {
-            LYON_LOG_ERROR(g_logger) << "Socket::connect m_socket" << m_socket
-                                     << " address = " << address->toString()
-                                     << " timeout = " << timeout_ms;
+            LYON_LOG_ERROR(g_logger)
+                << "Socket::connect fail m_socket" << m_socket
+                << " address = " << address->toString()
+                << " timeout = " << timeout_ms
+                << " error = " << strerror(errno);
             close();
             return false;
         }

@@ -149,8 +149,9 @@ bool RpcServer::registMethodToRegister(RpcMethod::ptr method) {
 
     Serializer ser;
 
-    // ser << method->getName() << method->getRtType() << method->getArgsType();
-    ser << (*std::static_pointer_cast<RpcMethodMeta>(method));
+    //这里将该服务开放的监听端口也发送过去
+    ser << (*std::static_pointer_cast<RpcMethodMeta>(method))
+        << getListeningPorts();
 
     request->setContent(ser.toString());
 

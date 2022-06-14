@@ -100,7 +100,10 @@ private:
     uint32_t m_maxRequest;
     std::atomic<uint32_t> m_total = {0};
     RpcSession::ptr m_registerSession;
+    //每个方法所对应的连接池
     std::map<RpcMethodMeta, std::list<RpcClient *>> m_connections;
+    //每个方法所对应的可用服务器
+    std::map<RpcMethodMeta, std::list<std::string>> m_servers;
     MutexType m_mutex;
 };
 
