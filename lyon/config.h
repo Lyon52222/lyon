@@ -118,10 +118,10 @@ public:
     std::map<std::string, T> operator()(const std::string &s) {
         YAML::Node node = YAML::Load(s);
         typename std::map<std::string, T> m;
-        for (auto itr = node.begin(); itr != m.end(); itr++) {
+        for (auto itr = node.begin(); itr != node.end(); itr++) {
             std::stringstream ss;
             ss << itr->second;
-            m[itr->first] = LexicalCast<std::string, T>()(ss.str());
+            m[itr->first.Scalar()] = LexicalCast<std::string, T>()(ss.str());
         }
         return m;
     }

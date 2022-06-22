@@ -1,9 +1,25 @@
 #include "rpc_register.h"
 #include <cstdint>
-#include <lyon/address.h>
 #include <memory>
 namespace lyon::rpc {
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
+
+bool RpcRegister::aliveTest(const std::string &server) {
+    Address::ptr addr = Address::LookUpAnyIpAddress(server);
+    Socket::ptr sock = Socket::CreateTCP(addr);
+    RpcSession session = RpcSession(sock);
+
+    RpcProtocol::ptr request = RpcProtocol::CreateAliveTestRquest();
+
+    session.sendRpcProtocol(request);
+
+    RpcProtocol::ptr response = session.recvRpcProtocol();
+    if (!response && !session.isConnected()) {
+        // TODO:删除server提供的所有服务
+        return false;
+    }
+    return true;
+}
 
 void RpcRegister::handleClient(Socket::ptr sock) {
     RpcSession::ptr session = std::make_shared<RpcSession>(sock);
@@ -23,6 +39,8 @@ void RpcRegister::handleClient(Socket::ptr sock) {
         } else if (request->getType() ==
                    RpcProtocol::MSG_TYPE::RPC_DISCOVER_METHOD_REQUEST) {
             response = handleDiscoverMethod(request);
+        } else if (request->getType() ==
+                   RpcProtocol::MSG_TYPE::RPC_SERVER_ERROR_REQUEST) {
         }
 
         if (response) {
@@ -85,6 +103,17 @@ RpcProtocol::ptr RpcRegister::handleDiscoverMethod(RpcProtocol::ptr request) {
     }
 
     return response;
+}
+
+void RpcRegister::handleServerError(RpcProtocol::ptr request) {
+    Serializer request_ser(request->getContent(), request->isCompress());
+    RpcProtocol::ptr response =
+        RpcProtocol::CreateDiscoverMethodResponse(request->getSeqId());
+
+    std::string server;
+    request_ser >> server;
+
+    m_ioworker->addJob([this, server]() { aliveTest(server); });
 }
 
 } // namespace lyon::rpc

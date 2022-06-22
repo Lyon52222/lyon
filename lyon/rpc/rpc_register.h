@@ -14,6 +14,8 @@ public:
     typedef std::shared_ptr<RpcRegister> ptr;
     using TcpServer::TcpServer;
 
+    bool aliveTest(const std::string &server);
+
     virtual void handleClient(Socket::ptr sock) override;
 
     /**
@@ -26,8 +28,14 @@ public:
 
     RpcProtocol::ptr handleDiscoverMethod(RpcProtocol::ptr request);
 
+    void handleServerError(RpcProtocol::ptr request);
+
 private:
+    //注册的方法和其对应服务器
     std::map<RpcMethodMeta, std::list<std::string>> m_registedMethod;
+    //服务器和其提供的方法
+    std::map<std::string, std::list<std::string>::const_iterator>
+        m_serverMethod;
 };
 
 } // namespace lyon::rpc

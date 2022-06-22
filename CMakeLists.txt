@@ -51,7 +51,7 @@ set(
   lyon/rpc/rpc_server.cc
   lyon/rpc/rpc_connection.cc
   lyon/rpc/rpc_register.cc
-  lyon/rpc/rpc_connection_poll.cc
+  lyon/rpc/rpc_connection_pool.cc
 )
 
 # 使用ragel解析src_rl文件并且将解析文件保存到outputdir下。

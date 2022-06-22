@@ -3,7 +3,7 @@
 #include <lyon/address.h>
 #include <lyon/iomanager.h>
 #include <lyon/log.h>
-#include <lyon/rpc/rpc_connection_poll.h>
+#include <lyon/rpc/rpc_connection_pool.h>
 #include <lyon/rpc/rpc_result.h>
 
 static lyon::Logger::ptr g_logger = LYON_LOG_GET_ROOT();
@@ -73,8 +73,8 @@ void test_future_call() {
 }
 
 void test_poll_call() {
-    lyon::rpc::RpcConnectionPoll::ptr poll =
-        lyon::rpc::RpcConnectionPoll::Create(20, 10000, 20);
+    lyon::rpc::RpcConnectionPool::ptr poll =
+        lyon::rpc::RpcConnectionPool::Create(20, 10000, 20);
     poll->bindRegister("localhost:8089");
 
     lyon::rpc::RpcResult<int> rt = poll->call<int>("add", 123, 89);

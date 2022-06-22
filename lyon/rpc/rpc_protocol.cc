@@ -1,5 +1,6 @@
 #include "rpc_protocol.h"
 #include <cstdint>
+#include <memory>
 #include <sstream>
 namespace lyon::rpc {
 
@@ -59,45 +60,72 @@ std::string RpcProtocol::toString() const {
     return ss.str();
 }
 
+RpcProtocol::ptr RpcProtocol::CreateServerErrorRequest() {
+    RpcProtocol::ptr protocol =
+        std::make_shared<RpcProtocol>(MSG_TYPE::RPC_SERVER_ERROR_REQUEST, 0x01);
+    protocol->setSeqId(++m_id);
+    return protocol;
+}
+
+RpcProtocol::ptr RpcProtocol::CreateServerCloseRequest() {
+    RpcProtocol::ptr protocol =
+        std::make_shared<RpcProtocol>(MSG_TYPE::RPC_SERVER_CLOSE_REQUEST, 0x01);
+    protocol->setSeqId(++m_id);
+    return protocol;
+}
+
+RpcProtocol::ptr RpcProtocol::CreateAliveTestRquest() {
+    RpcProtocol::ptr protocol =
+        std::make_shared<RpcProtocol>(MSG_TYPE::RPC_ALIVE_TEST_REQUEST, 0x01);
+    protocol->setSeqId(++m_id);
+    return protocol;
+}
+
+RpcProtocol::ptr RpcProtocol::CreateAliveTestResponse(uint32_t seq_id) {
+    RpcProtocol::ptr protocol =
+        std::make_shared<RpcProtocol>(MSG_TYPE::RPC_ALIVE_TEST_RESPONSE, 0x01);
+    protocol->setSeqId(seq_id);
+    return protocol;
+}
+
 RpcProtocol::ptr RpcProtocol::CreateCallMethodRequest() {
-    RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_CALL_METHOD_REQUEST, 0x01));
+    RpcProtocol::ptr protocol =
+        std::make_shared<RpcProtocol>(MSG_TYPE::RPC_CALL_METHOD_REQUEST, 0x01);
     protocol->setSeqId(++m_id);
     return protocol;
 }
 
 RpcProtocol::ptr RpcProtocol::CreateCallMethodResponse(uint32_t seq_id) {
-    RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_CALL_METHOD_RESPONSE, 0x01));
+    RpcProtocol::ptr protocol =
+        std::make_shared<RpcProtocol>(MSG_TYPE::RPC_CALL_METHOD_RESPONSE, 0x01);
     protocol->setSeqId(seq_id);
     return protocol;
 }
 
 RpcProtocol::ptr RpcProtocol::CreateRegistMethodRequest() {
-    RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_REGIST_METHOD_REQUEST, 0x01));
+    RpcProtocol::ptr protocol = std::make_shared<RpcProtocol>(
+        MSG_TYPE::RPC_REGIST_METHOD_REQUEST, 0x01);
     protocol->setSeqId(++m_id);
     return protocol;
 }
 
 RpcProtocol::ptr RpcProtocol::CreateRegistMethodResponse(uint32_t seq_id) {
-    RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_REGIST_METHOD_RESPONSE, 0x01));
+    RpcProtocol::ptr protocol = std::make_shared<RpcProtocol>(
+        MSG_TYPE::RPC_REGIST_METHOD_RESPONSE, 0x01);
     protocol->setSeqId(seq_id);
     return protocol;
 }
 
 RpcProtocol::ptr RpcProtocol::CreateDiscoverMethodRequest() {
-    RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_DISCOVER_METHOD_REQUEST, 0x01));
+    RpcProtocol::ptr protocol = std::make_shared<RpcProtocol>(
+        MSG_TYPE::RPC_DISCOVER_METHOD_REQUEST, 0x01);
     protocol->setSeqId(++m_id);
     return protocol;
 }
 
 RpcProtocol::ptr RpcProtocol::CreateDiscoverMethodResponse(uint32_t seq_id) {
-
-    RpcProtocol::ptr protocol(
-        new RpcProtocol(MSG_TYPE::RPC_DISCOVER_METHOD_RESPONSE, 0x01));
+    RpcProtocol::ptr protocol = std::make_shared<RpcProtocol>(
+        MSG_TYPE::RPC_DISCOVER_METHOD_RESPONSE, 0x01);
     protocol->setSeqId(seq_id);
     return protocol;
 }

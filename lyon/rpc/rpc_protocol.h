@@ -28,8 +28,11 @@ public:
         //心跳包
         RPC_HEART_BEAT = 0,
 
-        RPC_PROVIDER,
-        RPC_CONSUMER,
+        RPC_ALIVE_TEST_REQUEST,
+        RPC_ALIVE_TEST_RESPONSE,
+
+        RPC_SERVER_ERROR_REQUEST,
+        RPC_SERVER_CLOSE_REQUEST,
 
         //向注册中心注册方法
         RPC_REGIST_METHOD_REQUEST,
@@ -68,6 +71,12 @@ public:
     std::ostream &dump(std::ostream &os) const;
 
     std::string toString() const;
+
+    static RpcProtocol::ptr CreateServerErrorRequest();
+    static RpcProtocol::ptr CreateServerCloseRequest();
+
+    static RpcProtocol::ptr CreateAliveTestRquest();
+    static RpcProtocol::ptr CreateAliveTestResponse(uint32_t seq_id);
 
     static RpcProtocol::ptr CreateCallMethodRequest();
     static RpcProtocol::ptr CreateCallMethodResponse(uint32_t seq_id);

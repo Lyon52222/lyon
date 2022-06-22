@@ -32,7 +32,9 @@ public:
 
     bool registMethodToRegister(RpcMethod::ptr method);
 
-    virtual RpcProtocol::ptr handleMethodRequest(RpcProtocol::ptr protocol);
+    virtual RpcProtocol::ptr handleMethodRequest(RpcProtocol::ptr request);
+
+    virtual RpcProtocol::ptr handleAliveTest(RpcProtocol::ptr request);
 
     template <typename F> void registMethod(const std::string &name, F func) {
         auto func_ptr(new RpcMethod(name, func));

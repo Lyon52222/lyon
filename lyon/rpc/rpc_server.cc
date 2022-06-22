@@ -141,6 +141,13 @@ RpcProtocol::ptr RpcServer::handleMethodRequest(RpcProtocol::ptr request) {
     return response;
 }
 
+RpcProtocol::ptr RpcServer::handleAliveTest(RpcProtocol::ptr request) {
+    RpcProtocol::ptr response =
+        RpcProtocol::CreateAliveTestResponse(request->getSeqId());
+
+    return response;
+}
+
 void RpcServer::registMethod(RpcMethod::ptr method) {
     m_methods.emplace(method->getName(), method);
 }

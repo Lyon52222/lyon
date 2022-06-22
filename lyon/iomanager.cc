@@ -334,7 +334,7 @@ void IOManager::idle() {
         //当出现中断错误时，重试
         do {
             //设置超时时间为下次定时时间的到时时间
-            static const uint64_t MAX_TIMEOUT = 4000;
+            static const uint64_t MAX_TIMEOUT = 6000;
             if (next_timeout == ~0ull) {
                 next_timeout = MAX_TIMEOUT;
             } else {

@@ -1,24 +1,25 @@
-#include "rpc_connection_poll.h"
+#include "rpc_connection_pool.h"
 #include <lyon/log.h>
+#include <lyon/serialize/serializer.h>
 #include <memory>
 
 namespace lyon::rpc {
 
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
 
-RpcConnectionPoll::RpcConnectionPoll(uint32_t maxSize, uint32_t maxLiveTime,
+RpcConnectionPool::RpcConnectionPool(uint32_t maxSize, uint32_t maxLiveTime,
                                      uint32_t maxRequest)
     : m_maxSize(maxSize), m_maxLiveTime(maxLiveTime), m_maxRequest(maxRequest) {
 }
 
-RpcConnectionPoll::ptr RpcConnectionPoll::Create(uint32_t maxSize,
+RpcConnectionPool::ptr RpcConnectionPool::Create(uint32_t maxSize,
                                                  uint32_t maxLiveTime,
                                                  uint32_t maxRequest) {
-    return std::make_shared<RpcConnectionPoll>(maxSize, maxLiveTime,
+    return std::make_shared<RpcConnectionPool>(maxSize, maxLiveTime,
                                                maxRequest);
 }
 
-bool RpcConnectionPoll::bindRegister(Address::ptr addr) {
+bool RpcConnectionPool::bindRegister(Address::ptr addr) {
     Socket::ptr sock = Socket::CreateTCP(addr);
     if (!sock->connect(addr)) {
         LYON_LOG_ERROR(g_logger) << "RpcServer::bindRegister fail";
@@ -29,7 +30,7 @@ bool RpcConnectionPoll::bindRegister(Address::ptr addr) {
     return true;
 }
 
-bool RpcConnectionPoll::bindRegister(const std::string &host) {
+bool RpcConnectionPool::bindRegister(const std::string &host) {
     Address::ptr addr = Address::LookUpAnyIpAddress(host);
     if (!addr) {
         LYON_LOG_ERROR(g_logger) << "RpcServer::bindRegister fail";
@@ -39,7 +40,7 @@ bool RpcConnectionPoll::bindRegister(const std::string &host) {
 }
 
 RpcConnection::ptr
-RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
+RpcConnectionPool::getConnection(const RpcMethodMeta &method) {
     std::vector<RpcConnection *> invalid_connections;
     RpcConnection *rt = nullptr;
     MutexType::Lock lock(m_mutex);
@@ -77,7 +78,7 @@ RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
             //将请求失败的删除
             if (!rt->connect(server)) {
                 servers.pop_front();
-                // TODO:这里应该通知register 该服务已失效
+                reportServerError(server);
                 continue;
             } else {
                 break;
@@ -109,12 +110,12 @@ RpcConnectionPoll::getConnection(const RpcMethodMeta &method) {
     }
 
     return RpcConnection::ptr(rt,
-                              std::bind(RpcConnectionPoll::ReleasePtr,
+                              std::bind(RpcConnectionPool::ReleasePtr,
                                         std::placeholders::_1, this, method));
 }
 
 std::vector<std::string>
-RpcConnectionPoll::discover(const RpcMethodMeta &method) {
+RpcConnectionPool::discover(const RpcMethodMeta &method) {
     std::vector<std::string> servers;
     if (!m_registerSession || !m_registerSession->isConnected()) {
         LYON_LOG_INFO(g_logger) << "RpcConnectionPoll not bind Register";
@@ -135,7 +136,19 @@ RpcConnectionPoll::discover(const RpcMethodMeta &method) {
     return servers;
 }
 
-void RpcConnectionPoll::ReleasePtr(RpcConnection *ptr, RpcConnectionPoll *poll,
+void RpcConnectionPool::reportServerError(std::string server) {
+    if (!m_registerSession || !m_registerSession->isConnected()) {
+        LYON_LOG_INFO(g_logger) << "RpcConnectionPoll not bind Register";
+        return;
+    }
+    RpcProtocol::ptr request = RpcProtocol::CreateServerErrorRequest();
+    Serializer ser;
+    ser << server;
+    request->setContent(ser.toString());
+    m_registerSession->sendRpcProtocol(request);
+}
+
+void RpcConnectionPool::ReleasePtr(RpcConnection *ptr, RpcConnectionPool *poll,
                                    RpcMethodMeta method) {
     ptr->incRequest();
     if (!ptr->isConnected() ||
