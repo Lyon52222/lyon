@@ -17,6 +17,7 @@ typedef std::shared_ptr<redisReply> ReplyRpr;
 class IRedis {
 public:
     typedef std::shared_ptr<IRedis> ptr;
+    enum Type { REDIS = 1 };
 
     IRedis(bool logEnable = true) : m_logEnable(logEnable) {}
     virtual ~IRedis() {}
@@ -33,6 +34,7 @@ public:
 
 protected:
     bool m_logEnable;
+    Type m_type;
     std::string m_name;
     std::string m_password;
 };
@@ -61,11 +63,12 @@ protected:
     std::string m_host;
 };
 
-class Redis : SyncIRedis {
+class Redis : public SyncIRedis {
 public:
     typedef std::shared_ptr<Redis> ptr;
-    Redis();
-    Redis(const std::map<std::string, std::string> &conf);
+    Redis(const std::string &name);
+    Redis(const std::string &name,
+          const std::map<std::string, std::string> &conf);
 
     virtual ~Redis() {}
 
@@ -87,7 +90,7 @@ public:
     virtual ReplyRpr getReply() override;
 
 private:
-    timeval m_cmdTimeout;
+    timeval m_cmdTimeout = {1, 0};
     std::shared_ptr<redisContext> m_context;
 };
 

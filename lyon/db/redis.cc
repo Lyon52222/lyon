@@ -14,9 +14,33 @@ static ConfigVar<std::map<std::string, std::map<std::string, std::string>>>::ptr
         std::map<std::string, std::map<std::string, std::string>>(),
         "redis config");
 
-Redis::Redis() {}
+static std::string get_value(const std::map<std::string, std::string> &m,
+                             const std::string &key,
+                             const std::string &def = "") {
+    auto itr = m.find(key);
+    return itr == m.end() ? def : itr->second;
+}
 
-Redis::Redis(const std::map<std::string, std::string> &conf) {}
+Redis::Redis(const std::string &name) {
+    m_name = name;
+    m_type = REDIS;
+}
+
+Redis::Redis(const std::string &name,
+             const std::map<std::string, std::string> &conf) {
+    m_name = name;
+
+    auto host_port = get_value(conf, "host", "localhost:6379");
+    auto pos = host_port.find(":");
+    m_host = host_port.substr(0, pos);
+    m_port = atoi(host_port.substr(pos + 1).c_str());
+    m_password = get_value(conf, "password");
+
+    auto timeout_str = get_value(conf, "timeout");
+    uint64_t timeout = atoi(timeout_str.c_str());
+    m_cmdTimeout.tv_sec = timeout / 1000;
+    m_cmdTimeout.tv_usec = timeout % 1000 * 1000;
+}
 
 bool Redis::connect() { return connect(m_host, m_port, 50); }
 
@@ -80,8 +104,8 @@ ReplyRpr Redis::cmd(const char *fmt, va_list ap) {
     if (!r) {
         LYON_LOG_ERROR(g_logger)
             << "redisCommand error: (" << fmt << ")(" << m_host << ":" << m_port
-            << ")(" << m_name << ")";
-
+            << ")(" << m_name << ")"
+            << " error: " << m_context->errstr;
         return nullptr;
     }
     ReplyRpr rt(r, freeReplyObject);
@@ -150,7 +174,7 @@ ReplyRpr Redis::getReply() {
     return nullptr;
 }
 
-RedisManager::RedisManager() {}
+RedisManager::RedisManager() { init(); }
 
 IRedis::ptr RedisManager::get(const std::string &name) {
     RWMutexType::WRLock rlock(m_mutex);
@@ -172,9 +196,19 @@ void RedisManager::freeRedis(IRedis *redis) {
 }
 
 void RedisManager::init() {
-    // m_config = g_redis->getVal();
-    // for (auto &i : m_config) {
-    // }
+    m_config = g_redis->getVal();
+    for (auto &i : m_config) {
+        auto type = get_value(i.second, "type", "redis");
+        auto poll = atoi(get_value(i.second, "poll", "1").c_str());
+        while (poll--) {
+            if (type == "redis") {
+                Redis *rds = new Redis(i.first, i.second);
+                rds->connect();
+                RWMutexType::WRLock rlock(m_mutex);
+                m_datas[i.first].push_back(rds);
+            }
+        }
+    }
 }
 
 ReplyRpr RedisUtil::Cmd(const std::string &name, const char *fmt, ...) {
@@ -188,6 +222,8 @@ ReplyRpr RedisUtil::Cmd(const std::string &name, const char *fmt, ...) {
 ReplyRpr RedisUtil::Cmd(const std::string &name, const char *fmt, va_list ap) {
     auto redis = RedisMgr::GetInstance()->get(name);
     if (!redis) {
+        LYON_LOG_INFO(g_logger)
+            << "Don't have any redis connection of : " << name;
         return nullptr;
     }
     return redis->cmd(fmt, ap);

@@ -21,6 +21,7 @@ ListAllYamlNumbers(const std::string &prefix, const YAML::Node &node,
     } else if (node.IsSequence()) {
         numbers.emplace_back(prefix, node);
     } else if (node.IsMap()) {
+        numbers.emplace_back(prefix, node);
         for (auto itr = node.begin(); itr != node.end(); itr++) {
             ListAllYamlNumbers(prefix.empty()
                                    ? itr->first.Scalar()

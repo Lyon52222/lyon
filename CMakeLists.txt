@@ -7,7 +7,7 @@ option(BUILD_EXAMPLES "ON for compile examples" ON)
 include(cmake/utils.cmake)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -O3 -g -std=c++20 -Wall")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -O0 -g -std=c++20 -Wall")
 
 find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIR})
