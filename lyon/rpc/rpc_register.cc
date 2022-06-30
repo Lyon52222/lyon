@@ -1,5 +1,6 @@
 #include "rpc_register.h"
 #include <cstdint>
+#include <iterator>
 #include <memory>
 namespace lyon::rpc {
 static Logger::ptr g_logger = LYON_LOG_GET_LOGGER("system");
@@ -14,8 +15,14 @@ bool RpcRegister::aliveTest(const std::string &server) {
     session.sendRpcProtocol(request);
 
     RpcProtocol::ptr response = session.recvRpcProtocol();
+    //如果没有回应，或者连接已经断开
+    RWMutexType::WRLock wlock(m_mutex);
     if (!response && !session.isConnected()) {
-        // TODO:删除server提供的所有服务
+        auto &methods = m_serverMethod[server];
+        for (auto &method : methods) {
+            m_registedMethod.erase(method);
+        }
+        m_serverMethod[server].clear();
         return false;
     }
     return true;
@@ -67,11 +74,11 @@ RpcProtocol::ptr RpcRegister::handleRegistMethod(RpcProtocol::ptr request,
 
     // server开放服务的端口可能不止一个，这里暂时简单处理，使用第一个
     std::static_pointer_cast<IPAddress>(server_addr)->setPort(server_ports[0]);
-    if (m_registedMethod.contains(method)) {
-        m_registedMethod[method].push_back(server_addr->toString());
-    } else {
-        m_registedMethod.emplace(method, std::list{server_addr->toString()});
-    }
+    // m_registedMethod.emplace(method, std::list{server_addr->toString()});
+
+    RWMutexType::WRLock wlock(m_mutex);
+    auto itr = m_registedMethod.emplace(method, server_addr->toString());
+    m_serverMethod[server_addr->toString()].push_back(itr);
 
     LYON_LOG_DEBUG(g_logger) << "regist method: " << method.toString() << " at "
                              << server_addr->toString();
@@ -94,10 +101,16 @@ RpcProtocol::ptr RpcRegister::handleDiscoverMethod(RpcProtocol::ptr request) {
     request_ser >> method;
 
     Serializer result_ser;
+    RWMutexType::RDLock rlock(m_mutex);
     if (!m_registedMethod.contains(method)) {
 
     } else {
-        result_ser << (m_registedMethod[method]);
+        auto range = m_registedMethod.equal_range(method);
+        std::list<std::string> servers;
+        for (auto i = range.first; i != range.second; ++i) {
+            servers.push_back(i->second);
+        }
+        result_ser << servers;
 
         response->setContent(result_ser.toString());
     }

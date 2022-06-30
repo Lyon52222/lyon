@@ -395,19 +395,19 @@ HttpResult::ptr HttpConnectionPool::doRequest(HttpRequest::ptr request,
 }
 
 void HttpConnectionPool::ReleasePtr(HttpConnection *ptr,
-                                    HttpConnectionPool *poll) {
+                                    HttpConnectionPool *pool) {
     //这里将socket连接进行重用
     ptr->incRequest();
     if (!ptr->isConnected() ||
-        (ptr->getCreateTime() + poll->m_maxLiveTime >= GetCurrentTimeMS()) ||
-        ptr->getRequest() > poll->m_maxRequest ||
-        poll->m_total > poll->m_maxSize) {
+        (ptr->getCreateTime() + pool->m_maxLiveTime >= GetCurrentTimeMS()) ||
+        ptr->getRequest() > pool->m_maxRequest ||
+        pool->m_total > pool->m_maxSize) {
         delete ptr;
-        --poll->m_total;
+        --pool->m_total;
         return;
     }
-    MutexType::Lock lock(poll->m_mutex);
-    poll->m_connections.push_back(ptr);
+    MutexType::Lock lock(pool->m_mutex);
+    pool->m_connections.push_back(ptr);
 }
 
 HttpResult::ptr

@@ -199,8 +199,8 @@ void RedisManager::init() {
     m_config = g_redis->getVal();
     for (auto &i : m_config) {
         auto type = get_value(i.second, "type", "redis");
-        auto poll = atoi(get_value(i.second, "poll", "1").c_str());
-        while (poll--) {
+        auto pool = atoi(get_value(i.second, "pool", "1").c_str());
+        while (pool--) {
             if (type == "redis") {
                 Redis *rds = new Redis(i.first, i.second);
                 rds->connect();

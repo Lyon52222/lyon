@@ -118,7 +118,7 @@ std::vector<std::string>
 RpcConnectionPool::discover(const RpcMethodMeta &method) {
     std::vector<std::string> servers;
     if (!m_registerSession || !m_registerSession->isConnected()) {
-        LYON_LOG_INFO(g_logger) << "RpcConnectionPoll not bind Register";
+        LYON_LOG_INFO(g_logger) << "RpcConnectionPool not bind Register";
         return servers;
     }
 
@@ -137,10 +137,16 @@ RpcConnectionPool::discover(const RpcMethodMeta &method) {
 }
 
 void RpcConnectionPool::reportServerError(std::string server) {
+    std::cout << "test" << std::endl;
+
     if (!m_registerSession || !m_registerSession->isConnected()) {
-        LYON_LOG_INFO(g_logger) << "RpcConnectionPoll not bind Register";
+        LYON_LOG_INFO(g_logger) << "RpcConnectionPool not bind Register";
         return;
     }
+
+    LYON_LOG_INFO(g_logger)
+        << "RpcConnectionPool report " << server << "is unconnectable";
+
     RpcProtocol::ptr request = RpcProtocol::CreateServerErrorRequest();
     Serializer ser;
     ser << server;
@@ -148,20 +154,20 @@ void RpcConnectionPool::reportServerError(std::string server) {
     m_registerSession->sendRpcProtocol(request);
 }
 
-void RpcConnectionPool::ReleasePtr(RpcConnection *ptr, RpcConnectionPool *poll,
+void RpcConnectionPool::ReleasePtr(RpcConnection *ptr, RpcConnectionPool *pool,
                                    RpcMethodMeta method) {
     ptr->incRequest();
     if (!ptr->isConnected() ||
-        (ptr->getCreateTime() + poll->m_maxLiveTime >= GetCurrentTimeMS()) ||
-        ptr->getRequest() > poll->m_maxRequest ||
-        poll->m_total > poll->m_maxSize) {
+        (ptr->getCreateTime() + pool->m_maxLiveTime >= GetCurrentTimeMS()) ||
+        ptr->getRequest() > pool->m_maxRequest ||
+        pool->m_total > pool->m_maxSize) {
         delete ptr;
-        --poll->m_total;
+        --pool->m_total;
         return;
     }
 
-    MutexType::Lock lock(poll->m_mutex);
-    poll->m_connections[method].push_back(ptr);
+    MutexType::Lock lock(pool->m_mutex);
+    pool->m_connections[method].push_back(ptr);
 }
 
 } // namespace lyon::rpc

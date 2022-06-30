@@ -1,5 +1,5 @@
-#ifndef __LYON_RPC_CONNECTION_POLL_H__
-#define __LYON_RPC_CONNECTION_POLL_H__
+#ifndef __LYON_RPC_CONNECTION_POOL_H__
+#define __LYON_RPC_CONNECTION_POOL_H__
 
 #include "lyon/mutex.h"
 #include "lyon/serialize/serializer.h"
@@ -34,7 +34,7 @@ public:
 
     void reportServerError(std::string server);
 
-    static void ReleasePtr(RpcConnection *ptr, RpcConnectionPool *poll,
+    static void ReleasePtr(RpcConnection *ptr, RpcConnectionPool *pool,
                            RpcMethodMeta method);
 
     template <typename T, typename... Args>

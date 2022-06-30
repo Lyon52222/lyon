@@ -72,12 +72,12 @@ void test_future_call() {
     }
 }
 
-void test_poll_call() {
-    lyon::rpc::RpcConnectionPool::ptr poll =
+void test_pool_call() {
+    lyon::rpc::RpcConnectionPool::ptr pool =
         lyon::rpc::RpcConnectionPool::Create(20, 10000, 20);
-    poll->bindRegister("localhost:8089");
+    pool->bindRegister("localhost:8089");
 
-    lyon::rpc::RpcResult<int> rt = poll->call<int>("add", 123, 89);
+    lyon::rpc::RpcResult<int> rt = pool->call<int>("add", 123, 89);
     LYON_LOG_INFO(g_logger) << rt.getMsg();
     LYON_LOG_INFO(g_logger) << rt.getVal();
 }
@@ -88,6 +88,6 @@ int main(int argc, char *argv[]) {
     // iom.addJob(test_async_call);
     // iom.addJob(test_future_call);
 
-    iom.addJob(test_poll_call);
+    iom.addJob(test_pool_call);
     return 0;
 }
