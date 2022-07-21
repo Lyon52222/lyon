@@ -1,11 +1,11 @@
 #ifndef __LYON_DB_REDIS_H__
 #define __LYON_DB_REDIS_H__
 
+#include "lyon/mutex.h"
+#include "lyon/singleton.h"
 #include <cstdint>
 #include <hiredis/hiredis.h>
 #include <list>
-#include <lyon/mutex.h>
-#include <lyon/singleton.h>
 #include <map>
 #include <memory>
 #include <vector>
